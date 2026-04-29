@@ -1,0 +1,7 @@
+# Ignorar dependencias y secretos del backend
+BACKEND/node_modules/
+BACKEND/.env
+
+# Si tenés node_modules en la raíz o en estilos (poco probable ahora, pero por las dudas)
+node_modules/
+.env
