@@ -24,3 +24,9 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
+
+// Arriba con los otros require:
+const productRoutes = require('./routes/productRoutes');
+
+// Abajo, después de conectar la DB:
+app.use('/api/products', productRoutes);
