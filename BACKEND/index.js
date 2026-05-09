@@ -2,31 +2,37 @@
 require('dotenv').config(); // Lee el archivo .env
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db'); // Traemos la función que creamos en el Paso 2
+const connectDB = require('./config/db'); 
 
-// 2. Levantamos la persiana del negocio (inicializamos Express)
+// 2. Importamos las Rutas (Controllers)
+const productRoutes = require('./routes/productRoutes');
+const userRoutes = require('./routes/userRoutes');
+
+// 3. Levantamos la persiana del negocio (inicializamos Express)
 const app = express();
 
-// 3. Ejecutamos la conexión a la base de datos
+// 4. Ejecutamos la conexión a la base de datos
 connectDB();
 
-// 4. Middlewares (los "patovicas" de la entrada)
-app.use(cors()); // Deja que tu frontend se comunique con este backend sin que el navegador lo bloquee
-app.use(express.json()); // Le enseña a Express a leer datos en formato JSON (lo que manda el frontend)
+// 5. Middlewares (los "patovicas" de la entrada)
+app.use(cors()); // Permite la comunicación con el frontend
+app.use(express.json()); // Permite leer datos en formato JSON
 
-// 5. Creamos una ruta de prueba para ver que todo ande
+// 6. Rutas de la Aplicación
+// Ruta de prueba
 app.get('/', (req, res) => {
     res.send('¡El servidor de Inova está arriba y corriendo!');
 });
 
-// 6. Ponemos el servidor a escuchar peticiones
+// Enchufamos las rutas de Usuarios (Registro y Login)
+app.use('/api/users', userRoutes);
+
+// Enchufamos las rutas de Productos (Pulseras y Collares)
+app.use('/api/products', productRoutes);
+
+// 7. Ponemos el servidor a escuchar peticiones
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+    console.log(`✨ Las rutas de Usuarios y Productos están listas`);
 });
-
-// Arriba con los otros require:
-const productRoutes = require('./routes/productRoutes');
-
-// Abajo, después de conectar la DB:
-app.use('/api/products', productRoutes);
