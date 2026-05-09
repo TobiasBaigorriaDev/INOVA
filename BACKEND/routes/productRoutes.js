@@ -1,25 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/Products'); // Importamos el modelo que hiciste arriba
+const Product = require('../models/Products');
 
-// 1. OBTENER todos los productos (Para que el Front los muestre)
+// OBTENER TODOS LOS PRODUCTOS (GET)
+// Ruta: GET /api/products
 router.get('/', async (req, res) => {
     try {
         const productos = await Product.find();
-        res.json(productos);
+        res.status(200).json(productos);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener productos" });
+        res.status(500).json({ mensaje: 'Error al obtener los productos', error });
     }
 });
 
-// 2. CREAR un producto nuevo (Para cuando vos cargues una pulsera)
+// CREAR UN NUEVO PRODUCTO (POST)
+// Ruta: POST /api/products
 router.post('/', async (req, res) => {
-    const nuevoProducto = new Product(req.body);
     try {
+        const nuevoProducto = new Product(req.body);
         const productoGuardado = await nuevoProducto.save();
         res.status(201).json(productoGuardado);
     } catch (error) {
-        res.status(400).json({ message: "Error al guardar el producto" });
+        res.status(400).json({ mensaje: 'Error al crear el producto', error });
     }
 });
 
