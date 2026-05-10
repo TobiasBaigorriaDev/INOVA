@@ -2,12 +2,9 @@ import React from 'react';
 import { Heart, ShoppingCart, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Un "Componente" es una pieza de Lego reutilizable.
-// Sacamos la barra de navegación aquí para no tener que escribirla en todas las páginas.
-function Navbar() {
+function Navbar({ onOpenCart }) {
   return (
     <nav className="navbar container">
-      {/* En vez de <a href="..."> usamos <Link to="..."> para que React cambie de página SIN recargar */}
       <Link to="/" className="navbar-brand">
         <div className="logo-circle">I</div>
         <div className="logo-text">INOVA</div>
@@ -19,9 +16,16 @@ function Navbar() {
         <li><Link to="/contacto">CONTACTO</Link></li>
       </ul>
       <div className="nav-icons">
-        <Heart size={20} strokeWidth={1.5} />
-        <ShoppingCart size={20} strokeWidth={1.5} />
-        <User size={20} strokeWidth={1.5} />
+        {/* <-- AHORA EL CORAZÓN ES UN LINK A /favoritos --> */}
+        <Link to="/favoritos" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}>
+          <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
+        </Link>
+
+        <span onClick={onOpenCart} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <ShoppingCart size={20} strokeWidth={1.5} />
+        </span>
+
+        <User size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
       </div>
     </nav>
   );
