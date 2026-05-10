@@ -1,7 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CartSidebar.css';
 
 const CartSidebar = ({ isOpen, onClose, cartItems, updateQuantity, removeFromCart }) => {
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/checkout');
+  };
 
   // Calculamos el subtotal multiplicando precio por cantidad de cada producto
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.qty), 0);
@@ -64,7 +71,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems, updateQuantity, removeFromCar
             <span>TOTAL</span>
             <span>${total.toFixed(2)}</span>
           </div>
-          <button className="checkout-btn" disabled={cartItems.length === 0}>
+          <button className="checkout-btn" disabled={cartItems.length === 0} onClick={handleCheckout}>
             FINALIZAR COMPRA
           </button>
           <p className="taxes-note">IMPUESTOS CALCULADOS AL MOMENTO DEL PAGO</p>

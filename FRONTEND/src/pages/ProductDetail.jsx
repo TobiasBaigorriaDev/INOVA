@@ -1,12 +1,59 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft } from 'lucide-react';
 
+const products = [
+  { id: 1, name: 'Collar Minimalista Oro', price: '$89.00', image: '/CollarMinimalistaOro.jpg' },
+  { id: 2, name: 'Pulsera Elegante', price: '$65.00', image: '/PulseraElegante.jpg' },
+  { id: 3, name: 'Anillo Aurora', price: '$120.00', image: '/AnilloAurora.jpg' },
+  { id: 4, name: 'Pendientes Gota', price: '$75.00', image: '/PendientesGota.jpg' },
+  { id: 5, name: 'Pulsera Ethereal', price: '$95.00', image: '/PulseraEthereal.jpg' },
+  { id: 6, name: 'Collar Luna', price: '$110.00', image: '/CollarLuna.jpg' }
+];
+
+const cleanProductPrice = (product) => {
+  const numericPrice = typeof product.price === 'string'
+    ? parseFloat(product.price.replace('$', ''))
+    : product.price;
+  return { ...product, price: numericPrice };
+};
+
 // Esta es una PÁGINA nueva que solo se mostrará cuando la URL sea /producto/1 o /producto/2, etc.
-function ProductDetail() {
+function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
   // useParams() lee la URL para saber qué ID de producto estamos mirando.
   // Si la URL es /producto/3, entonces id será "3".
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [quantity, setQuantity] = useState(1);
+
+  const productInfo = products.find(p => p.id === parseInt(id)) || {
+    id: parseInt(id),
+    name: `Joya Exclusiva #${id}`,
+    price: '$150.00',
+    image: 'https://images.unsplash.com/photo-1599643478524-fb66f70d00f8?auto=format&fit=crop&w=1000&q=80'
+  };
+
+  const isFavorite = favorites.some(fav => fav.id === productInfo.id);
+
+  const handleAddToCart = () => {
+    addToCart(cleanProductPrice(productInfo), quantity);
+  };
+
+  const handleBuyNow = () => {
+    addToCart(cleanProductPrice(productInfo), quantity);
+    navigate('/checkout');
+  };
+
+  const updateQty = (amount) => {
+    setQuantity(prev => {
+      const newQty = prev + amount;
+      return newQty > 0 ? newQty : 1;
+    });
+  };
+
+  const handleToggleFavorite = () => {
+    toggleFavorite(cleanProductPrice(productInfo));
+  };
 
   // (En el futuro, aquí le pedirás al backend la info del producto "id". Por ahora, ponemos datos fijos)
 
@@ -20,11 +67,11 @@ function ProductDetail() {
 
       <div style={{ display: 'flex', gap: '60px', alignItems: 'center' }}>
 
-        {/* Lado izquierdo: Foto falsa gigante */}
+        {/* Lado izquierdo: Foto gigante */}
         <div style={{ flex: 1, borderRadius: '30px', overflow: 'hidden', backgroundColor: '#f5f5f5', aspectRatio: '4/5' }}>
           <img
-            src="https://images.unsplash.com/photo-1599643478524-fb66f70d00f8?auto=format&fit=crop&w=1000&q=80"
-            alt="Producto"
+            src={productInfo.image}
+            alt={productInfo.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
@@ -32,22 +79,39 @@ function ProductDetail() {
         {/* Lado derecho: Detalles */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <h1 className="font-serif" style={{ fontSize: '48px', fontStyle: 'italic', margin: 0 }}>
-            Joya Exclusiva #{id}
+            {productInfo.name}
           </h1>
           <p style={{ fontSize: '24px', color: 'var(--text-muted)', letterSpacing: '1px' }}>
-            $150.00
+            {typeof productInfo.price === 'number' ? `$${productInfo.price.toFixed(2)}` : productInfo.price}
           </p>
           <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', fontWeight: '300' }}>
             Esta es la vista de detalle. Aquí iría la descripción larga del producto que traigamos de la base de datos de MongoDB. Una pieza artesanal única para tu colección.
           </p>
 
-          <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
-            <button className="add-to-cart-btn" style={{ flex: 2, padding: '20px', fontSize: '12px' }}>
+          <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+            
+            {/* Selector de cantidad */}
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '30px', padding: '0 10px', height: '60px' }}>
+              <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(-1)}>-</button>
+              <span style={{ width: '30px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>{quantity}</span>
+              <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(1)}>+</button>
+            </div>
+
+            <button className="add-to-cart-btn" style={{ flex: 1, minWidth: '180px', height: '60px', padding: '0', fontSize: '11px' }} onClick={handleAddToCart}>
               <ShoppingCart size={16} strokeWidth={2} />
               AÑADIR A MI BOLSA
             </button>
-            <button className="wishlist-btn" style={{ position: 'relative', top: 'auto', right: 'auto', width: '60px', height: '60px', flexShrink: 0, border: '1px solid var(--border-color)' }}>
-              <Heart size={20} strokeWidth={1.5} />
+
+            <button className="add-to-cart-btn" style={{ flex: 1, minWidth: '180px', height: '60px', padding: '0', fontSize: '11px', background: 'var(--primary)', color: 'white' }} onClick={handleBuyNow}>
+              COMPRAR AHORA
+            </button>
+
+            <button 
+              className="wishlist-btn" 
+              style={{ position: 'relative', top: 'auto', right: 'auto', width: '60px', height: '60px', flexShrink: 0, border: '1px solid var(--border-color)', color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}
+              onClick={handleToggleFavorite}
+            >
+              <Heart size={20} strokeWidth={1.5} fill={isFavorite ? '#e74c3c' : 'none'} />
             </button>
           </div>
         </div>

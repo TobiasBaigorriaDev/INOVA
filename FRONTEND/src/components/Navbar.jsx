@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-function Navbar({ onOpenCart }) {
+function Navbar({ onOpenCart, cartItems = [] }) {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const totalItems = cartItems.reduce((total, item) => total + item.qty, 0);
+
+  useEffect(() => {
+    if (totalItems > 0) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [totalItems]);
+
   return (
-    <nav className="navbar container">
+    <nav className="navbar" style={{ width: '100%', borderBottom: '1px solid var(--border-color)' }}>
       <Link to="/" className="navbar-brand">
         <div className="logo-circle">I</div>
         <div className="logo-text">INOVA</div>
@@ -21,11 +35,14 @@ function Navbar({ onOpenCart }) {
           <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
         </Link>
 
-        <span onClick={onOpenCart} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <span onClick={onOpenCart} className={`cart-icon-container ${isAnimating ? 'cart-animating' : ''}`}>
           <ShoppingCart size={20} strokeWidth={1.5} />
+          {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
         </span>
 
-        <User size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
+        <Link to="/login" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}>
+          <User size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
+        </Link>
       </div>
     </nav>
   );

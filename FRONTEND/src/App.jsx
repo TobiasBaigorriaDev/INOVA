@@ -9,6 +9,8 @@ import CartSidebar from './components/CartSidebar';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Favorites from './pages/Favorites'; // <-- IMPORTAMOS LA NUEVA PÁGINA
+import Auth from './pages/Auth'; // <-- PÁGINA DE LOGIN Y REGISTRO
+import Checkout from './pages/Checkout'; // <-- PÁGINA DE COMPRA
 
 function App() {
   // Lógica del Carrito
@@ -29,16 +31,15 @@ function App() {
   };
   // -----------------------------------
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
     const existingItem = cartItems.find(item => item.id === product.id);
     if (existingItem) {
       setCartItems(cartItems.map(item =>
-        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        item.id === product.id ? { ...item, qty: item.qty + quantity } : item
       ));
     } else {
-      setCartItems([...cartItems, { ...product, qty: 1 }]);
+      setCartItems([...cartItems, { ...product, qty: quantity }]);
     }
-    setIsCartOpen(true);
   };
 
   const updateQuantity = (id, amount) => {
@@ -57,7 +58,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar onOpenCart={() => setIsCartOpen(true)} />
+      <Navbar onOpenCart={() => setIsCartOpen(true)} cartItems={cartItems} />
 
       <Routes>
         {/* Le pasamos los favoritos al Home para que el corazón se pinte si ya está agregado */}
@@ -66,7 +67,9 @@ function App() {
         {/* <-- NUEVA RUTA PARA LOS FAVORITOS --> */}
         <Route path="/favoritos" element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} addToCart={addToCart} />} />
 
-        <Route path="/producto/:id" element={<ProductDetail addToCart={addToCart} />} />
+        <Route path="/producto/:id" element={<ProductDetail addToCart={addToCart} toggleFavorite={toggleFavorite} favorites={favorites} />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/checkout" element={<Checkout cartItems={cartItems} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />} />
       </Routes>
 
       <CartSidebar
