@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft } from 'lucide-react';
-
-const products = [
-  { id: 1, name: 'Collar Minimalista Oro', price: '$89.00', image: '/CollarMinimalistaOro.jpg' },
-  { id: 2, name: 'Pulsera Elegante', price: '$65.00', image: '/PulseraElegante.jpg' },
-  { id: 3, name: 'Anillo Aurora', price: '$120.00', image: '/AnilloAurora.jpg' },
-  { id: 4, name: 'Pendientes Gota', price: '$75.00', image: '/PendientesGota.jpg' },
-  { id: 5, name: 'Pulsera Ethereal', price: '$95.00', image: '/PulseraEthereal.jpg' },
-  { id: 6, name: 'Collar Luna', price: '$110.00', image: '/CollarLuna.jpg' }
-];
+import { products } from '../data/products';
 
 const cleanProductPrice = (product) => {
   const numericPrice = typeof product.price === 'string'
@@ -18,20 +10,23 @@ const cleanProductPrice = (product) => {
   return { ...product, price: numericPrice };
 };
 
-// Esta es una PÁGINA nueva que solo se mostrará cuando la URL sea /producto/1 o /producto/2, etc.
 function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
-  // useParams() lee la URL para saber qué ID de producto estamos mirando.
-  // Si la URL es /producto/3, entonces id será "3".
   const { id } = useParams();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
 
-  const productInfo = products.find(p => p.id === parseInt(id)) || {
-    id: parseInt(id),
-    name: `Joya Exclusiva #${id}`,
-    price: '$150.00',
-    image: 'https://images.unsplash.com/photo-1599643478524-fb66f70d00f8?auto=format&fit=crop&w=1000&q=80'
-  };
+  // Busca el producto en el nuevo archivo central
+  const productInfo = products.find(p => p.id === parseInt(id));
+
+  // Si alguien pone un ID que no existe, mostramos un error amigable
+  if (!productInfo) {
+    return (
+      <div className="container" style={{ padding: '80px 40px', minHeight: '60vh', textAlign: 'center' }}>
+        <h1 className="font-serif">Producto no encontrado</h1>
+        <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Volver al inicio</Link>
+      </div>
+    );
+  }
 
   const isFavorite = favorites.some(fav => fav.id === productInfo.id);
 
@@ -55,19 +50,16 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
     toggleFavorite(cleanProductPrice(productInfo));
   };
 
-  // (En el futuro, aquí le pedirás al backend la info del producto "id". Por ahora, ponemos datos fijos)
-
   return (
     <div className="container" style={{ padding: '80px 40px', minHeight: '60vh' }}>
 
-      {/* Botón para volver atrás */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', marginBottom: '40px', fontSize: '12px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}>
         <ArrowLeft size={16} /> VOLVER AL INICIO
       </Link>
 
       <div style={{ display: 'flex', gap: '60px', alignItems: 'center' }}>
 
-        {/* Lado izquierdo: Foto gigante */}
+        {/* Lado izquierdo: Foto */}
         <div style={{ flex: 1, borderRadius: '30px', overflow: 'hidden', backgroundColor: '#f5f5f5', aspectRatio: '4/5' }}>
           <img
             src={productInfo.image}
@@ -89,8 +81,7 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
           </p>
 
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-            
-            {/* Selector de cantidad */}
+
             <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '30px', padding: '0 10px', height: '60px' }}>
               <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(-1)}>-</button>
               <span style={{ width: '30px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>{quantity}</span>
@@ -106,8 +97,8 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
               COMPRAR AHORA
             </button>
 
-            <button 
-              className="wishlist-btn" 
+            <button
+              className="wishlist-btn"
               style={{ position: 'relative', top: 'auto', right: 'auto', width: '60px', height: '60px', flexShrink: 0, border: '1px solid var(--border-color)', color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}
               onClick={handleToggleFavorite}
             >

@@ -1,49 +1,10 @@
 import React from 'react';
 import { Heart, ShoppingCart, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const products = [
-  {
-    id: 1,
-    name: 'Collar Minimalista Oro',
-    price: '$89.00',
-    image: '/CollarMinimalistaOro.jpg'
-  },
-  {
-    id: 2,
-    name: 'Pulsera Elegante',
-    price: '$65.00',
-    image: '/PulseraElegante.jpg'
-  },
-  {
-    id: 3,
-    name: 'Anillo Aurora',
-    price: '$120.00',
-    image: '/AnilloAurora.jpg'
-  },
-  {
-    id: 4,
-    name: 'Pendientes Gota',
-    price: '$75.00',
-    image: '/PendientesGota.jpg'
-  },
-  {
-    id: 5,
-    name: 'Pulsera Ethereal',
-    price: '$95.00',
-    image: '/PulseraEthereal.jpg'
-  },
-  {
-    id: 6,
-    name: 'Collar Luna',
-    price: '$110.00',
-    image: '/CollarLuna.jpg'
-  }
-];
+import { products } from '../data/products';
 
 function Home({ addToCart, toggleFavorite, favorites }) {
 
-  // Función para limpiar el precio
   const cleanProductPrice = (product) => {
     const numericPrice = typeof product.price === 'string'
       ? parseFloat(product.price.replace('$', ''))
@@ -67,9 +28,8 @@ function Home({ addToCart, toggleFavorite, favorites }) {
         <div className="products-header">
           <h2 className="products-title font-serif">Selección Artesanal</h2>
           <div className="products-filters">
-            <span className="active">Todos</span>
-            <span>Aros</span>
-            <span>Anillos</span>
+            {/* Este botón ahora lleva a tu nueva página de colecciones */}
+            <Link to="/colecciones"><span className="active" style={{ cursor: 'pointer' }}>Ver Todas las Colecciones</span></Link>
           </div>
         </div>
 
@@ -84,7 +44,6 @@ function Home({ addToCart, toggleFavorite, favorites }) {
                     className="wishlist-btn"
                     onClick={(e) => {
                       e.preventDefault();
-                      // Limpiamos el producto antes de guardarlo en favoritos
                       toggleFavorite(cleanProductPrice(product));
                     }}
                     style={{
