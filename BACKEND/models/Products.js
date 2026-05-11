@@ -30,4 +30,4 @@ const productSchema = new mongoose.Schema({
     timestamps: true // Crea createdAt y updatedAt automáticamente
 });
 
-module.exports = mongoose.model('Product', productSchema);//linea final
+module.exports = mongoose.model('Product', productSchema);
