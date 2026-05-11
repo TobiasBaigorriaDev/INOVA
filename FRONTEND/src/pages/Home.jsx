@@ -5,6 +5,7 @@ import { products } from '../data/products';
 
 function Home({ addToCart, toggleFavorite, favorites }) {
 
+  // Función para limpiar el precio
   const cleanProductPrice = (product) => {
     const numericPrice = typeof product.price === 'string'
       ? parseFloat(product.price.replace('$', ''))
@@ -44,6 +45,7 @@ function Home({ addToCart, toggleFavorite, favorites }) {
                     className="wishlist-btn"
                     onClick={(e) => {
                       e.preventDefault();
+                      // Limpiamos el producto antes de guardarlo en favoritos
                       toggleFavorite(cleanProductPrice(product));
                     }}
                     style={{

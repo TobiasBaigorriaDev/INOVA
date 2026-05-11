@@ -10,7 +10,10 @@ const cleanProductPrice = (product) => {
   return { ...product, price: numericPrice };
 };
 
+// Esta es una PÁGINA nueva que solo se mostrará cuando la URL sea /producto/1 o /producto/2, etc.
 function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
+  // useParams() lee la URL para saber qué ID de producto estamos mirando.
+  // Si la URL es /producto/3, entonces id será "3".
   const { id } = useParams();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
@@ -50,16 +53,19 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
     toggleFavorite(cleanProductPrice(productInfo));
   };
 
+  // (En el futuro, aquí le pedirás al backend la info del producto "id". Por ahora, ponemos datos fijos o desde nuestro archivo local)
+
   return (
     <div className="container" style={{ padding: '80px 40px', minHeight: '60vh' }}>
 
+      {/* Botón para volver atrás */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', marginBottom: '40px', fontSize: '12px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}>
         <ArrowLeft size={16} /> VOLVER AL INICIO
       </Link>
 
       <div style={{ display: 'flex', gap: '60px', alignItems: 'center' }}>
 
-        {/* Lado izquierdo: Foto */}
+        {/* Lado izquierdo: Foto gigante */}
         <div style={{ flex: 1, borderRadius: '30px', overflow: 'hidden', backgroundColor: '#f5f5f5', aspectRatio: '4/5' }}>
           <img
             src={productInfo.image}
@@ -82,6 +88,7 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
 
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
 
+            {/* Selector de cantidad */}
             <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '30px', padding: '0 10px', height: '60px' }}>
               <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(-1)}>-</button>
               <span style={{ width: '30px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>{quantity}</span>
