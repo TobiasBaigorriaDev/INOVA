@@ -3,6 +3,9 @@ require('dotenv').config(); // Lee el archivo .env
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db'); 
+const { connectSQL } = require('./config/dbSQL');
+const orderRoutes = require('./routes/orderRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // 2. Importamos las Rutas (Controllers)
 const productRoutes = require('./routes/productRoutes');
@@ -13,6 +16,7 @@ const app = express();
 
 // 4. Ejecutamos la conexión a la base de datos
 connectDB();
+connectSQL();
 
 // 5. Middlewares (los "patovicas" de la entrada)
 app.use(cors()); // Permite la comunicación con el frontend
@@ -29,6 +33,9 @@ app.use('/api/users', userRoutes);
 
 // Enchufamos las rutas de Productos (Pulseras y Collares)
 app.use('/api/products', productRoutes);
+
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // 7. Ponemos el servidor a escuchar peticiones
 const PORT = process.env.PORT || 3000;
