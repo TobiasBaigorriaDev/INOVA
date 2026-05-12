@@ -1,5 +1,5 @@
 // 1. Traemos las herramientas que instalamos
-require('dotenv').config(); // Lee el archivo .env
+require('dotenv').config({ override: true }); // Lee el archivo .env y fuerza su uso
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db'); 

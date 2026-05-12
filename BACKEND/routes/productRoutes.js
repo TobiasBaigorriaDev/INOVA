@@ -25,4 +25,18 @@ router.post('/', async (req, res) => {
     }
 });
 
+// ELIMINAR UN PRODUCTO (DELETE)
+// Ruta: DELETE /api/products/:id
+router.delete('/:id', async (req, res) => {
+    try {
+        const productoEliminado = await Product.findByIdAndDelete(req.params.id);
+        if (!productoEliminado) {
+            return res.status(404).json({ mensaje: 'Producto no encontrado' });
+        }
+        res.status(200).json({ mensaje: 'Producto eliminado con éxito' });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al eliminar el producto', error });
+    }
+});
+
 module.exports = router;
