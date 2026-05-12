@@ -12,6 +12,7 @@ import Favorites from './pages/Favorites'; // <-- IMPORTAMOS LA NUEVA PÁGINA
 import Auth from './pages/Auth'; // <-- PÁGINA DE LOGIN Y REGISTRO
 import Checkout from './pages/Checkout'; // <-- PÁGINA DE COMPRA
 import Collections from './pages/Collections'; // <-- IMPORTAMOS COLECCIONES
+import Admin from './pages/Admin'; // <-- PANEL DE ADMINISTRACIÓN
 
 function App() {
   // Lógica del Carrito
@@ -74,6 +75,9 @@ function App() {
 
         {/* <-- NUEVA RUTA PARA COLECCIONES --> */}
         <Route path="/colecciones" element={<Collections addToCart={addToCart} toggleFavorite={toggleFavorite} favorites={favorites} />} />
+
+        {/* <-- RUTA PARA EL PANEL DE ADMINISTRACIÓN --> */}
+        <Route path="/admin" element={<Admin />} />
       </Routes>
 
       <CartSidebar
