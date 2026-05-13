@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-// CORRECCIÓN: 'User' con mayúscula porque así se llama tu archivo en la carpeta models
 const User = require('../models/User'); 
 const bcrypt = require('bcrypt'); 
 
@@ -9,6 +8,13 @@ router.post('/register', async (req, res) => {
     try {
         const { nombre, email, password } = req.body;
 
+        // Validación: Verificar si el email ya existe
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ mensaje: 'El email ya está registrado' });
+        }
+
+        // Seguridad: Hashing de contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHasheado = await bcrypt.hash(password, salt);
 

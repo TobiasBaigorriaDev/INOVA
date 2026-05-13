@@ -28,7 +28,7 @@ function Collections({ addToCart, toggleFavorite, favorites }) {
     return (
         <div className="container" style={{ paddingTop: '80px', paddingBottom: '80px', minHeight: '80vh' }}>
             <div className="products-header" style={{ textAlign: 'center', marginBottom: '50px', display: 'block' }}>
-                <h1 className="font-serif" style={{ fontSize: '3.5rem', marginBottom: '30px' }}>Colecciones</h1>
+                <h1 className="font-serif collections-title">Colecciones</h1>
                 <div className="products-filters" style={{ justifyContent: 'center', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                     {categories.map(cat => (
                         <span

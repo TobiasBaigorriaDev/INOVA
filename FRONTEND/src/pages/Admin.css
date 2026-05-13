@@ -264,3 +264,22 @@
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 40px 20px;
+  }
+  .admin-title {
+    font-size: 28px;
+  }
+  .admin-form-section, .admin-list-section {
+    padding: 20px;
+  }
+  .products-table th, .products-table td {
+    padding: 10px;
+  }
+  .products-table-container {
+    overflow-x: auto;
+  }
+}
