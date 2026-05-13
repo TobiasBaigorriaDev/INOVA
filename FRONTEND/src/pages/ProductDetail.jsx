@@ -56,14 +56,14 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
   // (En el futuro, aquí le pedirás al backend la info del producto "id". Por ahora, ponemos datos fijos o desde nuestro archivo local)
 
   return (
-    <div className="container" style={{ padding: '80px 40px', minHeight: '60vh' }}>
+    <div className="container product-detail-container">
 
       {/* Botón para volver atrás */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', marginBottom: '40px', fontSize: '12px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}>
         <ArrowLeft size={16} /> VOLVER AL INICIO
       </Link>
 
-      <div style={{ display: 'flex', gap: '60px', alignItems: 'center' }}>
+      <div className="product-detail-layout">
 
         {/* Lado izquierdo: Foto gigante */}
         <div style={{ flex: 1, borderRadius: '30px', overflow: 'hidden', backgroundColor: '#f5f5f5', aspectRatio: '4/5' }}>

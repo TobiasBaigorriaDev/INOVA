@@ -219,3 +219,14 @@
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
 }
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+  .auth-card {
+    padding: 30px 20px;
+  }
+  .auth-header h1 {
+    font-size: 24px;
+    letter-spacing: 6px;
+  }
+}

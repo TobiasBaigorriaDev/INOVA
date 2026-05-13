@@ -170,3 +170,10 @@
   color: #888;
   margin-top: 10px;
 }
+
+/* --- Responsive Design --- */
+@media (max-width: 480px) {
+  .cart-sidebar {
+    width: 100%;
+  }
+}
