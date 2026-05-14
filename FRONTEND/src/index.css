@@ -447,51 +447,63 @@ li {
   .container {
     padding: 0 20px;
   }
+
   .navbar {
     padding: 20px;
     flex-direction: column;
     gap: 20px;
   }
+
   .nav-links {
     gap: 15px;
     flex-wrap: wrap;
     justify-content: center;
   }
+
   .hero-title {
     font-size: 80px;
     letter-spacing: 6px;
   }
+
   .hero-subtitle {
     font-size: 14px;
   }
+
   .products-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
+
   .products-grid {
     grid-template-columns: 1fr;
     gap: 30px;
   }
+
   .product-detail-container {
     padding-top: 40px;
     padding-bottom: 40px;
   }
+
   .product-detail-layout {
     flex-direction: column;
     gap: 30px;
   }
+
   .collections-title {
     font-size: 2.5rem;
   }
+
   .footer-top {
     flex-direction: column;
     gap: 40px;
   }
+
   .footer-links {
     flex-direction: column;
     gap: 20px;
   }
+
   .footer {
     padding: 60px 20px 40px;
   }
@@ -502,7 +514,52 @@ li {
     font-size: 60px;
     letter-spacing: 4px;
   }
+
   .nav-links {
     font-size: 9px;
+  }
+}
+
+/* Animación para el Chatbot flotante */
+@keyframes chatBubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Animación para cuando el Chatbot se cierra */
+@keyframes chatBubbleDisappear {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.2) translateY(20px);
+  }
+}
+
+/* Animación del rebote del botón cuando vuelve a aparecer */
+@keyframes chatButtonPop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

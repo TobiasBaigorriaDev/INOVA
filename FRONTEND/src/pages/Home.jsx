@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ShoppingCart, MessageCircle } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react'; // Quitamos MessageCircle de aquí
 import { Link } from 'react-router-dom';
 import { products } from '../data/products';
 
@@ -77,10 +77,6 @@ function Home({ addToCart, toggleFavorite, favorites }) {
           })}
         </div>
       </section>
-
-      <button className="chat-btn">
-        <MessageCircle size={28} strokeWidth={1.5} />
-      </button>
     </>
   );
 }

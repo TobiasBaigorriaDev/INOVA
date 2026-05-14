@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react'; // <-- Importamos el ícono del chat aquí
 import './index.css';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
+import Chatbot from './components/Chatbot'; // <-- IMPORTAMOS NUESTRO NUEVO CHATBOT
 
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
@@ -18,6 +20,9 @@ function App() {
   // Lógica del Carrito
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState([]);
+
+  // --- NUEVO: Lógica del Chatbot ---
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // --- NUEVO: Lógica de Favoritos ---
   const [favorites, setFavorites] = useState([]);
@@ -87,6 +92,24 @@ function App() {
         updateQuantity={updateQuantity}
         removeFromCart={removeFromCart}
       />
+
+      {/* COMPONENTE DEL CHATBOT */}
+      <Chatbot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+
+      {/* Si el chat está cerrado, mostramos el botón original. 
+          Le sumamos un "delay" de 0.25s para que espere a que la ventana se achique,
+          y la animación "chatButtonPop" para que rebote. */}
+      {!isChatOpen && (
+        <button
+          className="chat-btn"
+          onClick={() => setIsChatOpen(true)}
+          style={{
+            animation: 'chatButtonPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.25s backwards'
+          }}
+        >
+          <MessageCircle size={28} strokeWidth={1.5} />
+        </button>
+      )}
 
       <Footer />
     </Router>
