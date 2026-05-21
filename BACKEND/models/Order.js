@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbSQL');
+const User = require('./User'); // Importamos el modelo de Usuario SQL
 
 const Order = sequelize.define('Order', {
     id: {
@@ -8,8 +9,12 @@ const Order = sequelize.define('Order', {
         autoIncrement: true
     },
     userId: {
-        type: DataTypes.STRING, // id del usuario de Mongo 
-        allowNull: false
+        type: DataTypes.INTEGER, // Ahora el ID es un INTEGER en PostgreSQL
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        }
     },
     total: {
         type: DataTypes.FLOAT,
@@ -20,5 +25,9 @@ const Order = sequelize.define('Order', {
         defaultValue: 'pendiente'
     }
 });
+
+// Relacionar Ordenes con Usuarios
+User.hasMany(Order, { foreignKey: 'userId' });
+Order.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = Order;

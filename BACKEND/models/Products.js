@@ -1,33 +1,39 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/dbSQL');
 
-const productSchema = new mongoose.Schema({
+// Definimos el modelo de productos en PostgreSQL usando Sequelize
+const Product = sequelize.define('Product', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     nombre: { 
-        type: String, 
-        required: [true, 'El nombre del producto es obligatorio'] 
+        type: DataTypes.STRING, 
+        allowNull: false
     },
     descripcion: { 
-        type: String, 
-        required: [true, 'La descripción es obligatoria'] 
+        type: DataTypes.TEXT, 
+        allowNull: false 
     },
     precio: { 
-        type: Number, 
-        required: [true, 'El precio es obligatorio'] 
+        type: DataTypes.FLOAT, 
+        allowNull: false 
     },
     categoria: { 
-        type: String, 
-        enum: ['pulsera', 'collar'], 
-        required: [true, 'Debe elegir una categoría: pulsera o collar'] 
+        type: DataTypes.ENUM('pulsera', 'collar'), 
+        allowNull: false
     },
     imagenUrl: { 
-        type: String,
-        default: '' // Base lista para cuando subamos las fotos
+        type: DataTypes.STRING,
+        defaultValue: '' 
     },
     stock: { 
-        type: Number, 
-        default: 0 
+        type: DataTypes.INTEGER, 
+        defaultValue: 0 
     }
 }, { 
-    timestamps: true // Crea createdAt y updatedAt automáticamente
+    timestamps: true // Esto crea createdAt y updatedAt automáticamente
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = Product;

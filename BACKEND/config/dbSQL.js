@@ -3,7 +3,7 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(
     process.env.PG_DATABASE || 'inova_sql',
     process.env.PG_USER || 'postgres',
-    process.env.PG_PASSWORD || 'luli1234',
+    process.env.PG_PASSWORD || 'manu1203',
     {
         host: process.env.PG_HOST || 'localhost',
         port: process.env.PG_PORT ? Number(process.env.PG_PORT) : 5432,

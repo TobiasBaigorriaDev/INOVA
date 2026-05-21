@@ -2,7 +2,6 @@
 require('dotenv').config({ override: true }); // Lee el archivo .env y fuerza su uso
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db'); 
 const { connectSQL } = require('./config/dbSQL');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
@@ -15,7 +14,6 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 
 // 4. Ejecutamos la conexión a la base de datos
-connectDB();
 connectSQL();
 
 // 5. Middlewares (los "patovicas" de la entrada)

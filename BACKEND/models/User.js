@@ -1,31 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/dbSQL');
 
-// Definimos la "forma" que van a tener nuestros usuarios en la base de datos
-const UserSchema = new mongoose.Schema({
+// Definimos el modelo de usuarios en PostgreSQL usando Sequelize
+const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     nombre: {
-        type: String,
-        required: [true, 'El nombre es obligatorio']
+        type: DataTypes.STRING,
+        allowNull: false
     },
     email: {
-        type: String,
-        required: [true, 'El correo es obligatorio'],
-        unique: true // No deja que dos personas se registren con el mismo mail
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     },
     password: {
-        type: String,
-        required: [true, 'La contraseña es obligatoria']
+        type: DataTypes.STRING,
+        allowNull: false
     },
     rol: {
-        type: String,
-        enum: ['ADMIN_ROLE', 'USER_ROLE'], // Solo permitimos estos dos valores
-        default: 'USER_ROLE'
+        type: DataTypes.ENUM('ADMIN_ROLE', 'USER_ROLE'),
+        defaultValue: 'USER_ROLE'
     },
     estado: {
-        type: Boolean,
-        default: true // Para poder "borrar" un usuario sin sacarlo de la DB
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     }
 }, {
-    timestamps: true // Esto nos crea automáticamente la fecha de creación y actualización
+    timestamps: true // Esto nos crea automáticamente createdAt y updatedAt
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = User;
