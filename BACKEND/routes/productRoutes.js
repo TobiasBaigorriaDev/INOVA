@@ -43,6 +43,19 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET /api/products/:id
+router.get('/:id', async (req, res) => {
+    try {
+        const producto = await Product.findByPk(req.params.id);
+        if (!producto) {
+            return res.status(404).json({ mensaje: 'Producto no encontrado' });
+        }
+        res.status(200).json(producto);
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al obtener el producto', error: error.message });
+    }
+});
+
 // POST /api/products
 router.post('/', async (req, res) => {
     try {
@@ -68,14 +81,57 @@ router.post('/upload', upload.single('imagen'), (req, res) => {
     }
 });
 
+// Función para extraer el public_id de una URL de Cloudinary
+const getPublicIdFromUrl = (url) => {
+    if (!url || !url.includes('cloudinary.com')) return null;
+    try {
+        const parts = url.split('/image/upload/');
+        if (parts.length < 2) return null;
+        
+        let publicIdWithFormat = parts[1];
+        // Quitar la versión si existe (ej. v1716584283/)
+        if (publicIdWithFormat.startsWith('v')) {
+            const index = publicIdWithFormat.indexOf('/');
+            publicIdWithFormat = publicIdWithFormat.slice(index + 1);
+        }
+        
+        // Quitar la extensión del archivo (.jpg, .png, etc.)
+        const dotIndex = publicIdWithFormat.lastIndexOf('.');
+        if (dotIndex !== -1) {
+            return publicIdWithFormat.slice(0, dotIndex);
+        }
+        return publicIdWithFormat;
+    } catch (error) {
+        console.error('Error al extraer public_id de la URL de Cloudinary:', error);
+        return null;
+    }
+};
+
 // DELETE /api/products/:id
 router.delete('/:id', async (req, res) => {
     try {
-        const rowsDeleted = await Product.destroy({ where: { id: req.params.id } });
-        if (rowsDeleted === 0) {
+        const product = await Product.findByPk(req.params.id);
+        if (!product) {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
-        res.status(200).json({ mensaje: 'Producto eliminado con éxito' });
+
+        // Si el producto tiene una imagen de Cloudinary, la eliminamos de la nube
+        if (product.imagenUrl) {
+            const publicId = getPublicIdFromUrl(product.imagenUrl);
+            if (publicId) {
+                try {
+                    await cloudinary.uploader.destroy(publicId);
+                    console.log(`🧹 Imagen eliminada de Cloudinary: ${publicId}`);
+                } catch (cloudinaryError) {
+                    console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+                    // No bloqueamos la eliminación de la base de datos si falla Cloudinary
+                }
+            }
+        }
+
+        // Eliminamos el producto de la base de datos
+        await product.destroy();
+        res.status(200).json({ mensaje: 'Producto eliminado con éxito de la base de datos y Cloudinary' });
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al eliminar el producto', error: error.message });
     }

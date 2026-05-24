@@ -1,10 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { products } from '../data/products';
+import { products as staticProducts } from '../data/products';
 
 function Collections({ addToCart, toggleFavorite, favorites }) {
+    const [dbProducts, setDbProducts] = useState(staticProducts);
     const [filter, setFilter] = useState('todos');
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/products');
+                if (!response.ok) throw new Error('Error al obtener productos');
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const mappedProducts = data.map(p => ({
+                        id: p.id,
+                        name: p.nombre,
+                        description: p.descripcion,
+                        price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+                        image: p.imagenUrl || 'https://via.placeholder.com/300',
+                        category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
+                        stock: p.stock
+                    }));
+                    setDbProducts(mappedProducts);
+                }
+            } catch (error) {
+                console.error('Error al conectar con PostgreSQL, usando datos estáticos:', error);
+            }
+        };
+        fetchProducts();
+    }, []);
 
     const cleanProductPrice = (product) => {
         const numericPrice = typeof product.price === 'string'
@@ -14,8 +41,8 @@ function Collections({ addToCart, toggleFavorite, favorites }) {
     };
 
     const filteredProducts = filter === 'todos'
-        ? products
-        : products.filter(p => p.category === filter);
+        ? dbProducts
+        : dbProducts.filter(p => p.category === filter);
 
     const categories = [
         { id: 'todos', name: 'Todos' },

@@ -17,6 +17,7 @@ function Admin() {
     stock: ''
   });
 
+  const [uploading, setUploading] = useState(false);
   const apiUrl = 'http://localhost:3000/api/products'; // Asumiendo que este es el puerto del backend
 
   // Cargar productos al montar
@@ -47,6 +48,34 @@ function Admin() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append('imagen', file);
+
+    try {
+      setUploading(true);
+      showToast('Subiendo imagen a Cloudinary...');
+      const res = await fetch('http://localhost:3000/api/products/upload', {
+        method: 'POST',
+        body: formDataUpload
+      });
+
+      if (!res.ok) throw new Error('Error al subir la imagen');
+
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, imagenUrl: data.url }));
+      showToast('¡Imagen subida a Cloudinary con éxito!');
+    } catch (error) {
+      console.error(error);
+      showToast('Error al subir la imagen', 'error');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -174,14 +203,45 @@ function Admin() {
             </div>
 
             <div className="form-group">
-              <label>URL de la Imagen</label>
-              <input
-                type="url"
-                name="imagenUrl"
-                value={formData.imagenUrl}
-                onChange={handleChange}
-                placeholder="https://ejemplo.com/imagen.jpg"
-              />
+              <label>Imagen del Producto</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  style={{
+                    padding: '12px',
+                    border: '1px dashed #cccccc',
+                    borderRadius: '12px',
+                    backgroundColor: '#fafafa',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                />
+                
+                {uploading && (
+                  <span style={{ fontSize: '13px', color: '#888888', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    Subiendo a Cloudinary... ☁️
+                  </span>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="url"
+                    name="imagenUrl"
+                    value={formData.imagenUrl}
+                    onChange={handleChange}
+                    placeholder="O pega una URL de imagen directa aquí"
+                    style={{ flex: 1 }}
+                  />
+                  {formData.imagenUrl && (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #eeeeee', flexShrink: 0 }}>
+                      <img src={formData.imagenUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <button type="submit" className="submit-btn">
@@ -220,7 +280,7 @@ function Admin() {
                 </thead>
                 <tbody>
                   {productos.map((producto) => (
-                    <tr key={producto._id}>
+                    <tr key={producto.id}>
                       <td>
                         <div className="table-img-container">
                           {producto.imagenUrl ? (
@@ -245,7 +305,7 @@ function Admin() {
                       <td>
                         <button
                           className="delete-btn"
-                          onClick={() => handleDelete(producto._id)}
+                          onClick={() => handleDelete(producto.id)}
                           title="Eliminar"
                         >
                           <Trash2 size={16} /> Eliminar

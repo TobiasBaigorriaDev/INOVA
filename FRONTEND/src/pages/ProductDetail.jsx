@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft } from 'lucide-react';
-import { products } from '../data/products';
+import { products as staticProducts } from '../data/products';
 
 const cleanProductPrice = (product) => {
   const numericPrice = typeof product.price === 'string'
@@ -17,9 +17,52 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
+  const [productInfo, setProductInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Busca el producto en el nuevo archivo central
-  const productInfo = products.find(p => p.id === parseInt(id));
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:3000/api/products/${id}`);
+        if (!response.ok) throw new Error('Producto no encontrado en DB');
+        const p = await response.json();
+        
+        if (p) {
+          const mapped = {
+            id: p.id,
+            name: p.nombre,
+            description: p.descripcion,
+            price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+            image: p.imagenUrl || 'https://via.placeholder.com/300',
+            category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
+            stock: p.stock
+          };
+          setProductInfo(mapped);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching product from DB, falling back to static:', error);
+      }
+      
+      // Fallback a productos estáticos
+      const staticProduct = staticProducts.find(item => item.id === parseInt(id));
+      setProductInfo(staticProduct);
+      setLoading(false);
+    };
+    
+    fetchProduct();
+  }, [id]);
+
+  // Si está cargando el producto
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '80px 40px', minHeight: '60vh', textAlign: 'center' }}>
+        <h1 className="font-serif">Cargando producto...</h1>
+      </div>
+    );
+  }
 
   // Si alguien pone un ID que no existe, mostramos un error amigable
   if (!productInfo) {
@@ -83,7 +126,7 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
             {typeof productInfo.price === 'number' ? `$${productInfo.price.toFixed(2)}` : productInfo.price}
           </p>
           <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', fontWeight: '300' }}>
-            Esta es la vista de detalle. Aquí iría la descripción larga del producto que traigamos de la base de datos de MongoDB. Una pieza artesanal única para tu colección.
+            {productInfo.description || "Una pieza artesanal única para tu colección, diseñada con dedicación y fabricada con materiales de la más alta calidad."}
           </p>
 
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
