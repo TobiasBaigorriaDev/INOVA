@@ -5,6 +5,7 @@ const cors = require('cors');
 const { connectSQL } = require('./config/dbSQL');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // 2. Importamos las Rutas (Controllers)
 const productRoutes = require('./routes/productRoutes');
@@ -19,6 +20,7 @@ connectSQL();
 // 5. Middlewares (los "patovicas" de la entrada)
 app.use(cors()); // Permite la comunicación con el frontend
 app.use(express.json()); // Permite leer datos en formato JSON
+app.use('/api/auth', authRoutes); // Enchufamos las rutas de autenticación (registro y login)
 
 // 6. Rutas de la Aplicación
 // Ruta de prueba

@@ -3,7 +3,7 @@ const router = express.Router();
 const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 
-// Crear un pago
+
 router.post('/', async (req, res) => {
     try {
         const { orderId, amount, method } = req.body;
@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Obtener todos los pagos
+
 router.get('/', async (req, res) => {
     try {
         const payments = await Payment.findAll({ include: Order });
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Obtener pago por ID
+
 router.get('/:id', async (req, res) => {
     try {
         const payment = await Payment.findByPk(req.params.id, { include: Order });
