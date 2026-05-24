@@ -2,11 +2,33 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Products');
 
-// OBTENER TODOS LOS PRODUCTOS (GET)
+const multer = require('multer');
+const path = require('path');
+
+//multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const isValid = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (isValid) {
+        cb(null, true);
+    } else {
+        cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, webp)'), false);
+    }
+};
+
+const upload = multer({ storage, fileFilter });
 // Ruta: GET /api/products
 router.get('/', async (req, res) => {
     try {
-        // En Sequelize usamos findAll
         const productos = await Product.findAll();
         res.status(200).json(productos);
     } catch (error) {
