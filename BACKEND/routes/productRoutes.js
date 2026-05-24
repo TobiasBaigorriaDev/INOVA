@@ -1,23 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Products');
-
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-//multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+//Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+//multer con Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'inova_productos',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
     }
 });
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp/;
-    const isValid = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const isValid = allowedTypes.test(file.mimetype);
     if (isValid) {
         cb(null, true);
     } else {
@@ -26,7 +32,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ storage, fileFilter });
-// Ruta: GET /api/products
+
+// GET /api/products
 router.get('/', async (req, res) => {
     try {
         const productos = await Product.findAll();
@@ -36,11 +43,9 @@ router.get('/', async (req, res) => {
     }
 });
 
-// CREAR UN NUEVO PRODUCTO (POST)
-// Ruta: POST /api/products
+// POST /api/products
 router.post('/', async (req, res) => {
     try {
-        // En Sequelize usamos create
         const productoGuardado = await Product.create(req.body);
         res.status(201).json(productoGuardado);
     } catch (error) {
@@ -48,11 +53,24 @@ router.post('/', async (req, res) => {
     }
 });
 
-// ELIMINAR UN PRODUCTO (DELETE)
-// Ruta: DELETE /api/products/:id
+// POST /api/products/upload
+router.post('/upload', upload.single('imagen'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ mensaje: 'No se subió ninguna imagen o el formato es inválido' });
+        }
+        res.status(200).json({
+            mensaje: 'Imagen subida con éxito',
+            url: req.file.path
+        });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al subir la imagen', error: error.message });
+    }
+});
+
+// DELETE /api/products/:id
 router.delete('/:id', async (req, res) => {
     try {
-        // En Sequelize usamos destroy con un where
         const rowsDeleted = await Product.destroy({ where: { id: req.params.id } });
         if (rowsDeleted === 0) {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
