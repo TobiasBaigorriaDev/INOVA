@@ -17,6 +17,8 @@ import Auth from './pages/Auth';
 import Checkout from './pages/Checkout';
 import Collections from './pages/Collections';
 import Admin from './pages/Admin';
+import Contacto from './pages/Contacto';
+import Historia from './pages/Historia';
 
 function App() {
 
@@ -201,6 +203,16 @@ function App() {
           <Route
             path="/admin"
             element={<Admin />}
+          />
+
+          <Route
+            path="/contacto"
+            element={<Contacto />}
+          />
+
+          <Route
+            path="/historia"
+            element={<Historia />}
           />
 
         </Routes>

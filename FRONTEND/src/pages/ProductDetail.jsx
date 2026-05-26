@@ -162,6 +162,10 @@ function ProductDetail({ toggleFavorite, favorites = [] }) {
             {productInfo.description || "Una pieza artesanal única para tu colección, diseñada con dedicación y fabricada con materiales de la más alta calidad."}
           </p>
 
+          <p style={{ fontSize: '14px', fontWeight: '500', color: Number(productInfo.stock) > 0 ? 'var(--text-muted)' : '#e74c3c', marginTop: '10px' }}>
+            {Number(productInfo.stock) > 0 ? `Stock disponible: ${productInfo.stock} unidades` : 'Producto agotado'}
+          </p>
+
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
 
             {/* Selector de cantidad */}

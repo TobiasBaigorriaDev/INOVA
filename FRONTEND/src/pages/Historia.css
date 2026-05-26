@@ -1,0 +1,97 @@
+:root {
+  --inova-primary: #310a3d;
+  --inova-gold: #c6a87c;
+  --inova-bg-light: #faf9f8;
+  --inova-text: #2c2c2c;
+  --inova-text-light: #666666;
+}
+
+.historia-container {
+  background-color: var(--inova-bg-light);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HERO SECTION */
+.historia-hero {
+  position: relative;
+  height: 35vh;
+  min-height: 250px;
+  background-image: url('https://images.unsplash.com/photo-1599643478514-4a11029c91ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.historia-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(49, 10, 61, 0.8), rgba(27, 5, 34, 0.6));
+}
+
+.historia-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: white;
+}
+
+.historia-hero-content h1 {
+  font-size: 3.5rem;
+  letter-spacing: 2px;
+}
+
+/* CONTENT SECTION */
+.historia-content {
+  padding: 5rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.historia-text-box {
+  background-color: white;
+  padding: 4rem;
+  max-width: 800px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+  border: 1px solid var(--inova-border);
+  text-align: center;
+}
+
+.historia-title {
+  color: var(--inova-primary);
+  font-size: 2.2rem;
+  margin-bottom: 2rem;
+}
+
+.historia-placeholder {
+  border: 2px dashed var(--inova-gold);
+  background-color: rgba(198, 168, 124, 0.05);
+  padding: 3rem;
+  border-radius: 8px;
+}
+
+.historia-placeholder p {
+  color: var(--inova-text-light);
+  font-size: 1.2rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .historia-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .historia-text-box {
+    padding: 2rem;
+  }
+}
