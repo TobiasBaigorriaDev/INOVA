@@ -1,87 +1,249 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react'; // <-- Importamos el ícono del chat aquí
+import { MessageCircle } from 'lucide-react';
 import './index.css';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
-import Chatbot from './components/Chatbot'; // <-- IMPORTAMOS NUESTRO NUEVO CHATBOT
-import { CartProvider } from './context/CartContext'; // <-- IMPORTAMOS EL PROVEEDOR DEL CARRITO
+import Chatbot from './components/Chatbot';
+
+import { CartProvider } from './context/CartContext';
 
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
-import Favorites from './pages/Favorites'; // <-- IMPORTAMOS LA NUEVA PÁGINA
-import Auth from './pages/Auth'; // <-- PÁGINA DE LOGIN Y REGISTRO
-import Checkout from './pages/Checkout'; // <-- PÁGINA DE COMPRA
-import Collections from './pages/Collections'; // <-- IMPORTAMOS COLECCIONES
-import Admin from './pages/Admin'; // <-- PANEL DE ADMINISTRACIÓN
+import Favorites from './pages/Favorites';
+import Auth from './pages/Auth';
+import Checkout from './pages/Checkout';
+import Collections from './pages/Collections';
+import Admin from './pages/Admin';
 
 function App() {
-  // --- NUEVO: Lógica del Chatbot ---
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // --- NUEVO: Lógica de Favoritos ---
-  const [favorites, setFavorites] = useState([]);
+  // =========================
+  // CHATBOT
+  // =========================
 
-  // Función que agrega si no está, o saca si ya está en favoritos
-  const toggleFavorite = (product) => {
-    const isFav = favorites.find(item => item.id === product.id);
-    if (isFav) {
-      setFavorites(favorites.filter(item => item.id !== product.id));
-    } else {
-      setFavorites([...favorites, product]);
+  const [isChatOpen, setIsChatOpen] =
+    useState(false);
+
+  // =========================
+  // FAVORITOS PERSISTENTES
+  // =========================
+
+  const [favorites, setFavorites] =
+    useState(() => {
+
+      const favoritosGuardados =
+        localStorage.getItem('favoritos');
+
+      return favoritosGuardados
+        ? JSON.parse(favoritosGuardados)
+        : [];
+
+    });
+
+  // =========================
+  // USUARIO LOGUEADO
+  // =========================
+
+  const [usuario, setUsuario] =
+    useState(null);
+
+  // =========================
+  // CARGAR USUARIO
+  // =========================
+
+  useEffect(() => {
+
+    const usuarioGuardado =
+      localStorage.getItem('usuario');
+
+    if (usuarioGuardado) {
+
+      setUsuario(
+        JSON.parse(usuarioGuardado)
+      );
+
     }
+
+  }, []);
+
+  // =========================
+  // GUARDAR FAVORITOS
+  // =========================
+
+  useEffect(() => {
+
+    localStorage.setItem(
+      'favoritos',
+      JSON.stringify(favorites)
+    );
+
+  }, [favorites]);
+
+  // =========================
+  // AGREGAR / QUITAR FAVORITOS
+  // =========================
+
+  const toggleFavorite = (product) => {
+
+    const isFav = favorites.find(
+      item => item.id === product.id
+    );
+
+    if (isFav) {
+
+      setFavorites(
+
+        favorites.filter(
+          item => item.id !== product.id
+        )
+
+      );
+
+    } else {
+
+      setFavorites([
+        ...favorites,
+        product
+      ]);
+
+    }
+
   };
-  // -----------------------------------
+
+  // =========================
+  // LOGOUT
+  // =========================
+
+  const logout = () => {
+
+    localStorage.removeItem('token');
+
+    localStorage.removeItem('usuario');
+
+    localStorage.removeItem('favoritos');
+
+    setUsuario(null);
+
+    window.location.href = '/login';
+
+  };
 
   return (
+
     <CartProvider>
+
       <Router>
-        <Navbar />
+
+        <Navbar
+          usuario={usuario}
+          logout={logout}
+        />
 
         <Routes>
-          {/* Le pasamos los favoritos al Home para que el corazón se pinte si ya está agregado */}
-          <Route path="/" element={<Home toggleFavorite={toggleFavorite} favorites={favorites} />} />
 
-          {/* <-- NUEVA RUTA PARA LOS FAVORITOS --> */}
-          <Route path="/favoritos" element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} />} />
+          <Route
+            path="/"
+            element={
+              <Home
+                toggleFavorite={toggleFavorite}
+                favorites={favorites}
+              />
+            }
+          />
 
-          <Route path="/producto/:id" element={<ProductDetail toggleFavorite={toggleFavorite} favorites={favorites} />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/favoritos"
+            element={
+              <Favorites
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+              />
+            }
+          />
 
-          {/* <-- NUEVA RUTA PARA COLECCIONES --> */}
-          <Route path="/colecciones" element={<Collections toggleFavorite={toggleFavorite} favorites={favorites} />} />
+          <Route
+            path="/producto/:id"
+            element={
+              <ProductDetail
+                toggleFavorite={toggleFavorite}
+                favorites={favorites}
+              />
+            }
+          />
 
-          {/* <-- RUTA PARA EL PANEL DE ADMINISTRACIÓN --> */}
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/login"
+            element={
+              <Auth
+                setUsuario={setUsuario}
+              />
+            }
+          />
+
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
+
+          <Route
+            path="/colecciones"
+            element={
+              <Collections
+                toggleFavorite={toggleFavorite}
+                favorites={favorites}
+              />
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={<Admin />}
+          />
+
         </Routes>
 
         <CartSidebar />
 
-        {/* COMPONENTE DEL CHATBOT */}
-        <Chatbot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+        <Chatbot
+          isOpen={isChatOpen}
+          onClose={() =>
+            setIsChatOpen(false)
+          }
+        />
 
-        {/* Si el chat está cerrado, mostramos el botón original. 
-            Le sumamos un "delay" de 0.25s para que espere a que la ventana se achique,
-            y la animación "chatButtonPop" para que rebote. */}
         {!isChatOpen && (
+
           <button
             className="chat-btn"
-            onClick={() => setIsChatOpen(true)}
+            onClick={() =>
+              setIsChatOpen(true)
+            }
             style={{
-              animation: 'chatButtonPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.25s backwards'
+              animation:
+                'chatButtonPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.25s backwards'
             }}
           >
-            <MessageCircle size={28} strokeWidth={1.5} />
+
+            <MessageCircle
+              size={28}
+              strokeWidth={1.5}
+            />
+
           </button>
+
         )}
 
         <Footer />
+
       </Router>
+
     </CartProvider>
+
   );
+
 }
 
 export default App;

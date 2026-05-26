@@ -147,11 +147,12 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (error) {
+console.log(error);
 
-        res.status(500).json({
-            mensaje: 'Error al iniciar sesión',
-            error: error.message
-        });
+    res.status(500).json({
+        mensaje: 'Error al iniciar sesión',
+        error: error.message
+    });
 
     }
 
