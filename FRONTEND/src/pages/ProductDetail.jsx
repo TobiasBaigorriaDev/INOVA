@@ -52,7 +52,12 @@ function ProductDetail({ toggleFavorite, favorites = [] }) {
             description: p.descripcion,
             price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
             image: p.imagenUrl || 'https://via.placeholder.com/300',
-            category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
+            category: 
+              p.categoria === 'pulsera' ? 'pulseras' : 
+              p.categoria === 'collar' ? 'collares' : 
+              p.categoria === 'anillo' ? 'anillos' : 
+              p.categoria === 'pendiente' ? 'pendientes' : 
+              p.categoria,
             stock: p.stock !== undefined ? Number(p.stock) : 0
           };
           setProductInfo(mapped);

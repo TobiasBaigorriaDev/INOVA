@@ -16,19 +16,28 @@ function Home({ toggleFavorite, favorites }) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/products');
+        const response = await fetch('http://localhost:3000/api/products?limit=100');
         if (!response.ok) throw new Error('Error al obtener productos');
         const data = await response.json();
         
-        if (data && data.length > 0) {
+        const productsArray = Array.isArray(data)
+          ? data
+          : data.productos || [];
+          
+        if (productsArray && productsArray.length > 0) {
           // Mapeamos los productos de PostgreSQL al formato del frontend
-          const mappedProducts = data.map(p => ({
+          const mappedProducts = productsArray.map(p => ({
             id: p.id,
             name: p.nombre,
             description: p.descripcion,
             price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
             image: p.imagenUrl || 'https://via.placeholder.com/300',
-            category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
+            category: 
+              p.categoria === 'pulsera' ? 'pulseras' : 
+              p.categoria === 'collar' ? 'collares' : 
+              p.categoria === 'anillo' ? 'anillos' : 
+              p.categoria === 'pendiente' ? 'pendientes' : 
+              p.categoria,
             stock: p.stock
           }));
           setDbProducts(mappedProducts);

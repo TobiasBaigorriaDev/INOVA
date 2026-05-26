@@ -125,7 +125,7 @@ router.post('/login', async (req, res) => {
                 id: usuario.id,
                 rol: usuario.rol
             },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'inova_secure_fallback_secret_key_2026',
             {
                 expiresIn: '2h'
             }

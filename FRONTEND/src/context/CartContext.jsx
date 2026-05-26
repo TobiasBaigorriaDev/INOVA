@@ -72,6 +72,12 @@ export const CartProvider = ({ children }) => {
 
   // Agregar producto al carrito
   const addToCart = (product, quantity = 1, forceSetQty = false) => {
+    // Nos aseguramos de que el precio siempre sea un número limpio
+    const rawPrice = product.precio !== undefined ? product.precio : product.price;
+    const numericPrice = typeof rawPrice === 'string'
+      ? parseFloat(rawPrice.replace('$', ''))
+      : Number(rawPrice);
+
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
       const availableStock = product.stock !== undefined ? Number(product.stock) : 99;
@@ -92,7 +98,7 @@ export const CartProvider = ({ children }) => {
         return [...prevItems, { 
           id: product.id,
           name: product.nombre || product.name,
-          price: product.precio || product.price,
+          price: numericPrice,
           image: product.imagenUrl || product.image,
           qty: initialQty,
           stock: availableStock

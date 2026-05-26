@@ -38,7 +38,14 @@ function Collections({ toggleFavorite, favorites }) {
             let url = `http://localhost:3000/api/products?page=${currentPage}&limit=8`;
 
             if (filter !== 'todos') {
-                url += `&categoria=${filter}`;
+                // Mapeamos de plural a singular para la base de datos
+                const mappedCategory = 
+                    filter === 'collares' ? 'collar' : 
+                    filter === 'pulseras' ? 'pulsera' : 
+                    filter === 'anillos' ? 'anillo' : 
+                    filter === 'pendientes' ? 'pendiente' : 
+                    filter;
+                url += `&categoria=${mappedCategory}`;
             }
             if (searchQuery.trim() !== '') {
                 url += `&search=${searchQuery}`;
@@ -58,7 +65,12 @@ function Collections({ toggleFavorite, favorites }) {
                     description: p.descripcion,
                     price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
                     image: p.imagenUrl || 'https://via.placeholder.com/300',
-                    category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
+                    category: 
+                        p.categoria === 'pulsera' ? 'pulseras' : 
+                        p.categoria === 'collar' ? 'collares' : 
+                        p.categoria === 'anillo' ? 'anillos' : 
+                        p.categoria === 'pendiente' ? 'pendientes' : 
+                        p.categoria,
                     stock: p.stock
                 }));
                 setDbProducts(mappedProducts);

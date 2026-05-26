@@ -21,7 +21,7 @@ const Product = sequelize.define('Product', {
         allowNull: false 
     },
     categoria: { 
-        type: DataTypes.ENUM('pulsera', 'collar'), 
+        type: DataTypes.ENUM('pulsera', 'collar', 'anillo', 'pendiente'), 
         allowNull: false
     },
     imagenUrl: { 
