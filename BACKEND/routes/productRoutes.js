@@ -4,6 +4,7 @@ const Product = require('../models/Products');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { Op } = require('sequelize'); // Importamos los operadores de Sequelize
 
 //Cloudinary
 cloudinary.config({
@@ -33,11 +34,57 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// GET /api/products
+// GET /api/products (MODIFICADO: Búsqueda, Filtros, Paginación y Ordenamiento por Precio)
 router.get('/', async (req, res) => {
     try {
-        const productos = await Product.findAll();
-        res.status(200).json(productos);
+        // 1. Extraemos los parámetros de la URL
+        const { search, categoria, precioMin, precioMax, page = 1, limit = 10, sortPrice } = req.query;
+
+        // 2. Armamos el objeto de filtros dinámicamente
+        let whereClause = {};
+
+        if (search) {
+            whereClause.nombre = {
+                [Op.iLike]: `%${search}%`
+            };
+        }
+
+        if (categoria) {
+            whereClause.categoria = categoria;
+        }
+
+        if (precioMin || precioMax) {
+            whereClause.precio = {};
+            if (precioMin) whereClause.precio[Op.gte] = parseFloat(precioMin);
+            if (precioMax) whereClause.precio[Op.lte] = parseFloat(precioMax);
+        }
+
+        // 3. Calculamos la paginación
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        // 4. Lógica de ordenamiento dinámico
+        let orderClause = [['createdAt', 'DESC']]; // Orden por defecto (más nuevos)
+        if (sortPrice === 'asc') {
+            orderClause = [['precio', 'ASC']]; // Menor a mayor
+        } else if (sortPrice === 'desc') {
+            orderClause = [['precio', 'DESC']]; // Mayor a menor
+        }
+
+        // 5. Consulta a la base de datos
+        const { count, rows } = await Product.findAndCountAll({
+            where: whereClause,
+            limit: parseInt(limit),
+            offset: offset,
+            order: orderClause
+        });
+
+        res.status(200).json({
+            totalItems: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: parseInt(page),
+            productos: rows
+        });
+
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al obtener los productos', error: error.message });
     }
@@ -81,21 +128,18 @@ router.post('/upload', upload.single('imagen'), (req, res) => {
     }
 });
 
-// Función para extraer el public_id de una URL de Cloudinary
 const getPublicIdFromUrl = (url) => {
     if (!url || !url.includes('cloudinary.com')) return null;
     try {
         const parts = url.split('/image/upload/');
         if (parts.length < 2) return null;
-        
+
         let publicIdWithFormat = parts[1];
-        // Quitar la versión si existe (ej. v1716584283/)
         if (publicIdWithFormat.startsWith('v')) {
             const index = publicIdWithFormat.indexOf('/');
             publicIdWithFormat = publicIdWithFormat.slice(index + 1);
         }
-        
-        // Quitar la extensión del archivo (.jpg, .png, etc.)
+
         const dotIndex = publicIdWithFormat.lastIndexOf('.');
         if (dotIndex !== -1) {
             return publicIdWithFormat.slice(0, dotIndex);
@@ -115,7 +159,6 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
 
-        // Si el producto tiene una imagen de Cloudinary, la eliminamos de la nube
         if (product.imagenUrl) {
             const publicId = getPublicIdFromUrl(product.imagenUrl);
             if (publicId) {
@@ -124,12 +167,10 @@ router.delete('/:id', async (req, res) => {
                     console.log(`🧹 Imagen eliminada de Cloudinary: ${publicId}`);
                 } catch (cloudinaryError) {
                     console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
-                    // No bloqueamos la eliminación de la base de datos si falla Cloudinary
                 }
             }
         }
 
-        // Eliminamos el producto de la base de datos
         await product.destroy();
         res.status(200).json({ mensaje: 'Producto eliminado con éxito de la base de datos y Cloudinary' });
     } catch (error) {
@@ -138,7 +179,6 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ACTUALIZAR UN PRODUCTO (PUT)
-// Ruta: PUT /api/products/:id
 router.put('/:id', async (req, res) => {
     try {
         const { nombre, descripcion, precio, categoria, imagenUrl, stock } = req.body;

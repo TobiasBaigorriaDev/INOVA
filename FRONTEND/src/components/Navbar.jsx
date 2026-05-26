@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ShoppingCart, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
+import { Heart, ShoppingCart, User, Search } from 'lucide-react'; // <-- AGREGAMOS Search
+import { Link, useNavigate } from 'react-router-dom'; // <-- AGREGAMOS useNavigate
+import { useCart } from '../context/CartContext';
 
 function Navbar() {
   const [isAnimating, setIsAnimating] = useState(false);
-  const { totalItems, setIsCartOpen } = useCart(); // <-- OBTENEMOS LOS DATOS DIRECTAMENTE DEL CONTEXTO
+  const { totalItems, setIsCartOpen } = useCart();
+  const navigate = useNavigate();
+
+  // Estados para la animación de la barra de búsqueda global
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   useEffect(() => {
     if (totalItems > 0) {
@@ -16,6 +21,17 @@ function Navbar() {
       return () => clearTimeout(timer);
     }
   }, [totalItems]);
+
+  // Función para ejecutar la búsqueda global
+  const handleGlobalSearch = (e) => {
+    e.preventDefault();
+    if (globalSearch.trim() !== '') {
+      // Navegamos a colecciones y le pasamos la palabra en la URL
+      navigate(`/colecciones?search=${encodeURIComponent(globalSearch)}`);
+      setIsSearchOpen(false); // Cerramos la barrita
+      setGlobalSearch(''); // Limpiamos el input
+    }
+  };
 
   return (
     <nav className="navbar" style={{ width: '100%', borderBottom: '1px solid var(--border-color)' }}>
@@ -29,8 +45,47 @@ function Navbar() {
         <li><Link to="/historia">HISTORIA</Link></li>
         <li><Link to="/contacto">CONTACTO</Link></li>
       </ul>
-      <div className="nav-icons">
-        {/* <-- AHORA EL CORAZÓN ES UN LINK A /favoritos --> */}
+      <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+
+        {/* --- NUEVO: CONTENEDOR DE BÚSQUEDA GLOBAL ANIMADO --- */}
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <Search
+            size={20}
+            strokeWidth={1.5}
+            style={{ cursor: 'pointer', zIndex: 2 }}
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+          />
+          <form
+            onSubmit={handleGlobalSearch}
+            style={{
+              width: isSearchOpen ? '180px' : '0px',
+              opacity: isSearchOpen ? 1 : 0,
+              visibility: isSearchOpen ? 'visible' : 'hidden',
+              transition: 'all 0.3s ease-in-out',
+              marginLeft: isSearchOpen ? '10px' : '0px',
+              overflow: 'hidden'
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              style={{
+                width: '100%',
+                border: 'none',
+                borderBottom: '1px solid var(--text-muted)',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: '13px',
+                padding: '2px 0',
+                color: 'inherit'
+              }}
+            />
+          </form>
+        </div>
+        {/* ---------------------------------------------------- */}
+
         <Link to="/favoritos" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}>
           <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
         </Link>

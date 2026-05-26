@@ -18,7 +18,7 @@ function Admin() {
   });
 
   const [uploading, setUploading] = useState(false);
-  const apiUrl = 'http://localhost:3000/api/products'; // Asumiendo que este es el puerto del backend
+  const apiUrl = 'http://localhost:3000/api/products';
 
   // Cargar productos al montar
   useEffect(() => {
@@ -33,10 +33,13 @@ function Admin() {
   const fetchProductos = async () => {
     try {
       setLoading(true);
-      const res = await fetch(apiUrl);
+      // Pedimos un límite alto (ej: 100) para que el admin vea todo el inventario de una
+      const res = await fetch(`${apiUrl}?limit=100`);
       if (!res.ok) throw new Error('Error al obtener productos');
       const data = await res.json();
-      setProductos(data);
+
+      // SOLUCIÓN AL ERROR: Extraemos el arreglo 'productos' del objeto paginado
+      setProductos(data.productos || []);
     } catch (error) {
       console.error(error);
       showToast('Error al cargar los productos', 'error');
@@ -78,7 +81,6 @@ function Admin() {
     }
   };
 
-  // Función para actualizar los inputs del inventario localmente en tiempo real
   const handleTableFieldChange = (id, field, value) => {
     setProductos(prev => prev.map(p => {
       if (p.id === id) {
@@ -88,7 +90,6 @@ function Admin() {
     }));
   };
 
-  // Función para guardar los cambios de precio y stock de una fila en PostgreSQL
   const handleTableSave = async (producto) => {
     try {
       const payload = {
@@ -109,7 +110,7 @@ function Admin() {
       if (!res.ok) throw new Error('Error al actualizar el producto');
 
       showToast('¡Inventario actualizado con éxito!');
-      fetchProductos(); // Recargar para sincronizar
+      fetchProductos();
     } catch (error) {
       console.error(error);
       showToast('Error al actualizar el inventario', 'error');
@@ -142,7 +143,7 @@ function Admin() {
         imagenUrl: '',
         stock: ''
       });
-      fetchProductos(); // Recargar la lista
+      fetchProductos();
     } catch (error) {
       console.error(error);
       showToast('Error al crear producto', 'error');
@@ -160,7 +161,7 @@ function Admin() {
       if (!res.ok) throw new Error('Error al eliminar el producto');
 
       showToast('Producto eliminado');
-      fetchProductos(); // Recargar la lista
+      fetchProductos();
     } catch (error) {
       console.error(error);
       showToast('Error al eliminar producto', 'error');
@@ -235,8 +236,11 @@ function Admin() {
             <div className="form-group">
               <label>Categoría</label>
               <select name="categoria" value={formData.categoria} onChange={handleChange} required>
+                {/* TAREA COMPLETADA: Nuevas clasificaciones agregadas */}
                 <option value="pulsera">Pulsera</option>
                 <option value="collar">Collar</option>
+                <option value="anillo">Anillo</option>
+                <option value="pendiente">Pendiente</option>
               </select>
             </div>
 
@@ -257,28 +261,22 @@ function Admin() {
                     fontSize: '13px'
                   }}
                 />
-                
+
                 {uploading && (
                   <span style={{ fontSize: '13px', color: '#888888', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     Subiendo a Cloudinary... ☁️
                   </span>
                 )}
 
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input
-                    type="url"
-                    name="imagenUrl"
-                    value={formData.imagenUrl}
-                    onChange={handleChange}
-                    placeholder="O pega una URL de imagen directa aquí"
-                    style={{ flex: 1 }}
-                  />
-                  {formData.imagenUrl && (
+                {/* TAREA COMPLETADA: Eliminamos el input de URL manual y dejamos solo el preview limpio */}
+                {formData.imagenUrl && !uploading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #eeeeee', flexShrink: 0 }}>
                       <img src={formData.imagenUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-                  )}
-                </div>
+                    <span style={{ fontSize: '13px', color: '#27ae60', fontWeight: 'bold' }}>✓ Imagen lista</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -422,14 +420,14 @@ function Admin() {
                           className="edit-btn"
                           onClick={() => handleTableSave(producto)}
                           style={{
-                            marginRight: '16px', // Más separación del botón Eliminar
-                            backgroundColor: '#27ae60', // Color verde de guardado exitoso
+                            marginRight: '16px',
+                            backgroundColor: '#27ae60',
                             color: 'white',
                             border: 'none',
-                            padding: '8px 16px', // Botón un poco más grande
+                            padding: '8px 16px',
                             borderRadius: '8px',
                             cursor: 'pointer',
-                            fontSize: '13px', // Texto un poco más grande
+                            fontSize: '13px',
                             fontWeight: '600',
                             fontFamily: 'var(--font-sans)',
                             letterSpacing: '1.5px',
