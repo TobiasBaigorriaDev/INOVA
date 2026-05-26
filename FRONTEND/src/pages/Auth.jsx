@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+
+import { signInWithPopup } from 'firebase/auth';
+
+import { auth, provider } from '../firebase';
+
 import './Auth.css';
 
 function Auth() {
@@ -14,6 +19,39 @@ function Auth() {
     setIsLogin(!isLogin);
   };
 
+  // =========================
+  // LOGIN GOOGLE
+  // =========================
+
+  const handleGoogleLogin = async () => {
+
+    try {
+
+      const result = await signInWithPopup(
+        auth,
+        provider
+      );
+
+      const user = result.user;
+
+      console.log(user);
+
+      alert(`Bienvenido ${user.displayName}`);
+
+      localStorage.setItem(
+        'usuarioGoogle',
+        JSON.stringify(user)
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert('Error con Google');
+
+    }
+
+  };
 
   // =========================
   // HANDLE SUBMIT
@@ -215,6 +253,7 @@ function Auth() {
           <button
             type="button"
             className="auth-btn-google"
+            onClick={handleGoogleLogin}
           >
 
             <svg width="14" height="14" viewBox="0 0 48 48">
