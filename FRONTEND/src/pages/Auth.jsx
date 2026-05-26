@@ -44,7 +44,7 @@ function Auth({ setUsuario }) {
 
         <div className="auth-content">
 
-          <div className="auth-card">
+          <div className="auth-card auth-card-logged-in">
 
             <h2
               className="font-serif"

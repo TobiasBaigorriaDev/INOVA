@@ -27,12 +27,15 @@ export const CartProvider = ({ children }) => {
         const response = await fetch('http://localhost:3000/api/products');
         if (!response.ok) return;
         const dbProducts = await response.json();
+        const productsArray = Array.isArray(dbProducts)
+          ? dbProducts
+          : dbProducts.productos || [];
 
         setCartItems((prevItems) => {
           let hasChanges = false;
           
           const updatedItems = prevItems.map((item) => {
-            const dbProduct = dbProducts.find((p) => p.id === item.id);
+            const dbProduct = productsArray.find((p) => p.id === item.id);
             
             if (dbProduct) {
               const dbPrice = dbProduct.precio;

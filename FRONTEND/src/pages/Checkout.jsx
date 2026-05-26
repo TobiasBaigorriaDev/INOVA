@@ -217,7 +217,7 @@ function Checkout() {
             <div className={`payment-method ${paymentMethod === 'mercadolibre' ? 'active' : ''}`} onClick={() => setPaymentMethod('mercadolibre')}>
               <div className="payment-method-header">
                 <div className={`radio-circle ${paymentMethod === 'mercadolibre' ? 'active' : ''}`}></div>
-                <span className="payment-method-name">MERCADO LIBRE</span>
+                <span className="payment-method-name">MERCADO PAGO</span>
                 <Wallet size={18} className="payment-method-icon" />
               </div>
             </div>

@@ -19,7 +19,7 @@ router.post('/register', async (req, res) => {
         if (!nombre || !email || !password) {
 
             return res.status(400).json({
-                mensaje: 'Nombre, email y password son obligatorios'
+                mensaje: 'Nombre, email y contraseña son obligatorios'
             });
 
         }
@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
         if (!email || !password) {
 
             return res.status(400).json({
-                mensaje: 'Email y password son obligatorios'
+                mensaje: 'Email y contraseña son obligatorios'
             });
 
         }
@@ -114,7 +114,7 @@ router.post('/login', async (req, res) => {
         if (!passwordCorrecta) {
 
             return res.status(400).json({
-                mensaje: 'Password incorrecta'
+                mensaje: 'Contraseña incorrecta'
             });
 
         }
