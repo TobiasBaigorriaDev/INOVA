@@ -23,6 +23,30 @@ const Order = sequelize.define('Order', {
     status: {
         type: DataTypes.ENUM('pendiente', 'pagado', 'enviado', 'entregado'),
         defaultValue: 'pendiente'
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    nombreCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    apellidoCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    diaEncuentro: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    horaEncuentro: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    metodoPago: {
+        type: DataTypes.ENUM('tarjeta', 'efectivo', 'mercadolibre', 'cripto'),
+        allowNull: false
     }
 });
 

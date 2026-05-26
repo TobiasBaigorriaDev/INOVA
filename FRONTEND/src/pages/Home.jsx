@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'; // Quitamos MessageCircle de aquí
 import { Link } from 'react-router-dom';
 import { products as staticProducts } from '../data/products';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
-function Home({ addToCart, toggleFavorite, favorites }) {
+function Home({ toggleFavorite, favorites }) {
+  const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
   const [dbProducts, setDbProducts] = useState(staticProducts);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);

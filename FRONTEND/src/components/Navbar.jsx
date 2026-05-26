@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
-function Navbar({ onOpenCart, cartItems = [] }) {
+function Navbar() {
   const [isAnimating, setIsAnimating] = useState(false);
-
-  const totalItems = cartItems.reduce((total, item) => total + item.qty, 0);
+  const { totalItems, setIsCartOpen } = useCart(); // <-- OBTENEMOS LOS DATOS DIRECTAMENTE DEL CONTEXTO
 
   useEffect(() => {
     if (totalItems > 0) {
@@ -35,7 +35,7 @@ function Navbar({ onOpenCart, cartItems = [] }) {
           <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
         </Link>
 
-        <span onClick={onOpenCart} className={`cart-icon-container ${isAnimating ? 'cart-animating' : ''}`}>
+        <span onClick={() => setIsCartOpen(true)} className={`cart-icon-container ${isAnimating ? 'cart-animating' : ''}`}>
           <ShoppingCart size={20} strokeWidth={1.5} />
           {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
         </span>

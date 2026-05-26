@@ -78,6 +78,44 @@ function Admin() {
     }
   };
 
+  // Función para actualizar los inputs del inventario localmente en tiempo real
+  const handleTableFieldChange = (id, field, value) => {
+    setProductos(prev => prev.map(p => {
+      if (p.id === id) {
+        return { ...p, [field]: value };
+      }
+      return p;
+    }));
+  };
+
+  // Función para guardar los cambios de precio y stock de una fila en PostgreSQL
+  const handleTableSave = async (producto) => {
+    try {
+      const payload = {
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        precio: Number(producto.precio),
+        categoria: producto.categoria,
+        imagenUrl: producto.imagenUrl,
+        stock: Number(producto.stock)
+      };
+
+      const res = await fetch(`${apiUrl}/${producto.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Error al actualizar el producto');
+
+      showToast('¡Inventario actualizado con éxito!');
+      fetchProductos(); // Recargar para sincronizar
+    } catch (error) {
+      console.error(error);
+      showToast('Error al actualizar el inventario', 'error');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -272,7 +310,8 @@ function Admin() {
                 <thead>
                   <tr>
                     <th>Imagen</th>
-                    <th>Detalles</th>
+                    <th>Nombre y Categoría</th>
+                    <th>Descripción</th>
                     <th>Precio</th>
                     <th>Stock</th>
                     <th>Acciones</th>
@@ -291,18 +330,114 @@ function Admin() {
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                          <strong style={{ fontSize: '15px' }}>{producto.nombre}</strong>
-                          <span className={`badge badge-${producto.categoria}`}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <input
+                            type="text"
+                            value={producto.nombre || ''}
+                            onChange={(e) => handleTableFieldChange(producto.id, 'nombre', e.target.value)}
+                            style={{
+                              width: '145px',
+                              padding: '8px',
+                              border: '1px solid #dddddd',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              fontFamily: 'var(--font-sans)',
+                              color: '#333'
+                            }}
+                            placeholder="Nombre"
+                            required
+                          />
+                          <span className={`badge badge-${producto.categoria}`} style={{ alignSelf: 'flex-start' }}>
                             {producto.categoria}
                           </span>
                         </div>
                       </td>
-                      <td style={{ fontWeight: '600' }}>
-                        ${producto.precio?.toFixed(2)}
-                      </td>
-                      <td>{producto.stock} uds.</td>
                       <td>
+                        <textarea
+                          value={producto.descripcion || ''}
+                          onChange={(e) => handleTableFieldChange(producto.id, 'descripcion', e.target.value)}
+                          style={{
+                            width: '190px',
+                            height: '55px',
+                            padding: '8px',
+                            border: '1px solid #dddddd',
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            fontFamily: 'var(--font-sans)',
+                            color: '#555',
+                            resize: 'none',
+                            lineHeight: '1.4'
+                          }}
+                          placeholder="Descripción"
+                          required
+                        />
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span style={{ fontSize: '14px', color: '#555', fontFamily: 'var(--font-sans)', fontWeight: '600' }}>$</span>
+                          <input
+                            type="number"
+                            value={producto.precio !== undefined ? producto.precio : ''}
+                            onChange={(e) => handleTableFieldChange(producto.id, 'precio', e.target.value)}
+                            style={{
+                              width: '85px',
+                              padding: '8px',
+                              border: '1px solid #dddddd',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              fontFamily: 'var(--font-sans)',
+                              color: '#333'
+                            }}
+                            step="0.01"
+                            min="0"
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <input
+                            type="number"
+                            value={producto.stock !== undefined ? producto.stock : ''}
+                            onChange={(e) => handleTableFieldChange(producto.id, 'stock', e.target.value)}
+                            style={{
+                              width: '70px',
+                              padding: '8px',
+                              border: '1px solid #dddddd',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              fontFamily: 'var(--font-sans)',
+                              color: '#333',
+                              textAlign: 'center'
+                            }}
+                            min="0"
+                          />
+                          <span style={{ fontSize: '13px', color: '#888', fontFamily: 'var(--font-sans)' }}>uds.</span>
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          className="edit-btn"
+                          onClick={() => handleTableSave(producto)}
+                          style={{
+                            marginRight: '16px', // Más separación del botón Eliminar
+                            backgroundColor: '#27ae60', // Color verde de guardado exitoso
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 16px', // Botón un poco más grande
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '13px', // Texto un poco más grande
+                            fontWeight: '600',
+                            fontFamily: 'var(--font-sans)',
+                            letterSpacing: '1.5px',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          Guardar
+                        </button>
                         <button
                           className="delete-btn"
                           onClick={() => handleDelete(producto.id)}

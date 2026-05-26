@@ -137,4 +137,30 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// ACTUALIZAR UN PRODUCTO (PUT)
+// Ruta: PUT /api/products/:id
+router.put('/:id', async (req, res) => {
+    try {
+        const { nombre, descripcion, precio, categoria, imagenUrl, stock } = req.body;
+        const producto = await Product.findByPk(req.params.id);
+
+        if (!producto) {
+            return res.status(404).json({ mensaje: 'Producto no encontrado' });
+        }
+
+        await producto.update({
+            nombre,
+            descripcion,
+            precio,
+            categoria,
+            imagenUrl,
+            stock
+        });
+
+        res.status(200).json({ mensaje: 'Producto actualizado con éxito', producto });
+    } catch (error) {
+        res.status(400).json({ mensaje: 'Error al actualizar el producto', error: error.message });
+    }
+});
+
 module.exports = router;

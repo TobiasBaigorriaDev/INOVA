@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
-function Favorites({ favorites, toggleFavorite, addToCart }) {
+function Favorites({ favorites, toggleFavorite }) {
+    const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
     return (
         <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', minHeight: '60vh' }}>
 

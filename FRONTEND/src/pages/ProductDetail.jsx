@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { products as staticProducts } from '../data/products';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
 const cleanProductPrice = (product) => {
   const numericPrice = typeof product.price === 'string'
@@ -11,7 +12,8 @@ const cleanProductPrice = (product) => {
 };
 
 // Esta es una PÁGINA nueva que solo se mostrará cuando la URL sea /producto/1 o /producto/2, etc.
-function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
+function ProductDetail({ toggleFavorite, favorites = [] }) {
+  const { addToCart, cartItems } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
   // useParams() lee la URL para saber qué ID de producto estamos mirando.
   // Si la URL es /producto/3, entonces id será "3".
   const { id } = useParams();
@@ -19,6 +21,21 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
   const [quantity, setQuantity] = useState(1);
   const [productInfo, setProductInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Sincronizar el selector de cantidad local con la cantidad en el carrito
+  useEffect(() => {
+    if (productInfo) {
+      const existingItem = cartItems.find(item => item.id === productInfo.id);
+      const stockNum = Number(productInfo.stock);
+      if (stockNum === 0) {
+        setQuantity(0);
+      } else if (existingItem) {
+        setQuantity(Number(existingItem.qty));
+      } else {
+        setQuantity(1);
+      }
+    }
+  }, [productInfo?.id, cartItems]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -36,7 +53,7 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
             price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
             image: p.imagenUrl || 'https://via.placeholder.com/300',
             category: p.categoria === 'pulsera' ? 'pulseras' : p.categoria === 'collar' ? 'collares' : p.categoria,
-            stock: p.stock
+            stock: p.stock !== undefined ? Number(p.stock) : 0
           };
           setProductInfo(mapped);
           setLoading(false);
@@ -48,7 +65,12 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
       
       // Fallback a productos estáticos
       const staticProduct = staticProducts.find(item => item.id === parseInt(id));
-      setProductInfo(staticProduct);
+      if (staticProduct) {
+        setProductInfo({
+          ...staticProduct,
+          stock: staticProduct.stock !== undefined ? Number(staticProduct.stock) : 10
+        });
+      }
       setLoading(false);
     };
     
@@ -77,18 +99,24 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
   const isFavorite = favorites.some(fav => fav.id === productInfo.id);
 
   const handleAddToCart = () => {
-    addToCart(cleanProductPrice(productInfo), quantity);
+    addToCart(cleanProductPrice(productInfo), quantity, true);
   };
 
   const handleBuyNow = () => {
-    addToCart(cleanProductPrice(productInfo), quantity);
+    addToCart(cleanProductPrice(productInfo), quantity, true);
     navigate('/checkout');
   };
 
   const updateQty = (amount) => {
     setQuantity(prev => {
+      const maxStock = productInfo.stock !== undefined ? Number(productInfo.stock) : 99;
+      if (maxStock === 0) return 0;
+      
       const newQty = prev + amount;
-      return newQty > 0 ? newQty : 1;
+      if (newQty < 1) return 1;
+      if (newQty > maxStock) return maxStock; // No permite superar el stock en la vista de detalle
+      
+      return newQty;
     });
   };
 
@@ -133,18 +161,69 @@ function ProductDetail({ addToCart, toggleFavorite, favorites = [] }) {
 
             {/* Selector de cantidad */}
             <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '30px', padding: '0 10px', height: '60px' }}>
-              <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(-1)}>-</button>
+              <button 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '20px', 
+                  cursor: quantity <= 1 || Number(productInfo.stock) === 0 ? 'not-allowed' : 'pointer', 
+                  padding: '10px', 
+                  color: quantity <= 1 || Number(productInfo.stock) === 0 ? '#ccc' : 'var(--primary)' 
+                }} 
+                onClick={() => updateQty(-1)}
+                disabled={quantity <= 1 || Number(productInfo.stock) === 0}
+              >-</button>
               <span style={{ width: '30px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>{quantity}</span>
-              <button style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '10px', color: 'var(--primary)' }} onClick={() => updateQty(1)}>+</button>
+              <button 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '20px', 
+                  cursor: quantity >= Number(productInfo.stock) ? 'not-allowed' : 'pointer', 
+                  padding: '10px', 
+                  color: quantity >= Number(productInfo.stock) ? '#ccc' : 'var(--primary)' 
+                }} 
+                onClick={() => updateQty(1)}
+                disabled={quantity >= Number(productInfo.stock)}
+                title={quantity >= Number(productInfo.stock) ? "Llegaste al límite de stock disponible" : ""}
+              >+</button>
             </div>
 
-            <button className="add-to-cart-btn" style={{ flex: 1, minWidth: '180px', height: '60px', padding: '0', fontSize: '11px' }} onClick={handleAddToCart}>
+            <button 
+              className="add-to-cart-btn" 
+              style={{ 
+                flex: 1, 
+                minWidth: '180px', 
+                height: '60px', 
+                padding: '0', 
+                fontSize: '11px',
+                opacity: Number(productInfo.stock) === 0 ? 0.5 : 1,
+                cursor: Number(productInfo.stock) === 0 ? 'not-allowed' : 'pointer'
+              }} 
+              onClick={handleAddToCart}
+              disabled={Number(productInfo.stock) === 0}
+            >
               <ShoppingCart size={16} strokeWidth={2} />
-              AÑADIR A MI BOLSA
+              {Number(productInfo.stock) === 0 ? 'SIN STOCK' : 'AÑADIR A MI BOLSA'}
             </button>
 
-            <button className="add-to-cart-btn" style={{ flex: 1, minWidth: '180px', height: '60px', padding: '0', fontSize: '11px', background: 'var(--primary)', color: 'white' }} onClick={handleBuyNow}>
-              COMPRAR AHORA
+            <button 
+              className="add-to-cart-btn" 
+              style={{ 
+                flex: 1, 
+                minWidth: '180px', 
+                height: '60px', 
+                padding: '0', 
+                fontSize: '11px', 
+                background: Number(productInfo.stock) === 0 ? '#e0e0e0' : 'var(--primary)', 
+                color: Number(productInfo.stock) === 0 ? '#999' : 'white',
+                opacity: Number(productInfo.stock) === 0 ? 0.5 : 1,
+                cursor: Number(productInfo.stock) === 0 ? 'not-allowed' : 'pointer'
+              }} 
+              onClick={handleBuyNow}
+              disabled={Number(productInfo.stock) === 0}
+            >
+              {Number(productInfo.stock) === 0 ? 'SIN STOCK' : 'COMPRAR AHORA'}
             </button>
 
             <button

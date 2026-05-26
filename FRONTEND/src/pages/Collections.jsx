@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { products as staticProducts } from '../data/products';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
-function Collections({ addToCart, toggleFavorite, favorites }) {
+function Collections({ toggleFavorite, favorites }) {
+    const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
     const [dbProducts, setDbProducts] = useState(staticProducts);
     const [filter, setFilter] = useState('todos');
 
