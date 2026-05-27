@@ -170,6 +170,7 @@ function Admin() {
               <select name="categoria" value={formData.categoria} onChange={handleChange} required>
                 <option value="pulsera">Pulsera</option>
                 <option value="collar">Collar</option>
+                <option value="aro">Aros</option>
               </select>
             </div>
 

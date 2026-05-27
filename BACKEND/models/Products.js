@@ -20,9 +20,12 @@ const Product = sequelize.define('Product', {
         type: DataTypes.FLOAT, 
         allowNull: false 
     },
-    categoria: { 
-        type: DataTypes.ENUM('pulsera', 'collar'), 
-        allowNull: false
+   categoria: { 
+    type: DataTypes.ENUM('pulsera', 'collar', 'aro'), 
+    allowNull: false,
+    set(value) {
+        this.setDataValue('categoria', value.toLowerCase());
+    }
     },
     imagenUrl: { 
         type: DataTypes.STRING,

@@ -1,29 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { products } from '../data/products';
 
 function Collections({ addToCart, toggleFavorite, favorites }) {
     const [filter, setFilter] = useState('todos');
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const cleanProductPrice = (product) => {
-        const numericPrice = typeof product.price === 'string'
-            ? parseFloat(product.price.replace('$', ''))
-            : product.price;
-        return { ...product, price: numericPrice };
-    };
+    useEffect(() => {
+        fetch('http://localhost:3000/api/products')
+            .then(res => res.json())
+            .then(data => {
+                setProducts(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error al cargar productos:', err);
+                setLoading(false);
+            });
+    }, []);
 
     const filteredProducts = filter === 'todos'
         ? products
-        : products.filter(p => p.category === filter);
+        : products.filter(p => p.categoria === filter);
 
-    const categories = [
-        { id: 'todos', name: 'Todos' },
-        { id: 'collares', name: 'Collares' },
-        { id: 'anillos', name: 'Anillos' },
-        { id: 'pulseras', name: 'Pulseras' },
-        { id: 'pendientes', name: 'Pendientes' }
-    ];
+   const categories = [
+    { id: 'todos', name: 'Todos' },
+    { id: 'collar', name: 'Collares' },
+    { id: 'pulsera', name: 'Pulseras' },
+    { id: 'aro', name: 'Aros' },
+];
+
+    if (loading) return <div style={{ paddingTop: '120px', textAlign: 'center' }}>Cargando productos...</div>;
 
     return (
         <div className="container" style={{ paddingTop: '80px', paddingBottom: '80px', minHeight: '80vh' }}>
@@ -60,19 +68,19 @@ function Collections({ addToCart, toggleFavorite, favorites }) {
                                     className="wishlist-btn"
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        toggleFavorite(cleanProductPrice(product));
+                                        toggleFavorite(product);
                                     }}
                                     style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}
                                 >
                                     <Heart size={18} fill={isFavorite ? '#e74c3c' : 'none'} strokeWidth={2} />
                                 </button>
                                 <Link to={`/producto/${product.id}`} style={{ display: 'block' }}>
-                                    <img src={product.image} alt={product.name} />
+                                    <img src={product.imagenUrl} alt={product.nombre} />
                                 </Link>
                             </div>
-                            <h3 className="product-title font-serif">{product.name}</h3>
-                            <p className="product-price">{typeof product.price === 'number' ? `$${product.price.toFixed(2)}` : product.price}</p>
-                            <button className="add-to-cart-btn" onClick={() => addToCart(cleanProductPrice(product))}>
+                            <h3 className="product-title font-serif">{product.nombre}</h3>
+                            <p className="product-price">${product.precio.toFixed(2)}</p>
+                            <button className="add-to-cart-btn" onClick={() => addToCart(product)}>
                                 <ShoppingCart size={14} strokeWidth={2} /> AGREGAR AL CARRITO
                             </button>
                         </div>

@@ -221,6 +221,11 @@
   color: #389e0d;
 }
 
+.badge-aro {
+  background-color: #fff7e6;
+  color: #d46b08;
+}
+
 /* Loading y estados vacíos */
 .empty-state {
   text-align: center;
