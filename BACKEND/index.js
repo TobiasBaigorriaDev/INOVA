@@ -7,6 +7,7 @@ const { connectSQL } = require('./config/dbSQL');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authRoutes = require('./routes/authRoutes');
+const paymentMPRoutes = require('./routes/paymentMPRoutes');
 
 // 2. Importamos las Rutas (Controllers)
 const productRoutes = require('./routes/productRoutes');
@@ -37,6 +38,7 @@ app.use('/api/products', productRoutes);
 
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/mp', paymentMPRoutes);
 
 app.get('/api/private', validarJWT, (req, res) => {
 

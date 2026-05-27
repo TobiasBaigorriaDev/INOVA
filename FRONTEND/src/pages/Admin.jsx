@@ -16,7 +16,6 @@ function Admin() {
     stock: ''
   });
 
-  const [uploading, setUploading] = useState(false);
   const apiUrl = 'http://localhost:3000/api/products';
 
   useEffect(() => {
@@ -46,34 +45,6 @@ function Admin() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formDataUpload = new FormData();
-    formDataUpload.append('imagen', file);
-
-    try {
-      setUploading(true);
-      showToast('Subiendo imagen a Cloudinary...');
-      const res = await fetch('http://localhost:3000/api/products/upload', {
-        method: 'POST',
-        body: formDataUpload
-      });
-
-      if (!res.ok) throw new Error('Error al subir la imagen');
-
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, imagenUrl: data.url }));
-      showToast('¡Imagen subida a Cloudinary con éxito!');
-    } catch (error) {
-      console.error(error);
-      showToast('Error al subir la imagen', 'error');
-    } finally {
-      setUploading(false);
-    }
   };
 
   const handleTableFieldChange = (id, field, value) => {
@@ -209,19 +180,23 @@ function Admin() {
             </div>
 
             <div className="form-group">
-              <label>Imagen del Producto</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} style={{ padding: '12px', border: '1px dashed #cccccc', borderRadius: '12px', backgroundColor: '#fafafa', cursor: 'pointer', fontSize: '13px' }} />
-                {uploading && <span style={{ fontSize: '13px', color: '#888888', fontStyle: 'italic' }}>Subiendo a Cloudinary... ☁️</span>}
-                {formData.imagenUrl && !uploading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #eeeeee' }}>
-                      <img src={formData.imagenUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <span style={{ fontSize: '13px', color: '#27ae60', fontWeight: 'bold' }}>✓ Imagen lista</span>
+              <label>URL de la Imagen</label>
+              <input
+                type="url"
+                name="imagenUrl"
+                value={formData.imagenUrl}
+                onChange={handleChange}
+                placeholder="https://res.cloudinary.com/..."
+                style={{ padding: '14px 18px', border: '1px solid #e0e0e0', borderRadius: '12px', fontSize: '15px', backgroundColor: '#fcfcfc' }}
+              />
+              {formData.imagenUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '8px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #eeeeee' }}>
+                    <img src={formData.imagenUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                )}
-              </div>
+                  <span style={{ fontSize: '13px', color: '#27ae60', fontWeight: 'bold' }}>✓ Imagen lista</span>
+                </div>
+              )}
             </div>
 
             <button type="submit" className="submit-btn">Guardar Producto</button>
