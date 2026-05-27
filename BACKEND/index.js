@@ -1,4 +1,5 @@
 // 1. Traemos las herramientas que instalamos
+const validarJWT = require('./middlewares/authMiddleware');
 require('dotenv').config({ override: true }); // Lee el archivo .env y fuerza su uso
 const express = require('express');
 const cors = require('cors');
@@ -36,6 +37,15 @@ app.use('/api/products', productRoutes);
 
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+
+app.get('/api/private', validarJWT, (req, res) => {
+
+    res.json({
+        mensaje: 'Ruta privada funcionando',
+        usuario: req.usuario
+    });
+
+});
 
 // 7. Ponemos el servidor a escuchar peticiones
 const PORT = process.env.PORT || 3000;

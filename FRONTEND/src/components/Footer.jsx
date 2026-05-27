@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Pie de página reutilizable
 function Footer() {
@@ -14,12 +14,8 @@ function Footer() {
         </div>
         <div className="footer-links">
           <div className="footer-col">
-            <a href="#">Envios</a>
-            <a href="#">Taller</a>
-          </div>
-          <div className="footer-col">
-            <a href="#">Instagram</a>
-            <a href="#">Contacto</a>
+            <a href="https://www.instagram.com/inova.accesorios/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <Link to="/contacto">Contacto</Link>
           </div>
         </div>
       </div>

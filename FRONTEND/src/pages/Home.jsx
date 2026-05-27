@@ -1,25 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'; // Quitamos MessageCircle de aquí
 import { Link } from 'react-router-dom';
-import { products } from '../data/products';
+import { products as staticProducts } from '../data/products';
+import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
-function Home({ addToCart, toggleFavorite, favorites }) {
+function Home({ toggleFavorite, favorites }) {
+  const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
+  const [dbProducts, setDbProducts] = useState(staticProducts);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9; // Mostrar máximo 9 productos por página (solo paginará de ser necesario)
+
+  // Fetch de productos desde la base de datos PostgreSQL
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/products?limit=100');
+        if (!response.ok) throw new Error('Error al obtener productos');
+        const data = await response.json();
+        
+        const productsArray = Array.isArray(data)
+          ? data
+          : data.productos || [];
+          
+        if (productsArray && productsArray.length > 0) {
+          // Mapeamos los productos de PostgreSQL al formato del frontend
+          const mappedProducts = productsArray.map(p => ({
+            id: p.id,
+            name: p.nombre,
+            description: p.descripcion,
+            price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+            image: p.imagenUrl || 'https://via.placeholder.com/300',
+            category: 
+              p.categoria === 'pulsera' ? 'pulseras' : 
+              p.categoria === 'collar' ? 'collares' : 
+              p.categoria === 'anillo' ? 'anillos' : 
+              p.categoria === 'pendiente' ? 'pendientes' : 
+              p.categoria,
+            stock: p.stock
+          }));
+          setDbProducts(mappedProducts);
+        }
+      } catch (error) {
+        console.error('Error al conectar con PostgreSQL, usando datos estáticos:', error);
+      }
+    };
+    fetchProducts();
+  }, []);
   
   // Curated products for the hero carousel (first 4 products)
-  const carouselProducts = products.slice(0, 4);
+  const carouselProducts = dbProducts.slice(0, 4);
 
   // Pagination calculations
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const currentProducts = dbProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(dbProducts.length / itemsPerPage);
 
   useEffect(() => {
-    if (isHovered) return;
+    if (isHovered || carouselProducts.length === 0) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselProducts.length);
     }, 4500);
@@ -29,12 +69,14 @@ function Home({ addToCart, toggleFavorite, favorites }) {
   const nextSlide = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (carouselProducts.length === 0) return;
     setCurrentSlide((prev) => (prev + 1) % carouselProducts.length);
   };
 
   const prevSlide = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (carouselProducts.length === 0) return;
     setCurrentSlide((prev) => (prev - 1 + carouselProducts.length) % carouselProducts.length);
   };
 

@@ -20,12 +20,12 @@ const Product = sequelize.define('Product', {
         type: DataTypes.FLOAT, 
         allowNull: false 
     },
-   categoria: { 
-    type: DataTypes.ENUM('pulsera', 'collar', 'aro'), 
-    allowNull: false,
-    set(value) {
-        this.setDataValue('categoria', value.toLowerCase());
-    }
+    categoria: { 
+        type: DataTypes.ENUM('pulsera', 'collar', 'aro', 'anillo', 'pendiente'), 
+        allowNull: false,
+        set(value) {
+            this.setDataValue('categoria', value.toLowerCase());
+        }
     },
     imagenUrl: { 
         type: DataTypes.STRING,
@@ -36,7 +36,7 @@ const Product = sequelize.define('Product', {
         defaultValue: 0 
     }
 }, { 
-    timestamps: true // Esto crea createdAt y updatedAt automáticamente
+    timestamps: true
 });
 
 module.exports = Product;

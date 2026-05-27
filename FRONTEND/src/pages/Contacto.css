@@ -1,0 +1,411 @@
+/* Variables reutilizadas de Auth.css (tono berenjena) */
+:root {
+  --inova-primary: #310a3d;
+  --inova-primary-light: #521566;
+  --inova-primary-dark: #1b0522;
+  --inova-gold: #c6a87c;
+  --inova-text: #2c2c2c;
+  --inova-text-light: #666666;
+  --inova-bg-light: #faf9f8;
+  --inova-border: #e2e0dc;
+  --inova-transition: all 0.3s ease;
+}
+
+.contacto-container {
+  background-color: var(--inova-bg-light);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HERO SECTION */
+.contacto-hero {
+  position: relative;
+  height: 35vh;
+  min-height: 250px;
+  background-image: url('https://images.unsplash.com/photo-1599643478514-4a11029c91ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contacto-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(49, 10, 61, 0.8), rgba(27, 5, 34, 0.6));
+}
+
+.contacto-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: white;
+  animation: fadeIn 1s ease-out;
+}
+
+.contacto-hero-content h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  letter-spacing: 2px;
+}
+
+.contacto-hero-content p {
+  font-size: 1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--inova-gold);
+}
+
+/* LAYOUT */
+.contacto-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 4rem;
+  padding: 5rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* LEFT SIDE: INFO */
+.contacto-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.contacto-info-section h2 {
+  font-size: 2.2rem;
+  color: var(--inova-primary);
+  margin-bottom: 0.5rem;
+}
+
+.contacto-subtitle {
+  color: var(--inova-text-light);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.info-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  padding: 1.5rem;
+  background-color: white;
+  border: 1px solid var(--inova-border);
+  transition: var(--inova-transition);
+}
+
+.info-card:hover {
+  transform: translateX(10px);
+  border-color: var(--inova-gold);
+  box-shadow: 0 10px 30px rgba(49, 10, 61, 0.05);
+}
+
+.info-icon {
+  color: var(--inova-primary);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.info-card h4 {
+  font-size: 1.1rem;
+  color: var(--inova-primary-dark);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.info-card p {
+  color: var(--inova-text-light);
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.highlight-text {
+  color: var(--inova-gold) !important;
+  font-style: italic;
+  font-size: 0.9rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* SOCIAL SECTION */
+.contacto-social-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--inova-border);
+}
+
+.contacto-social-section h3 {
+  font-size: 1.5rem;
+  color: var(--inova-primary);
+  margin-bottom: 0.5rem;
+}
+
+.contacto-social-section p {
+  color: var(--inova-text-light);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+  transition: var(--inova-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.social-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.social-btn:hover::after {
+  left: 100%;
+}
+
+.whatsapp-btn {
+  background-color: #25D366;
+  color: white;
+  border: 1px solid #25D366;
+}
+
+.whatsapp-btn:hover {
+  background-color: #1DA851;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+}
+
+.instagram-btn {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+  border: none;
+}
+
+.instagram-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(220, 39, 67, 0.3);
+}
+
+
+/* RIGHT SIDE: FORM */
+.contacto-form-section {
+  display: flex;
+}
+
+.contacto-card {
+  background-color: white;
+  padding: 3rem;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+  border: 1px solid var(--inova-border);
+}
+
+.form-title {
+  font-size: 2rem;
+  color: var(--inova-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-desc {
+  color: var(--inova-text-light);
+  margin-bottom: 2.5rem;
+}
+
+.contacto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--inova-text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--inova-border);
+  background-color: var(--inova-bg-light);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: var(--inova-transition);
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--inova-primary);
+  background-color: white;
+  box-shadow: 0 0 0 2px rgba(49, 10, 61, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.submit-contacto-btn {
+  background-color: var(--inova-primary);
+  color: white;
+  border: none;
+  padding: 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: var(--inova-transition);
+  margin-top: 1rem;
+}
+
+.submit-contacto-btn:hover:not(:disabled) {
+  background-color: var(--inova-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(49, 10, 61, 0.2);
+}
+
+.submit-contacto-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.form-error-msg {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border-left: 4px solid #ef4444;
+}
+
+/* SUCCESS STATE */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  min-height: 400px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.success-icon {
+  color: var(--inova-gold);
+  margin-bottom: 1.5rem;
+}
+
+.success-state h3 {
+  font-size: 2.5rem;
+  color: var(--inova-primary);
+  margin-bottom: 1rem;
+}
+
+.success-state p {
+  color: var(--inova-text-light);
+  margin-bottom: 2.5rem;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.btn-retry {
+  background-color: transparent;
+  border: 1px solid var(--inova-primary);
+  color: var(--inova-primary);
+  padding: 0.8rem 2rem;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: var(--inova-transition);
+}
+
+.btn-retry:hover {
+  background-color: var(--inova-primary);
+  color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .contacto-layout {
+    grid-template-columns: 1fr;
+    padding: 3rem 1rem;
+  }
+  
+  .contacto-hero h1 {
+    font-size: 2.5rem;
+  }
+  
+  .contacto-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .contacto-card {
+    padding: 1.5rem;
+  }
+  
+  .contacto-hero h1 {
+    font-size: 2rem;
+  }
+}

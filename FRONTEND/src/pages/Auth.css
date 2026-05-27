@@ -58,6 +58,10 @@
   box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
 
+.auth-card-logged-in {
+  background: #dbe7ff; /* Cambia este color al que quieras */
+}
+
 .auth-card h2 {
   font-size: 28px;
   font-weight: 400;
