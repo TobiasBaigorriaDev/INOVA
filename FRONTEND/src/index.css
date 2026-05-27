@@ -851,3 +851,26 @@ li {
     transform: scale(1);
   }
 }
+
+@media (max-width: 768px){
+
+  .chat-btn{
+
+    width: 62px;
+    height: 62px;
+
+    right: 20px;
+    bottom: 20px;
+  }
+
+}
+
+@media (max-width: 480px){
+
+  .chat-btn{
+
+    width: 58px;
+    height: 58px;
+  }
+
+}
