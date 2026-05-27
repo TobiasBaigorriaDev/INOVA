@@ -28,7 +28,7 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const fetchProducts = useCallback(async () => {
         setIsLoading(true);
         try {
-            let url = `http://localhost:3000/api/products?page=${currentPage}&limit=8`;
+            let url = `http://localhost:3000/api/products?page=${currentPage}&limit=12`;
             if (filter !== 'todos') url += `&categoria=${filter}`;
             if (searchQuery.trim() !== '') url += `&search=${searchQuery}`;
             if (sortOrder) url += `&sortPrice=${sortOrder}`;
