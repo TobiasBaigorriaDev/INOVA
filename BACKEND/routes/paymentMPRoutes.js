@@ -3,13 +3,22 @@ const router = express.Router();
 const { MercadoPagoConfig, Preference, Payment: MPPayment } = require('mercadopago');
 const Order = require('../models/Order');
 
+const accessToken = process.env.MP_ACCESS_TOKEN || '';
+
+if (!accessToken || accessToken.includes('TEST-aqui')) {
+    console.warn('⚠️ MP_ACCESS_TOKEN no configurado o contiene el valor por defecto. Revise BACKEND/.env');
+}
+
 const client = new MercadoPagoConfig({
-    accessToken: process.env.MP_ACCESS_TOKEN
+    accessToken
 });
 
 // POST /api/mp/create-preference
 router.post('/create-preference', async (req, res) => {
     try {
+        if (!accessToken || accessToken.includes('TEST-aqui')) {
+            return res.status(500).json({ mensaje: 'MP_ACCESS_TOKEN no configurado en el servidor' });
+        }
         const { items, orderId } = req.body;
 
         const preference = new Preference(client);
