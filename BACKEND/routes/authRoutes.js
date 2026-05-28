@@ -158,4 +158,61 @@ console.log(error);
 
 });
 
+// ============================
+// LOGIN CON GOOGLE
+// ============================
+
+router.post('/google', async (req, res) => {
+    try {
+        const { nombre, email, foto } = req.body;
+
+        // Buscar si el usuario ya existe
+        let usuario = await User.findOne({ where: { email } });
+
+        if (!usuario) {
+            // Si no existe, lo creamos con una contraseña aleatoria
+            const randomPassword = Math.random().toString(36).slice(-10);
+            const salt = await bcrypt.genSalt(10);
+            const passwordHasheado = await bcrypt.hash(randomPassword, salt);
+
+            usuario = await User.create({
+                nombre,
+                email,
+                password: passwordHasheado
+            });
+        }
+
+        // Generar JWT válido
+        const token = jwt.sign(
+            {
+                id: usuario.id,
+                rol: usuario.rol
+            },
+            process.env.JWT_SECRET || 'inova_secure_fallback_secret_key_2026',
+            {
+                expiresIn: '2h'
+            }
+        );
+
+        res.status(200).json({
+            mensaje: 'Login con Google exitoso',
+            token,
+            usuario: {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                email: usuario.email,
+                rol: usuario.rol,
+                foto
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            mensaje: 'Error al iniciar sesión con Google',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

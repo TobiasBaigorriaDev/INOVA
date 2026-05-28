@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const { MercadoPagoConfig, Preference, Payment: MPPayment } = require('mercadopago');
+const Order = require('../models/Order');
 
 const client = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN
@@ -9,12 +10,17 @@ const client = new MercadoPagoConfig({
 // POST /api/mp/create-preference
 router.post('/create-preference', async (req, res) => {
     try {
-        const { items } = req.body;
+        const { items, orderId } = req.body;
 
         const preference = new Preference(client);
 
         const response = await preference.create({
             body: {
+                // external_reference nos sirve para identificar la orden cuando MP nos mande el webhook
+                external_reference: orderId ? orderId.toString() : '0',
+                // notification_url es donde Mercado Pago enviará los avisos por POST
+                // TODO: Reemplazar por tu dominio público o ngrok en desarrollo
+                notification_url: 'https://TU_DOMINIO.ngrok.app/api/mp/webhook',
                 items: items.map(item => ({
                     title: item.nombre,
                     quantity: item.cantidad,
@@ -22,9 +28,9 @@ router.post('/create-preference', async (req, res) => {
                     currency_id: 'ARS'
                 })),
                 back_urls: {
-                    success: 'http://localhost:5173/checkout/success',
-                    failure: 'http://localhost:5173/checkout/failure',
-                    pending: 'http://localhost:5173/checkout/pending'
+                    success: 'https://tusitio.com/checkout/success',
+                    failure: 'https://tusitio.com/checkout/failure',
+                    pending: 'https://tusitio.com/checkout/pending'
                 },
                 auto_return: 'approved'
             }
@@ -38,6 +44,36 @@ router.post('/create-preference', async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al crear preferencia de pago', error: error.message });
+    }
+});
+
+// POST /api/mp/webhook
+// Esta ruta recibe las notificaciones de Mercado Pago y actualiza el estado de la Orden
+router.post('/webhook', async (req, res) => {
+    try {
+        const paymentId = req.query['data.id'] || req.body?.data?.id;
+        const type = req.query.type || req.body?.type;
+
+        if (type === 'payment' && paymentId) {
+            // Buscamos la info del pago en Mercado Pago
+            const paymentClient = new MPPayment(client);
+            const paymentInfo = await paymentClient.get({ id: paymentId });
+
+            const status = paymentInfo.status; // 'approved', 'rejected', etc.
+            const orderId = paymentInfo.external_reference;
+
+            // Si el pago está aprobado, actualizamos el estado de la Orden en la base de datos
+            if (status === 'approved' && orderId && orderId !== '0') {
+                await Order.update({ status: 'pagado' }, { where: { id: orderId } });
+                console.log(`Orden ${orderId} pagada correctamente.`);
+            }
+        }
+
+        // Siempre responder 200 OK para que MP no reintente enviar la notificación
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('Error en el Webhook:', error);
+        res.status(500).send('Error interno en webhook');
     }
 });
 

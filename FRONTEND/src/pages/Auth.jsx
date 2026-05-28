@@ -206,52 +206,38 @@ function Auth({ setUsuario }) {
   // =========================
 
   const loginGoogle = async () => {
-
     try {
-
       setErrorMensaje('');
-
-      const result = await signInWithPopup(
-        auth,
-        provider
-      );
-
+      const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const usuarioData = {
+      // Enviar los datos de Google al backend para que nos devuelva un JWT válido
+      const response = await fetch('http://localhost:3000/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: user.displayName,
+          email: user.email,
+          foto: user.photoURL
+        })
+      });
 
-        nombre: user.displayName,
+      const data = await response.json();
 
-        email: user.email,
+      if (!response.ok) {
+        throw new Error(data.mensaje || 'Error en el servidor al autenticar con Google');
+      }
 
-        foto: user.photoURL
-
-      };
-
-      localStorage.setItem(
-        'usuario',
-        JSON.stringify(usuarioData)
-      );
-
-      localStorage.setItem(
-        'token',
-        'google-login'
-      );
-
-      setUsuario(usuarioData);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      setUsuario(data.usuario);
 
       redirigirDespuesLogin();
 
     } catch (error) {
-
       console.log(error);
-
-      setErrorMensaje(
-        'Error al iniciar sesión con Google'
-      );
-
+      setErrorMensaje('Error al iniciar sesión con Google');
     }
-
   };
 
   // =========================

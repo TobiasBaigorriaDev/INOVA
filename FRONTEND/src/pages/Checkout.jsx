@@ -160,24 +160,53 @@ function Checkout() {
       const data = await response.json();
 
       if (!response.ok) {
-
-        throw new Error(
-          data.mensaje ||
-          'Error al procesar el pedido'
-        );
-
+        throw new Error(data.mensaje || 'Error al procesar el pedido');
       }
 
-      setSuccessMsg(
-        '¡Pedido realizado con éxito!'
-      );
+      // ==========================================
+      // INTEGRACIÓN CON MERCADO PAGO
+      // ==========================================
+      if (paymentMethod === 'mercadolibre') {
+        setSuccessMsg('Generando enlace de pago...');
+
+        const itemsParaMP = cartItems.map(item => ({
+          nombre: item.name,
+          cantidad: item.qty,
+          precio: item.price
+        }));
+
+        const mpResponse = await fetch('http://localhost:3000/api/mp/create-preference', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            items: itemsParaMP,
+            orderId: data.orderId
+          })
+        });
+
+        const mpData = await mpResponse.json();
+
+        if (!mpResponse.ok) {
+          throw new Error('Error al conectar con Mercado Pago');
+        }
+
+        // Limpiamos el carrito antes de redirigir
+        clearCart();
+        
+        // Redirigir al usuario a la pantalla de Mercado Pago
+        window.location.href = mpData.init_point;
+        return; 
+      }
+
+      // SI EL PAGO ES EN EFECTIVO O TARJETA (MANUAL):
+      setSuccessMsg('¡Pedido realizado con éxito!');
 
       clearCart();
 
       setTimeout(() => {
-
         navigate('/');
-
       }, 2500);
 
     } catch (err) {
