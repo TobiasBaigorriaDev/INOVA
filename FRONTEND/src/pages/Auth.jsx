@@ -28,6 +28,34 @@ function Auth({ setUsuario }) {
     useState('');
 
   // =========================
+  // FUNCION REDIRECT
+  // =========================
+
+  const redirigirDespuesLogin = () => {
+
+    const redirectPath =
+      localStorage.getItem(
+        'redirectAfterLogin'
+      );
+
+    if (redirectPath) {
+
+      localStorage.removeItem(
+        'redirectAfterLogin'
+      );
+
+      window.location.href =
+        redirectPath;
+
+    } else {
+
+      window.location.href = '/';
+
+    }
+
+  };
+
+  // =========================
   // USUARIO YA LOGUEADO
   // =========================
 
@@ -115,7 +143,7 @@ function Auth({ setUsuario }) {
                 className="auth-btn-primary"
                 onClick={() => {
 
-                  window.location.href = '/';
+                  redirigirDespuesLogin();
 
                 }}
               >
@@ -133,6 +161,10 @@ function Auth({ setUsuario }) {
                   localStorage.removeItem('token');
 
                   localStorage.removeItem('favoritos');
+
+                  localStorage.removeItem(
+                    'redirectAfterLogin'
+                  );
 
                   window.location.reload();
 
@@ -201,9 +233,14 @@ function Auth({ setUsuario }) {
         JSON.stringify(usuarioData)
       );
 
+      localStorage.setItem(
+        'token',
+        'google-login'
+      );
+
       setUsuario(usuarioData);
 
-      window.location.href = '/';
+      redirigirDespuesLogin();
 
     } catch (error) {
 
@@ -271,7 +308,7 @@ function Auth({ setUsuario }) {
 
         setUsuario(data.usuario);
 
-        window.location.href = '/';
+        redirigirDespuesLogin();
 
       }
 
@@ -311,7 +348,7 @@ function Auth({ setUsuario }) {
         setPassword('');
 
         setErrorMensaje(
-          'Usuario registrado con éxito'
+          'Usuario registrado con éxito. Ahora inicia sesión.'
         );
 
         setIsLogin(true);

@@ -30,7 +30,7 @@ function App() {
     useState(false);
 
   // =========================
-  // FAVORITOS PERSISTENTES
+  // FAVORITOS
   // =========================
 
   const [favorites, setFavorites] =
@@ -46,7 +46,7 @@ function App() {
     });
 
   // =========================
-  // USUARIO LOGUEADO
+  // USUARIO
   // =========================
 
   const [usuario, setUsuario] =
@@ -85,7 +85,7 @@ function App() {
   }, [favorites]);
 
   // =========================
-  // AGREGAR / QUITAR FAVORITOS
+  // FAVORITOS
   // =========================
 
   const toggleFavorite = (product) => {
@@ -146,6 +146,8 @@ function App() {
 
         <Routes>
 
+          {/* HOME */}
+
           <Route
             path="/"
             element={
@@ -155,6 +157,8 @@ function App() {
               />
             }
           />
+
+          {/* FAVORITOS */}
 
           <Route
             path="/favoritos"
@@ -166,6 +170,8 @@ function App() {
             }
           />
 
+          {/* PRODUCTO */}
+
           <Route
             path="/producto/:id"
             element={
@@ -176,6 +182,8 @@ function App() {
             }
           />
 
+          {/* LOGIN */}
+
           <Route
             path="/login"
             element={
@@ -185,10 +193,14 @@ function App() {
             }
           />
 
+          {/* CHECKOUT */}
+
           <Route
             path="/checkout"
             element={<Checkout />}
           />
+
+          {/* COLECCIONES */}
 
           <Route
             path="/colecciones"
@@ -200,15 +212,25 @@ function App() {
             }
           />
 
+          {/* ADMIN */}
+
           <Route
             path="/admin"
-            element={<Admin />}
+            element={
+              usuario
+                ? <Admin />
+                : <Auth setUsuario={setUsuario} />
+            }
           />
+
+          {/* CONTACTO */}
 
           <Route
             path="/contacto"
             element={<Contacto />}
           />
+
+          {/* HISTORIA */}
 
           <Route
             path="/historia"
@@ -217,7 +239,11 @@ function App() {
 
         </Routes>
 
+        {/* CARRITO */}
+
         <CartSidebar />
+
+        {/* CHATBOT */}
 
         <Chatbot
           isOpen={isChatOpen}
@@ -225,6 +251,8 @@ function App() {
             setIsChatOpen(false)
           }
         />
+
+        {/* BOTON CHAT */}
 
         {!isChatOpen && (
 
@@ -247,6 +275,8 @@ function App() {
           </button>
 
         )}
+
+        {/* FOOTER */}
 
         <Footer />
 
