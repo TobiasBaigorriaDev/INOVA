@@ -26,9 +26,20 @@ function Contacto() {
     setLoading(true);
     setError('');
 
-    // Simular un envío premium con micro-animación
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Enviar datos al webhook de n8n
+      const response = await fetch('http://localhost:5678/webhook/f3d4d1ef-5e70-46e1-8540-d167d357b729', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
       setSuccess(true);
       setFormData({
         nombre: '',
@@ -39,6 +50,7 @@ function Contacto() {
         mensaje: ''
       });
     } catch (err) {
+      console.error(err);
       setError('Hubo un error al enviar el mensaje. Por favor intente de nuevo.');
     } finally {
       setLoading(false);
