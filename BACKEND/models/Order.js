@@ -21,7 +21,7 @@ const Order = sequelize.define('Order', {
         allowNull: false
     },
     status: {
-        type: DataTypes.ENUM('pendiente', 'pagado', 'enviado', 'entregado'),
+        type: DataTypes.ENUM('pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'),
         defaultValue: 'pendiente'
     },
     email: {

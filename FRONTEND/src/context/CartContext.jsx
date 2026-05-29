@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 // 1. CREAMOS EL CONTEXTO
 const CartContext = createContext();
@@ -13,6 +14,29 @@ export const CartProvider = ({ children }) => {
 
   // Estado para controlar si el sidebar del carrito está abierto o cerrado
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Estado para las notificaciones (Toasts) globales de stock u otros eventos
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (message, type = 'success') => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast({ show: true, message, type });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast({ show: false, message: '', type: '' });
+    }, 3000);
+  };
+
+  // Limpieza del timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Guardar automáticamente en localStorage cada vez que cambien los artículos del carrito
   useEffect(() => {
@@ -78,12 +102,38 @@ export const CartProvider = ({ children }) => {
       ? parseFloat(rawPrice.replace('$', ''))
       : Number(rawPrice);
 
+    const availableStock = product.stock !== undefined ? Number(product.stock) : 99;
+    const qtyNumber = Number(quantity);
+
+    // Buscar si el producto ya está en el carrito
+    const existingItem = cartItems.find((item) => item.id === product.id);
+    const currentQtyInCart = existingItem ? Number(existingItem.qty) : 0;
+    
+    // Calcular la cantidad final que resultaría de esta operación
+    const targetQty = forceSetQty ? qtyNumber : currentQtyInCart + qtyNumber;
+
+    if (availableStock <= 0) {
+      showToast('Producto sin stock', 'error');
+      return;
+    }
+
+    if (currentQtyInCart >= availableStock) {
+      showToast('Producto sin stock', 'error');
+      return;
+    }
+
+    if (targetQty > availableStock) {
+      showToast('Producto sin stock', 'error');
+      // Si ya está en el carrito al tope del stock, no hacemos nada más
+      if (currentQtyInCart >= availableStock) {
+        return;
+      }
+    }
+
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      const availableStock = product.stock !== undefined ? Number(product.stock) : 99;
-      const qtyNumber = Number(quantity);
+      const existingItemInState = prevItems.find((item) => item.id === product.id);
       
-      if (existingItem) {
+      if (existingItemInState) {
         // Si ya existe, incrementamos su cantidad asegurando no superar el stock, o la sobreescribimos si forceSetQty es true
         return prevItems.map((item) => {
           if (item.id === product.id) {
@@ -109,20 +159,24 @@ export const CartProvider = ({ children }) => {
 
   // Actualizar la cantidad de un artículo (+1 o -1)
   const updateQuantity = (id, amount) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === id) {
-          const newQty = item.qty + amount;
-          const maxStock = item.stock !== undefined ? item.stock : 99;
-          
-          if (newQty < 1) return { ...item, qty: 1 };
-          if (newQty > maxStock) return { ...item, qty: maxStock }; // No dejar superar el stock disponible
-          
-          return { ...item, qty: newQty };
-        }
-        return item;
-      })
-    );
+    const item = cartItems.find((p) => p.id === id);
+    if (!item) return;
+
+    const newQty = item.qty + amount;
+    const maxStock = item.stock !== undefined ? item.stock : 99;
+
+    if (newQty < 1) {
+      setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: 1 } : p));
+      return;
+    }
+
+    if (newQty > maxStock) {
+      showToast('Producto sin stock', 'error');
+      setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: maxStock } : p));
+      return;
+    }
+
+    setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: newQty } : p));
   };
 
   // Eliminar un producto del carrito
@@ -161,9 +215,18 @@ export const CartProvider = ({ children }) => {
       subtotal,
       envio,
       total,
-      totalItems
+      totalItems,
+      showToast
     }}>
       {children}
+
+      {/* Toast Notification global de stock */}
+      {toast.show && (
+        <div className={`toast ${toast.type}`}>
+          {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          <span>{toast.message}</span>
+        </div>
+      )}
     </CartContext.Provider>
   );
 };

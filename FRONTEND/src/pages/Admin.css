@@ -288,3 +288,630 @@
     overflow-x: auto;
   }
 }
+
+/* --- Dashboard Stats Grid --- */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(90, 64, 107, 0.08);
+  border-color: rgba(90, 64, 107, 0.15);
+}
+
+.stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.stat-icon-wrapper.sales-total {
+  background: linear-gradient(135deg, #5A406B, #825B96);
+}
+
+.stat-icon-wrapper.sales-month {
+  background: linear-gradient(135deg, #10B981, #34D399);
+}
+
+.stat-icon-wrapper.orders-count {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+}
+
+.stat-icon-wrapper.average-ticket {
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8F8498;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #5A406B;
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+}
+
+.stat-subtext {
+  font-size: 12px;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+/* --- Sales History Section --- */
+.admin-history-section {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  margin-top: 40px;
+  width: 100%;
+}
+
+/* Badges de Pago */
+.badge-payment-mercadolibre {
+  background-color: #e6f7ff;
+  color: #096dd9;
+  border: 1px solid #91d5ff;
+}
+
+.badge-payment-tarjeta {
+  background-color: #f9f0ff;
+  color: #722ed1;
+  border: 1px solid #d3adf7;
+}
+
+.badge-payment-efectivo {
+  background-color: #f6ffed;
+  color: #389e0d;
+  border: 1px solid #b7eb8f;
+}
+
+/* Select de Estados de Orden */
+.status-select.status-pendiente {
+  background-color: #fffbe6;
+  color: #d46b08;
+  border-color: #ffe58f;
+}
+
+.status-select.status-pagado {
+  background-color: #f6ffed;
+  color: #389e0d;
+  border-color: #b7eb8f;
+}
+
+.status-select.status-cancelado {
+  background-color: #fff1f0;
+  color: #f5222d;
+  border-color: #ffa39e;
+}
+
+@keyframes pulseRed {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- Analytics / Most Sold Card --- */
+.analytics-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.most-sold-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.most-sold-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.01);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.most-sold-item:hover {
+  transform: translateX(5px);
+  background-color: #f5eff9; /* Ligero tono morado INOVA */
+  border-color: rgba(90, 64, 107, 0.1);
+}
+
+.ranking-number {
+  font-size: 16px;
+  font-weight: 800;
+  color: #8F8498;
+  width: 32px;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+}
+
+.most-sold-item:nth-child(1) .ranking-number {
+  color: #5A406B; /* Color principal INOVA para el #1 */
+  font-size: 20px;
+}
+
+.most-sold-item:nth-child(2) .ranking-number {
+  color: #825B96;
+}
+
+.most-sold-img-container {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #eee;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.most-sold-img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.most-sold-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.most-sold-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.most-sold-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.most-sold-qty {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5A406B;
+  background-color: #f3eef7;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background-color: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5A406B, #825B96);
+  border-radius: 3px;
+  transition: width 0.8s ease-out;
+}
+
+.most-sold-revenue {
+  font-size: 11px;
+  color: #888;
+}
+
+/* --- Botón Mostrar/Ocultar Métricas --- */
+.toggle-metrics-btn {
+  background-color: #f3eef7;
+  color: #5A406B;
+  border: 1px solid rgba(90, 64, 107, 0.15);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #5A406B;
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+}
+
+.stat-subtext {
+  font-size: 12px;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+/* --- Sales History Section --- */
+.admin-history-section {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  margin-top: 40px;
+  width: 100%;
+}
+
+/* Badges de Pago */
+.badge-payment-mercadolibre {
+  background-color: #e6f7ff;
+  color: #096dd9;
+  border: 1px solid #91d5ff;
+}
+
+.badge-payment-tarjeta {
+  background-color: #f9f0ff;
+  color: #722ed1;
+  border: 1px solid #d3adf7;
+}
+
+.badge-payment-efectivo {
+  background-color: #f6ffed;
+  color: #389e0d;
+  border: 1px solid #b7eb8f;
+}
+
+/* Select de Estados de Orden */
+.status-select.status-pendiente {
+  background-color: #fffbe6;
+  color: #d46b08;
+  border-color: #ffe58f;
+}
+
+.status-select.status-pagado {
+  background-color: #f6ffed;
+  color: #389e0d;
+  border-color: #b7eb8f;
+}
+
+.status-select.status-cancelado {
+  background-color: #fff1f0;
+  color: #f5222d;
+  border-color: #ffa39e;
+}
+
+@keyframes pulseRed {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- Analytics / Most Sold Card --- */
+.analytics-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.most-sold-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.most-sold-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.01);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.most-sold-item:hover {
+  transform: translateX(5px);
+  background-color: #f5eff9; /* Ligero tono morado INOVA */
+  border-color: rgba(90, 64, 107, 0.1);
+}
+
+.ranking-number {
+  font-size: 16px;
+  font-weight: 800;
+  color: #8F8498;
+  width: 32px;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+}
+
+.most-sold-item:nth-child(1) .ranking-number {
+  color: #5A406B; /* Color principal INOVA para el #1 */
+  font-size: 20px;
+}
+
+.most-sold-item:nth-child(2) .ranking-number {
+  color: #825B96;
+}
+
+.most-sold-img-container {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #eee;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.most-sold-img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.most-sold-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.most-sold-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.most-sold-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.most-sold-qty {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5A406B;
+  background-color: #f3eef7;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background-color: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5A406B, #825B96);
+  border-radius: 3px;
+  transition: width 0.8s ease-out;
+}
+
+.most-sold-revenue {
+  font-size: 11px;
+  color: #888;
+}
+
+/* --- Botón Mostrar/Ocultar Métricas --- */
+.toggle-metrics-btn {
+  background-color: #f3eef7;
+  color: #5A406B;
+  border: 1px solid rgba(90, 64, 107, 0.15);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+}
+
+.toggle-metrics-btn:hover {
+  background-color: #5A406B;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(90, 64, 107, 0.15);
+}
+
+/* Keyframes de animación */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Alerta de Stock Bajo --- */
+.admin-stock-alert {
+  background: linear-gradient(135deg, #fff2f0 0%, #fff1f0 100%);
+  border: 1px solid #ffccc7;
+  border-radius: 16px;
+  padding: 18px 24px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 6px 20px rgba(255, 77, 79, 0.04);
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+}
+
+.admin-stock-alert .alert-icon {
+  color: #ff4d4f;
+  flex-shrink: 0;
+  margin-top: 2px;
+  animation: pulseRed 2s infinite;
+}
+
+.admin-stock-alert .alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-stock-alert .alert-content strong {
+  font-size: 15px;
+  color: #a8071a;
+  font-weight: 700;
+}
+
+.admin-stock-alert .alert-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.admin-stock-alert .alert-badge {
+  background-color: #ffffff;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 5px rgba(255, 77, 79, 0.05);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.admin-stock-alert .alert-badge:hover {
+  background-color: #ff4d4f;
+  color: white;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 8px rgba(255, 77, 79, 0.15);
+}
+
+/* --- Animación de Despliegue de Panel de Métricas --- */
+.admin-metrics-wrapper {
+  max-height: 1500px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.6s cubic-bezier(0.86, 0, 0.07, 1), 
+              opacity 0.4s ease-out, 
+              margin-bottom 0.5s cubic-bezier(0.86, 0, 0.07, 1),
+              padding 0.5s cubic-bezier(0.86, 0, 0.07, 1);
+  margin-bottom: 40px;
+}
+
+.admin-metrics-wrapper.collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  pointer-events: none;
+}
+
+/* --- Botón Simular Ventas Demo --- */
+.seed-demo-btn {
+  background-color: #10b981;
+  color: white;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+}
+
+.seed-demo-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+/* --- Botón Regenerar Demo (Púrpura INOVA) --- */
+.seed-regen-btn {
+  background-color: #825B96 !important;
+  border-color: rgba(130, 91, 150, 0.15) !important;
+}
+
+.seed-regen-btn:hover {
+  background-color: #5A406B !important;
+  box-shadow: 0 4px 12px rgba(90, 64, 107, 0.2) !important;
+}
+
+/* --- Botón Apagar Demo (Rojo Elegante) --- */
+.clear-demo-btn {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffa39e;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+}
+
+.clear-demo-btn:hover {
+  background-color: #ff4d4f;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+}
+
+

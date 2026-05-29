@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { MercadoPagoConfig, Preference, Payment: MPPayment } = require('mercadopago');
 const Order = require('../models/Order');
+const OrderItem = require('../models/OrderItem');
+const Product = require('../models/Products');
+const { sequelize } = require('../config/dbSQL');
 
 const accessToken = process.env.MP_ACCESS_TOKEN || '';
 
@@ -37,11 +40,10 @@ router.post('/create-preference', async (req, res) => {
                     currency_id: 'ARS'
                 })),
                 back_urls: {
-                    success: 'https://tusitio.com/checkout/success',
-                    failure: 'https://tusitio.com/checkout/failure',
-                    pending: 'https://tusitio.com/checkout/pending'
-                },
-                auto_return: 'approved'
+                    success: 'http://localhost:5173/checkout',
+                    failure: 'http://localhost:5173/checkout',
+                    pending: 'http://localhost:5173/checkout'
+                }
             }
         });
 
@@ -71,10 +73,40 @@ router.post('/webhook', async (req, res) => {
             const status = paymentInfo.status; // 'approved', 'rejected', etc.
             const orderId = paymentInfo.external_reference;
 
-            // Si el pago está aprobado, actualizamos el estado de la Orden en la base de datos
+            // Si el pago está aprobado, descontamos stock y actualizamos el estado de la Orden
             if (status === 'approved' && orderId && orderId !== '0') {
-                await Order.update({ status: 'pagado' }, { where: { id: orderId } });
-                console.log(`Orden ${orderId} pagada correctamente.`);
+                const t = await sequelize.transaction();
+                try {
+                    // Buscamos la orden con sus detalles (items)
+                    const order = await Order.findByPk(orderId, {
+                        include: [{ model: OrderItem, as: 'items' }],
+                        transaction: t
+                    });
+
+                    if (order && order.status === 'pendiente') {
+                        // Descontamos stock para cada producto de la orden
+                        for (const item of order.items) {
+                            const product = await Product.findByPk(item.productId, { transaction: t });
+                            if (product) {
+                                const newStock = Math.max(0, product.stock - item.cantidad);
+                                await product.update({ stock: newStock }, { transaction: t });
+                                console.log(`[Webhook] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
+                            }
+                        }
+
+                        // Actualizamos el estado de la Orden a 'pagado'
+                        await order.update({ status: 'pagado' }, { transaction: t });
+                        console.log(`[Webhook] Orden ${orderId} marcada como PAGADA con éxito.`);
+                    } else if (order && order.status === 'pagado') {
+                        console.log(`[Webhook] La orden ${orderId} ya se encontraba pagada.`);
+                    }
+
+                    await t.commit();
+                } catch (webhookErr) {
+                    await t.rollback();
+                    console.error('[Webhook] Error crítico procesando la transacción de pago y stock:', webhookErr);
+                    throw webhookErr;
+                }
             }
         }
 

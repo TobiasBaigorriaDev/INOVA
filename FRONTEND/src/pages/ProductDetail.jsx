@@ -23,7 +23,8 @@ function ProductDetail({
 
   const {
     addToCart,
-    cartItems
+    cartItems,
+    showToast
   } = useCart();
 
   const { id } = useParams();
@@ -300,7 +301,7 @@ function ProductDetail({
           : 99;
 
       if (maxStock === 0) {
-
+        showToast('Producto sin stock', 'error');
         return 0;
 
       }
@@ -315,7 +316,7 @@ function ProductDetail({
       }
 
       if (newQty > maxStock) {
-
+        showToast('Producto sin stock', 'error');
         return maxStock;
 
       }
@@ -459,7 +460,7 @@ function ProductDetail({
             {
               Number(productInfo.stock) > 0
                 ? `Stock disponible: ${productInfo.stock} unidades`
-                : 'Producto agotado'
+                : 'Producto sin stock disponible'
             }
 
           </p>
@@ -532,23 +533,20 @@ function ProductDetail({
                   background: 'none',
                   border: 'none',
                   fontSize: '20px',
-                  cursor:
-                    quantity >=
-                    Number(productInfo.stock)
-                      ? 'not-allowed'
-                      : 'pointer',
+                  cursor: 'pointer',
                   padding: '10px',
                   color:
-                    quantity >=
-                    Number(productInfo.stock)
+                    quantity >= Number(productInfo.stock)
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
-                onClick={() => updateQty(1)}
-                disabled={
-                  quantity >=
-                  Number(productInfo.stock)
-                }
+                onClick={() => {
+                  if (quantity >= Number(productInfo.stock)) {
+                    showToast('Producto sin stock', 'error');
+                  } else {
+                    updateQty(1);
+                  }
+                }}
               >
                 +
               </button>

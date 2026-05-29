@@ -16,7 +16,8 @@ const CartSidebar = () => {
     subtotal, 
     envio, 
     total,
-    clearCart // <-- Traemos la función de vaciar el carrito
+    clearCart, // <-- Traemos la función de vaciar el carrito
+    showToast
   } = useCart();
 
   const handleCheckout = () => {
@@ -82,14 +83,19 @@ const CartSidebar = () => {
                     {/* Botón de Restar */}
                     <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}>-</button>
                     <span>{item.qty}</span>
-                    {/* Botón de Sumar (Deshabilitado si no hay más stock) */}
+                    {/* Botón de Sumar (Muestra cartel si no hay más stock) */}
                     <button 
                       className="qty-btn" 
-                      onClick={() => updateQuantity(item.id, 1)}
-                      disabled={item.qty >= item.stock}
+                      onClick={() => {
+                        if (item.qty >= item.stock) {
+                          showToast('Producto sin stock', 'error');
+                        } else {
+                          updateQuantity(item.id, 1);
+                        }
+                      }}
                       style={{
                         opacity: item.qty >= item.stock ? 0.35 : 1,
-                        cursor: item.qty >= item.stock ? 'not-allowed' : 'pointer'
+                        cursor: 'pointer'
                       }}
                       title={item.qty >= item.stock ? "Llegaste al límite de stock disponible" : ""}
                     >+</button>

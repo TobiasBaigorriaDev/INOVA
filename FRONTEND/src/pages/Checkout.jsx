@@ -56,6 +56,27 @@ function Checkout() {
 
   }, []);
 
+  // Verificar si viene una respuesta de pago de Mercado Pago en la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mpStatus = params.get('status') || params.get('collection_status');
+
+    if (mpStatus === 'approved') {
+      setSuccessMsg('¡Pago realizado con éxito! Tu pedido ha sido confirmado.');
+      clearCart();
+      // Limpiamos los parámetros de la URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 3500);
+    } else if (mpStatus && mpStatus !== 'approved') {
+      setErrorMsg('El pago de Mercado Pago no pudo ser procesado o fue cancelado. Tu carrito sigue guardado.');
+      // Limpiamos los parámetros de la URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // =========================
   // ESTADOS
   // =========================
@@ -189,11 +210,9 @@ function Checkout() {
         const mpData = await mpResponse.json();
 
         if (!mpResponse.ok) {
-          throw new Error('Error al conectar con Mercado Pago');
+          const detailedError = mpData.error ? `${mpData.mensaje || 'Error'}: ${mpData.error}` : (mpData.mensaje || 'Error al conectar con Mercado Pago');
+          throw new Error(detailedError);
         }
-
-        // Limpiamos el carrito antes de redirigir
-        clearCart();
         
         // Redirigir al usuario a la pantalla de Mercado Pago
         window.location.href = mpData.init_point;
