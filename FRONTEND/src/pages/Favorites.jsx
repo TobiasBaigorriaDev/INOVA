@@ -12,7 +12,7 @@ function Favorites({ favorites, toggleFavorite }) {
                 Mis Favoritos
             </h1>
             <p style={{ color: '#666', fontSize: '1.1rem', maxWidth: '600px', marginBottom: '40px' }}>
-                Una curaduría personal de sus piezas más deseadas. Guardadas para su próxima visita al atelier.
+                Una curaduría personal de sus piezas más deseadas. Guardadas para su próxima visita a INOVA.
             </p>
 
             {favorites.length === 0 ? (

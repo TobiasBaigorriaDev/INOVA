@@ -7,7 +7,7 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const urlSearchQuery = searchParams.get('search') || '';
 
     const [dbProducts, setDbProducts] = useState([]);
-    const [filter, setFilter] = useState('todos');
+    const [filter, setFilter] = useState(searchParams.get('categoria') || 'todos');
     const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
     const [searchInput, setSearchInput] = useState(urlSearchQuery);
     const [currentPage, setCurrentPage] = useState(1);
@@ -15,15 +15,34 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const [isLoading, setIsLoading] = useState(false);
     const [sortOrder, setSortOrder] = useState('');
     const [isAnimatingSort, setIsAnimatingSort] = useState(false);
+    const [addedItem, setAddedItem] = useState(null);
+
+    const handleAddToCartClick = (product) => {
+        addToCart(product);
+        setAddedItem(product.id);
+        setTimeout(() => setAddedItem(null), 1500);
+    };
 
     useEffect(() => {
         const currentUrlSearch = searchParams.get('search') || '';
+        const currentUrlCategory = searchParams.get('categoria') || 'todos';
+        let paramsChanged = false;
+
         if (currentUrlSearch !== searchQuery) {
             setSearchQuery(currentUrlSearch);
             setSearchInput(currentUrlSearch);
+            paramsChanged = true;
+        }
+
+        if (currentUrlCategory !== filter) {
+            setFilter(currentUrlCategory);
+            paramsChanged = true;
+        }
+
+        if (paramsChanged) {
             setCurrentPage(1);
         }
-    }, [searchParams]);
+    }, [searchParams, searchQuery, filter]);
 
     const fetchProducts = useCallback(async () => {
         setIsLoading(true);
@@ -62,18 +81,22 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
         e.preventDefault();
         setSearchQuery(searchInput);
         setCurrentPage(1);
+        const newParams = new URLSearchParams(searchParams);
         if (searchInput.trim()) {
-            setSearchParams({ search: searchInput });
+            newParams.set('search', searchInput);
         } else {
-            setSearchParams({});
+            newParams.delete('search');
         }
+        setSearchParams(newParams);
     };
 
     const clearSearch = () => {
         setSearchInput('');
         setSearchQuery('');
         setCurrentPage(1);
-        setSearchParams({});
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('search');
+        setSearchParams(newParams);
     };
 
     const toggleSortOrder = () => {
@@ -83,6 +106,18 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
             setCurrentPage(1);
             setTimeout(() => setIsAnimatingSort(false), 50);
         }, 200);
+    };
+
+    const handleFilterChange = (categoryId) => {
+        setFilter(categoryId);
+        setCurrentPage(1);
+        const newParams = new URLSearchParams(searchParams);
+        if (categoryId === 'todos') {
+            newParams.delete('categoria');
+        } else {
+            newParams.set('categoria', categoryId);
+        }
+        setSearchParams(newParams);
     };
 
     const categories = [
@@ -107,7 +142,7 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
 
                 <div className="products-filters" style={{ justifyContent: 'center', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
                     {categories.map(cat => (
-                        <span key={cat.id} className={filter === cat.id ? 'active' : ''} onClick={() => { setFilter(cat.id); setCurrentPage(1); }} style={{ cursor: 'pointer', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '2px', color: filter === cat.id ? 'var(--primary)' : 'var(--text-muted)', fontWeight: filter === cat.id ? 'bold' : 'normal' }}>
+                        <span key={cat.id} className={filter === cat.id ? 'active' : ''} onClick={() => handleFilterChange(cat.id)} style={{ cursor: 'pointer', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '2px', color: filter === cat.id ? 'var(--primary)' : 'var(--text-muted)', fontWeight: filter === cat.id ? 'bold' : 'normal' }}>
                             {cat.name}
                         </span>
                     ))}
@@ -150,8 +185,17 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
                                 </div>
                                 <h3 className="product-title font-serif">{product.nombre}</h3>
                                 <p className="product-price">${product.precio?.toFixed(2)}</p>
-                                <button className="add-to-cart-btn" onClick={() => addToCart(product)}>
-                                    <ShoppingCart size={14} strokeWidth={2} /> AGREGAR AL CARRITO
+                                <button 
+                                    className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''}`}
+                                    onClick={() => handleAddToCartClick(product)}
+                                >
+                                    {addedItem === product.id ? (
+                                        '¡AGREGADO! ✓'
+                                    ) : (
+                                        <>
+                                            <ShoppingCart size={14} strokeWidth={2} /> AGREGAR AL CARRITO
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         );

@@ -40,6 +40,71 @@ function ProductDetail({
   const [loading, setLoading] =
     useState(true);
 
+  const [similarProducts, setSimilarProducts] = 
+    useState([]);
+
+  const [mainItemAdded, setMainItemAdded] = useState(false);
+  const [addedSimilarItem, setAddedSimilarItem] = useState(null);
+
+  // =========================
+  // SCROLL TOP AL CAMBIAR ID
+  // =========================
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
+
+  // =========================
+  // PRODUCTOS SIMILARES
+  // =========================
+
+  useEffect(() => {
+    if (!productInfo) return;
+
+    const fetchSimilar = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/products?limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          const productsArray = Array.isArray(data) ? data : data.productos || [];
+          
+          if (productsArray && productsArray.length > 0) {
+            const mappedProducts = productsArray.map(p => ({
+              id: p.id,
+              name: p.nombre,
+              description: p.descripcion,
+              price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+              image: p.imagenUrl || 'https://via.placeholder.com/300',
+              category: 
+                p.categoria === 'pulsera' ? 'pulseras' : 
+                p.categoria === 'collar' ? 'collares' : 
+                p.categoria === 'anillo' ? 'anillos' : 
+                p.categoria === 'pendiente' ? 'pendientes' : 
+                p.categoria,
+              stock: p.stock
+            }));
+            
+            const filtered = mappedProducts
+              .filter(p => p.category === productInfo.category && p.id !== productInfo.id)
+              .slice(0, 4);
+              
+            setSimilarProducts(filtered);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching similar products', e);
+      }
+      
+      const filteredStatic = staticProducts
+        .filter(p => p.category === productInfo.category && p.id !== productInfo.id)
+        .slice(0, 4);
+      setSimilarProducts(filteredStatic);
+    };
+
+    fetchSimilar();
+  }, [productInfo]);
+
   // =========================
   // SINCRONIZAR CANTIDAD
   // =========================
@@ -269,6 +334,15 @@ function ProductDetail({
       true
     );
 
+    setMainItemAdded(true);
+    setTimeout(() => setMainItemAdded(false), 1500);
+
+  };
+
+  const handleSimilarAddToCartClick = (product) => {
+    addToCart(cleanProductPrice(product));
+    setAddedSimilarItem(product.id);
+    setTimeout(() => setAddedSimilarItem(null), 1500);
   };
 
   // =========================
@@ -301,7 +375,7 @@ function ProductDetail({
           : 99;
 
       if (maxStock === 0) {
-        showToast('Producto sin stock', 'error');
+        showToast('Límite de stock alcanzado', 'error');
         return 0;
 
       }
@@ -316,7 +390,7 @@ function ProductDetail({
       }
 
       if (newQty > maxStock) {
-        showToast('Producto sin stock', 'error');
+        showToast('Límite de stock alcanzado', 'error');
         return maxStock;
 
       }
@@ -345,8 +419,8 @@ function ProductDetail({
 
       {/* VOLVER */}
 
-      <Link
-        to="/"
+      <button
+        onClick={() => navigate(-1)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -356,15 +430,20 @@ function ProductDetail({
           fontSize: '12px',
           fontWeight: '600',
           letterSpacing: '2px',
-          textTransform: 'uppercase'
+          textTransform: 'uppercase',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          fontFamily: 'inherit'
         }}
       >
 
         <ArrowLeft size={16} />
 
-        VOLVER AL INICIO
+        VOLVER ATRÁS
 
-      </Link>
+      </button>
 
       <div className="product-detail-layout">
 
@@ -542,7 +621,7 @@ function ProductDetail({
                 }}
                 onClick={() => {
                   if (quantity >= Number(productInfo.stock)) {
-                    showToast('Producto sin stock', 'error');
+                    showToast('Límite de stock alcanzado', 'error');
                   } else {
                     updateQty(1);
                   }
@@ -556,7 +635,7 @@ function ProductDetail({
             {/* AGREGAR */}
 
             <button
-              className="add-to-cart-btn"
+              className={`add-to-cart-btn ${mainItemAdded ? 'item-added' : ''}`}
               style={{
                 flex: 1,
                 minWidth: '180px',
@@ -577,18 +656,22 @@ function ProductDetail({
                 Number(productInfo.stock) === 0
               }
             >
+              {mainItemAdded ? (
+                '¡AGREGADO! ✓'
+              ) : (
+                <>
+                  <ShoppingCart
+                    size={16}
+                    strokeWidth={2}
+                  />
 
-              <ShoppingCart
-                size={16}
-                strokeWidth={2}
-              />
-
-              {
-                Number(productInfo.stock) === 0
-                  ? 'SIN STOCK'
-                  : 'AÑADIR A MI BOLSA'
-              }
-
+                  {
+                    Number(productInfo.stock) === 0
+                      ? 'SIN STOCK'
+                      : 'AÑADIR A MI BOLSA'
+                  }
+                </>
+              )}
             </button>
 
             {/* COMPRAR */}
@@ -671,6 +754,69 @@ function ProductDetail({
         </div>
 
       </div>
+
+      {/* =========================
+          PRODUCTOS SIMILARES
+          ========================= */}
+      
+      {similarProducts.length > 0 && (
+        <section className="products-section" style={{ marginTop: '80px', paddingTop: '40px', borderTop: '1px solid var(--border-color)', paddingBottom: '40px' }}>
+          <div className="products-header" style={{ marginBottom: '40px', borderBottom: 'none', paddingBottom: '0' }}>
+            <h2 className="products-title font-serif" style={{ fontSize: '28px' }}>También te podría gustar</h2>
+          </div>
+
+          <div className="products-grid">
+            {similarProducts.map((product) => {
+              const isFav = favorites.some(fav => fav.id === product.id);
+
+              return (
+                <div key={product.id} className="product-card">
+                  <div className="product-image-container">
+                    <button
+                      className="wishlist-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(cleanProductPrice(product));
+                      }}
+                      style={{
+                        color: isFav ? '#e74c3c' : 'inherit',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      <Heart size={18} strokeWidth={2} fill={isFav ? '#e74c3c' : 'none'} />
+                    </button>
+
+                    <Link 
+                      to={`/producto/${product.id}`} 
+                      style={{ display: 'block' }}
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    >
+                      <img src={product.image} alt={product.name} />
+                    </Link>
+                  </div>
+
+                  <h3 className="product-title font-serif">{product.name}</h3>
+                  <p className="product-price">{product.price}</p>
+
+                  <button 
+                    className={`add-to-cart-btn ${addedSimilarItem === product.id ? 'item-added' : ''}`}
+                    onClick={() => handleSimilarAddToCartClick(product)}
+                  >
+                    {addedSimilarItem === product.id ? (
+                      '¡AGREGADO! ✓'
+                    ) : (
+                      <>
+                        <ShoppingCart size={14} strokeWidth={2} />
+                        AGREGAR AL CARRITO
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
     </div>
 

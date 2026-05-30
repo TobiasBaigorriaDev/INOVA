@@ -113,17 +113,17 @@ export const CartProvider = ({ children }) => {
     const targetQty = forceSetQty ? qtyNumber : currentQtyInCart + qtyNumber;
 
     if (availableStock <= 0) {
-      showToast('Producto sin stock', 'error');
+      showToast('Límite de stock alcanzado', 'error');
       return;
     }
 
     if (currentQtyInCart >= availableStock) {
-      showToast('Producto sin stock', 'error');
+      showToast('Límite de stock alcanzado', 'error');
       return;
     }
 
     if (targetQty > availableStock) {
-      showToast('Producto sin stock', 'error');
+      showToast('Límite de stock alcanzado', 'error');
       // Si ya está en el carrito al tope del stock, no hacemos nada más
       if (currentQtyInCart >= availableStock) {
         return;
@@ -171,7 +171,7 @@ export const CartProvider = ({ children }) => {
     }
 
     if (newQty > maxStock) {
-      showToast('Producto sin stock', 'error');
+      showToast('Límite de stock alcanzado', 'error');
       setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: maxStock } : p));
       return;
     }

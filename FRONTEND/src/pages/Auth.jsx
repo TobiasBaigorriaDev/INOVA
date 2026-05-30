@@ -364,7 +364,7 @@ function Auth({ setUsuario }) {
         <div className="auth-header">
 
           <h1 className="font-serif">
-            INOVA ATELIER
+            INOVA
           </h1>
 
           <p>
@@ -387,7 +387,7 @@ function Auth({ setUsuario }) {
 
             {isLogin
               ? 'Acceda a su cuenta exclusiva'
-              : 'Únase a nuestro exclusivo atelier'}
+              : 'Únase a INOVA'}
 
           </p>
 
@@ -449,7 +449,7 @@ function Auth({ setUsuario }) {
 
               <input
                 type="email"
-                placeholder="usuario@atelier.com"
+                placeholder="usuario@inova.com"
                 value={email}
                 onChange={(e) =>
                   setEmail(e.target.value)
@@ -528,7 +528,7 @@ function Auth({ setUsuario }) {
 
       <div className="auth-page-footer">
 
-        © 2024 THE DIGITAL ATELIER.
+        © 2024 INOVA.
         ALL RIGHTS RESERVED.
 
       </div>

@@ -11,6 +11,14 @@ function Home({ toggleFavorite, favorites }) {
   const [isHovered, setIsHovered] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9; // Mostrar máximo 9 productos por página (solo paginará de ser necesario)
+  
+  const [addedItem, setAddedItem] = useState(null);
+
+  const handleAddToCartClick = (product) => {
+    addToCart(cleanProductPrice(product));
+    setAddedItem(product.id);
+    setTimeout(() => setAddedItem(null), 1500);
+  };
 
   // Fetch de productos desde la base de datos PostgreSQL
   useEffect(() => {
@@ -62,7 +70,7 @@ function Home({ toggleFavorite, favorites }) {
     if (isHovered || carouselProducts.length === 0) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselProducts.length);
-    }, 4500);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isHovered, carouselProducts.length]);
 
@@ -90,10 +98,10 @@ function Home({ toggleFavorite, favorites }) {
 
   return (
     <>
-      <section className="hero">
+      <section className="hero hero-redesigned">
         <div className="hero-overlay"></div>
-        <div className="hero-container container">
-          <div className="hero-info">
+        <div className="hero-container container" style={{ gridTemplateColumns: '1fr', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', position: 'relative', zIndex: 10 }}>
+          <div className="hero-info" style={{ alignItems: 'center', textAlign: 'center' }}>
             <h1 className="hero-title font-serif">INOVA</h1>
             <p className="hero-subtitle">
               Piezas de autor creadas para quienes encuentran la belleza en los detalles más sutiles y la expresión sin fronteras.
@@ -102,62 +110,70 @@ function Home({ toggleFavorite, favorites }) {
               Explorar Colecciones
             </Link>
           </div>
+        </div>
+          
+        <div className="hero-carousel-wrapper">
+          <button 
+            className="carousel-arrow prev" 
+            onClick={prevSlide}
+            aria-label="Anterior producto"
+          >
+            <ChevronLeft size={20} strokeWidth={1.5} />
+          </button>
           
           <div 
-            className="hero-carousel-wrapper"
+            className="hero-carousel-track"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <button 
-              className="carousel-arrow prev" 
-              onClick={prevSlide}
-              aria-label="Anterior producto"
-            >
-              <ChevronLeft size={20} strokeWidth={1.5} />
-            </button>
-            
-            <div className="hero-carousel-track">
-              {carouselProducts.map((product, idx) => {
-                const isActive = idx === currentSlide;
-                return (
-                  <Link 
-                    key={product.id}
-                    to={`/producto/${product.id}`}
-                    className={`hero-carousel-card ${isActive ? 'active' : ''}`}
-                  >
-                    <div className="hero-card-image-container">
-                      <img src={product.image} alt={product.name} />
-                    </div>
-                    <div className="hero-card-info">
-                      <h3 className="hero-card-title font-serif">{product.name}</h3>
-                      <p className="hero-card-price">{product.price}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            {carouselProducts.map((product, idx) => {
+              let positionClass = 'hidden';
+              if (idx === currentSlide) {
+                positionClass = 'active';
+              } else if (idx === (currentSlide - 1 + carouselProducts.length) % carouselProducts.length) {
+                positionClass = 'prev-slide';
+              } else if (idx === (currentSlide + 1) % carouselProducts.length) {
+                positionClass = 'next-slide';
+              }
 
-            <button 
-              className="carousel-arrow next" 
-              onClick={nextSlide}
-              aria-label="Siguiente producto"
-            >
-              <ChevronRight size={20} strokeWidth={1.5} />
-            </button>
+              return (
+                <Link 
+                  key={product.id}
+                  to={`/producto/${product.id}`}
+                  className={`hero-carousel-card ${positionClass}`}
+                >
+                  <div className="hero-card-image-container">
+                    <img src={product.image} alt={product.name} />
+                  </div>
+                  <div className="hero-card-info">
+                    <h3 className="hero-card-title font-serif">{product.name}</h3>
+                    <p className="hero-card-price">{product.price}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
 
-            <div className="carousel-dots">
-              {carouselProducts.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`carousel-dot ${idx === currentSlide ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentSlide(idx);
-                  }}
-                  aria-label={`Ir al producto ${idx + 1}`}
-                />
-              ))}
-            </div>
+          <button 
+            className="carousel-arrow next" 
+            onClick={nextSlide}
+            aria-label="Siguiente producto"
+          >
+            <ChevronRight size={20} strokeWidth={1.5} />
+          </button>
+
+          <div className="carousel-dots">
+            {carouselProducts.map((_, idx) => (
+              <button
+                key={idx}
+                className={`carousel-dot ${idx === currentSlide ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentSlide(idx);
+                }}
+                aria-label={`Ir al producto ${idx + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -205,9 +221,18 @@ function Home({ toggleFavorite, favorites }) {
                 <h3 className="product-title font-serif">{product.name}</h3>
                 <p className="product-price">{product.price}</p>
 
-                <button className="add-to-cart-btn" onClick={() => addToCart(cleanProductPrice(product))}>
-                  <ShoppingCart size={14} strokeWidth={2} />
-                  AGREGAR AL CARRITO
+                <button 
+                  className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''}`}
+                  onClick={() => handleAddToCartClick(product)}
+                >
+                  {addedItem === product.id ? (
+                    '¡AGREGADO! ✓'
+                  ) : (
+                    <>
+                      <ShoppingCart size={14} strokeWidth={2} />
+                      AGREGAR AL CARRITO
+                    </>
+                  )}
                 </button>
               </div>
             );

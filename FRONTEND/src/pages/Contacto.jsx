@@ -68,9 +68,9 @@ function Contacto() {
       </div>
 
       <div className="contacto-layout container">
-        {/* LADO IZQUIERDO: Información del Atelier */}
+        {/* LADO IZQUIERDO: Información de INOVA */}
         <div className="contacto-info-section">
-          <h2 className="font-serif">El Atelier INOVA</h2>
+          <h2 className="font-serif">Contacto INOVA</h2>
           <p className="contacto-subtitle">
             Cada joya e historia es única. Póngase en contacto con nuestro equipo para asesorías personalizadas sobre tallas, pedidos a medida o consultas generales.
           </p>
@@ -98,7 +98,7 @@ function Contacto() {
               <Mail className="info-icon" size={20} />
               <div>
                 <h4>Consultas Generales</h4>
-                <p>info@inova-atelier.com</p>
+                <p>info@inova.com</p>
                 {/* inova.accesorios0@gmail.com */}
               </div>
             </div>
@@ -117,7 +117,7 @@ function Contacto() {
                 className="social-btn whatsapp-btn"
               >
                 <MessageSquare size={18} />
-                <span>WHATSAPP ATELIER</span>
+                <span>WHATSAPP INOVA</span>
               </a>
 
               {/* BOTÓN INSTAGRAM */}
@@ -145,7 +145,7 @@ function Contacto() {
               <div className="success-state">
                 <CheckCircle size={60} className="success-icon" />
                 <h3 className="font-serif">¡Mensaje Enviado!</h3>
-                <p>Agradecemos su interés en INOVA. Un asesor de nuestro atelier se pondrá en contacto con usted a la brevedad posible.</p>
+                <p>Agradecemos su interés en INOVA. Un asesor de INOVA se pondrá en contacto con usted a la brevedad posible.</p>
                 <button
                   onClick={() => setSuccess(false)}
                   className="btn-retry"
