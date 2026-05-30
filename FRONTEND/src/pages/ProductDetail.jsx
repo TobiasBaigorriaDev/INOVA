@@ -40,11 +40,13 @@ function ProductDetail({
   const [loading, setLoading] =
     useState(true);
 
-  const [similarProducts, setSimilarProducts] = 
+  const [similarProducts, setSimilarProducts] =
     useState([]);
 
   const [mainItemAdded, setMainItemAdded] = useState(false);
+  const [isStockLimitReached, setIsStockLimitReached] = useState(false);
   const [addedSimilarItem, setAddedSimilarItem] = useState(null);
+  const [errorSimilarItem, setErrorSimilarItem] = useState(null);
 
   // =========================
   // SCROLL TOP AL CAMBIAR ID
@@ -67,7 +69,7 @@ function ProductDetail({
         if (response.ok) {
           const data = await response.json();
           const productsArray = Array.isArray(data) ? data : data.productos || [];
-          
+
           if (productsArray && productsArray.length > 0) {
             const mappedProducts = productsArray.map(p => ({
               id: p.id,
@@ -75,19 +77,19 @@ function ProductDetail({
               description: p.descripcion,
               price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
               image: p.imagenUrl || 'https://via.placeholder.com/300',
-              category: 
-                p.categoria === 'pulsera' ? 'pulseras' : 
-                p.categoria === 'collar' ? 'collares' : 
-                p.categoria === 'anillo' ? 'anillos' : 
-                p.categoria === 'pendiente' ? 'pendientes' : 
-                p.categoria,
+              category:
+                p.categoria === 'pulsera' ? 'pulseras' :
+                  p.categoria === 'collar' ? 'collares' :
+                    p.categoria === 'anillo' ? 'anillos' :
+                      p.categoria === 'pendiente' ? 'pendientes' :
+                        p.categoria,
               stock: p.stock
             }));
-            
+
             const filtered = mappedProducts
               .filter(p => p.category === productInfo.category && p.id !== productInfo.id)
               .slice(0, 4);
-              
+
             setSimilarProducts(filtered);
             return;
           }
@@ -95,7 +97,7 @@ function ProductDetail({
       } catch (e) {
         console.error('Error fetching similar products', e);
       }
-      
+
       const filteredStatic = staticProducts
         .filter(p => p.category === productInfo.category && p.id !== productInfo.id)
         .slice(0, 4);
@@ -109,37 +111,20 @@ function ProductDetail({
   // SINCRONIZAR CANTIDAD
   // =========================
 
+  // =========================
+  // SINCRONIZAR CANTIDAD
+  // =========================
+
   useEffect(() => {
-
     if (productInfo) {
-
-      const existingItem =
-        cartItems.find(
-          item => item.id === productInfo.id
-        );
-
-      const stockNum =
-        Number(productInfo.stock);
-
+      const stockNum = Number(productInfo.stock);
       if (stockNum === 0) {
-
         setQuantity(0);
-
-      } else if (existingItem) {
-
-        setQuantity(
-          Number(existingItem.qty)
-        );
-
       } else {
-
         setQuantity(1);
-
       }
-
     }
-
-  }, [productInfo?.id, cartItems]);
+  }, [productInfo?.id]);
 
   // =========================
   // TRAER PRODUCTO
@@ -191,12 +176,12 @@ function ProductDetail({
               p.categoria === 'pulsera'
                 ? 'pulseras'
                 : p.categoria === 'collar'
-                ? 'collares'
-                : p.categoria === 'anillo'
-                ? 'anillos'
-                : p.categoria === 'pendiente'
-                ? 'pendientes'
-                : p.categoria,
+                  ? 'collares'
+                  : p.categoria === 'anillo'
+                    ? 'anillos'
+                    : p.categoria === 'pendiente'
+                      ? 'pendientes'
+                      : p.categoria,
 
             stock:
               p.stock !== undefined
@@ -327,12 +312,22 @@ function ProductDetail({
   // =========================
 
   const handleAddToCart = () => {
+    const existingItem = cartItems.find(item => item.id === productInfo.id);
+    const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
+
+    if (cartQuantity + quantity > Number(productInfo.stock)) {
+      setIsStockLimitReached(true);
+      setTimeout(() => setIsStockLimitReached(false), 1500);
+      return;
+    }
 
     addToCart(
       cleanProductPrice(productInfo),
       quantity,
-      true
+      false // Sumamos la cantidad en lugar de sobreescribirla
     );
+
+    setQuantity(1); // Reiniciamos el contador a 1 tras agregar al carrito
 
     setMainItemAdded(true);
     setTimeout(() => setMainItemAdded(false), 1500);
@@ -340,6 +335,15 @@ function ProductDetail({
   };
 
   const handleSimilarAddToCartClick = (product) => {
+    const existingItem = cartItems.find(item => item.id === product.id);
+    const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
+
+    if (cartQuantity + 1 > Number(product.stock)) {
+      setErrorSimilarItem(product.id);
+      setTimeout(() => setErrorSimilarItem(null), 1500);
+      return;
+    }
+
     addToCart(cleanProductPrice(product));
     setAddedSimilarItem(product.id);
     setTimeout(() => setAddedSimilarItem(null), 1500);
@@ -519,7 +523,7 @@ function ProductDetail({
 
             {
               productInfo.description ||
-              'Una pieza artesanal unica para tu coleccion.'
+              'Una pieza artesanal única para tu colección.'
             }
 
           </p>
@@ -577,13 +581,13 @@ function ProductDetail({
                   fontSize: '20px',
                   cursor:
                     quantity <= 1 ||
-                    Number(productInfo.stock) === 0
+                      Number(productInfo.stock) === 0
                       ? 'not-allowed'
                       : 'pointer',
                   padding: '10px',
                   color:
                     quantity <= 1 ||
-                    Number(productInfo.stock) === 0
+                      Number(productInfo.stock) === 0
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
@@ -635,7 +639,7 @@ function ProductDetail({
             {/* AGREGAR */}
 
             <button
-              className={`add-to-cart-btn ${mainItemAdded ? 'item-added' : ''}`}
+              className={`add-to-cart-btn ${mainItemAdded ? 'item-added' : ''} ${isStockLimitReached ? 'item-error shake' : ''}`}
               style={{
                 flex: 1,
                 minWidth: '180px',
@@ -647,7 +651,7 @@ function ProductDetail({
                     ? 0.5
                     : 1,
                 cursor:
-                  Number(productInfo.stock) === 0
+                  Number(productInfo.stock) === 0 || isStockLimitReached
                     ? 'not-allowed'
                     : 'pointer'
               }}
@@ -656,7 +660,9 @@ function ProductDetail({
                 Number(productInfo.stock) === 0
               }
             >
-              {mainItemAdded ? (
+              {isStockLimitReached ? (
+                '¡Stock Máximo Alcanzado! ❌'
+              ) : mainItemAdded ? (
                 '¡AGREGADO! ✓'
               ) : (
                 <>
@@ -758,7 +764,7 @@ function ProductDetail({
       {/* =========================
           PRODUCTOS SIMILARES
           ========================= */}
-      
+
       {similarProducts.length > 0 && (
         <section className="products-section" style={{ marginTop: '80px', paddingTop: '40px', borderTop: '1px solid var(--border-color)', paddingBottom: '40px' }}>
           <div className="products-header" style={{ marginBottom: '40px', borderBottom: 'none', paddingBottom: '0' }}>
@@ -786,8 +792,8 @@ function ProductDetail({
                       <Heart size={18} strokeWidth={2} fill={isFav ? '#e74c3c' : 'none'} />
                     </button>
 
-                    <Link 
-                      to={`/producto/${product.id}`} 
+                    <Link
+                      to={`/producto/${product.id}`}
                       style={{ display: 'block' }}
                       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
@@ -798,11 +804,13 @@ function ProductDetail({
                   <h3 className="product-title font-serif">{product.name}</h3>
                   <p className="product-price">{product.price}</p>
 
-                  <button 
-                    className={`add-to-cart-btn ${addedSimilarItem === product.id ? 'item-added' : ''}`}
+                  <button
+                    className={`add-to-cart-btn ${addedSimilarItem === product.id ? 'item-added' : ''} ${errorSimilarItem === product.id ? 'item-error shake' : ''}`}
                     onClick={() => handleSimilarAddToCartClick(product)}
                   >
-                    {addedSimilarItem === product.id ? (
+                    {errorSimilarItem === product.id ? (
+                      '¡Stock Máximo Alcanzado! ❌'
+                    ) : addedSimilarItem === product.id ? (
                       '¡AGREGADO! ✓'
                     ) : (
                       <>

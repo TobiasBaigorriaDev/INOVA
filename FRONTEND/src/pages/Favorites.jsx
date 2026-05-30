@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
 function Favorites({ favorites, toggleFavorite }) {
-    const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
+    const { addToCart, cartItems } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
+    const [addedItem, setAddedItem] = useState(null);
+    const [errorItem, setErrorItem] = useState(null);
+
+    const handleAddToCartClick = (product) => {
+        const existingItem = cartItems.find(item => item.id === product.id);
+        const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
+
+        if (cartQuantity + 1 > Number(product.stock)) {
+            setErrorItem(product.id);
+            setTimeout(() => setErrorItem(null), 1500);
+            return;
+        }
+
+        addToCart(product);
+        setAddedItem(product.id);
+        setTimeout(() => setAddedItem(null), 1500);
+    };
+
     return (
         <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', minHeight: '60vh' }}>
 
@@ -42,10 +60,17 @@ function Favorites({ favorites, toggleFavorite }) {
 
                             <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                                 <button
-                                    onClick={() => addToCart(product)}
-                                    style={{ flex: 1, backgroundColor: '#2b0e2b', color: 'white', border: 'none', padding: '10px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}
+                                    className={`${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
+                                    onClick={() => handleAddToCartClick(product)}
+                                    style={{ flex: 1, backgroundColor: errorItem === product.id ? '#e74c3c' : (addedItem === product.id ? '#2ecc71' : '#2b0e2b'), color: 'white', border: 'none', padding: '10px', cursor: errorItem === product.id ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px', transition: 'all 0.3s' }}
                                 >
-                                    <ShoppingCart size={14} /> AL CARRITO
+                                    {errorItem === product.id ? (
+                                        <span style={{ fontSize: '10px' }}>¡Stock Máximo Alcanzado! ❌</span>
+                                    ) : addedItem === product.id ? (
+                                        '¡AGREGADO! ✓'
+                                    ) : (
+                                        <><ShoppingCart size={14} /> AL CARRITO</>
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => toggleFavorite(product)}

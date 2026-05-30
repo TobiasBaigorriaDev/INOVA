@@ -57,10 +57,10 @@ export const CartProvider = ({ children }) => {
 
         setCartItems((prevItems) => {
           let hasChanges = false;
-          
+
           const updatedItems = prevItems.map((item) => {
             const dbProduct = productsArray.find((p) => p.id === item.id);
-            
+
             if (dbProduct) {
               const dbPrice = dbProduct.precio;
               const dbName = dbProduct.nombre;
@@ -70,10 +70,10 @@ export const CartProvider = ({ children }) => {
               // Si el precio, nombre, imagen o stock de la DB no coinciden con los del carrito, los actualizamos
               if (item.price !== dbPrice || item.name !== dbName || item.image !== dbImage || item.stock !== dbStock) {
                 hasChanges = true;
-                return { 
-                  ...item, 
-                  price: dbPrice, 
-                  name: dbName, 
+                return {
+                  ...item,
+                  price: dbPrice,
+                  name: dbName,
                   image: dbImage,
                   stock: dbStock
                 };
@@ -108,7 +108,7 @@ export const CartProvider = ({ children }) => {
     // Buscar si el producto ya está en el carrito
     const existingItem = cartItems.find((item) => item.id === product.id);
     const currentQtyInCart = existingItem ? Number(existingItem.qty) : 0;
-    
+
     // Calcular la cantidad final que resultaría de esta operación
     const targetQty = forceSetQty ? qtyNumber : currentQtyInCart + qtyNumber;
 
@@ -132,7 +132,7 @@ export const CartProvider = ({ children }) => {
 
     setCartItems((prevItems) => {
       const existingItemInState = prevItems.find((item) => item.id === product.id);
-      
+
       if (existingItemInState) {
         // Si ya existe, incrementamos su cantidad asegurando no superar el stock, o la sobreescribimos si forceSetQty es true
         return prevItems.map((item) => {
@@ -145,7 +145,7 @@ export const CartProvider = ({ children }) => {
       } else {
         // Si es nuevo, lo agregamos con sus campos, cantidad especificada y stock disponible
         const initialQty = qtyNumber > availableStock ? availableStock : qtyNumber;
-        return [...prevItems, { 
+        return [...prevItems, {
           id: product.id,
           name: product.nombre || product.name,
           price: numericPrice,
@@ -193,10 +193,10 @@ export const CartProvider = ({ children }) => {
 
   // Subtotal: suma de precio * cantidad de cada artículo
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
-  
+
   // Envío fijo si hay productos (deshabilitado: entregas en puntos de encuentro sin costo)
   const envio = 0;
-  
+
   // Total global
   const total = subtotal + envio;
 

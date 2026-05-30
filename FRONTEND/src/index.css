@@ -594,6 +594,24 @@ li {
   border-color: #27ae60 !important;
 }
 
+.add-to-cart-btn.item-error {
+  background: #e74c3c !important;
+  color: white !important;
+  border-color: #e74c3c !important;
+  cursor: not-allowed !important;
+}
+
+.shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
 .add-to-cart-btn::after {
   content: '';
   position: absolute;
@@ -618,6 +636,7 @@ li {
   0% {
     transform: translate(-50%, -50%) scale(0);
   }
+
   100% {
     transform: translate(-50%, -50%) scale(30);
   }
@@ -831,8 +850,9 @@ li {
   .hero-carousel-wrapper {
     max-width: 100vw;
   }
-  
-  .hero-carousel-card.prev-slide, .hero-carousel-card.next-slide {
+
+  .hero-carousel-card.prev-slide,
+  .hero-carousel-card.next-slide {
     display: none;
   }
 
@@ -935,9 +955,9 @@ li {
   }
 }
 
-@media (max-width: 768px){
+@media (max-width: 768px) {
 
-  .chat-btn{
+  .chat-btn {
 
     width: 62px;
     height: 62px;
@@ -948,9 +968,9 @@ li {
 
 }
 
-@media (max-width: 480px){
+@media (max-width: 480px) {
 
-  .chat-btn{
+  .chat-btn {
 
     width: 58px;
     height: 58px;
@@ -996,6 +1016,7 @@ li {
     transform: translateY(100px) scale(0.9);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -1017,6 +1038,7 @@ li {
     transform: translateY(100%) scale(0.9);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;

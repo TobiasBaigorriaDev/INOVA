@@ -5,16 +5,26 @@ import { products as staticProducts } from '../data/products';
 import { useCart } from '../context/CartContext'; // <-- IMPORTAMOS EL HOOK DEL CONTEXTO
 
 function Home({ toggleFavorite, favorites }) {
-  const { addToCart } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
+  const { addToCart, cartItems } = useCart(); // <-- CONSUMIMOS EL CARRITO DIRECTAMENTE
   const [dbProducts, setDbProducts] = useState(staticProducts);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9; // Mostrar máximo 9 productos por página (solo paginará de ser necesario)
-  
+
   const [addedItem, setAddedItem] = useState(null);
+  const [errorItem, setErrorItem] = useState(null);
 
   const handleAddToCartClick = (product) => {
+    const existingItem = cartItems.find(item => item.id === product.id);
+    const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
+
+    if (cartQuantity + 1 > Number(product.stock)) {
+      setErrorItem(product.id);
+      setTimeout(() => setErrorItem(null), 1500);
+      return;
+    }
+
     addToCart(cleanProductPrice(product));
     setAddedItem(product.id);
     setTimeout(() => setAddedItem(null), 1500);
@@ -27,11 +37,11 @@ function Home({ toggleFavorite, favorites }) {
         const response = await fetch('http://localhost:3000/api/products?limit=100');
         if (!response.ok) throw new Error('Error al obtener productos');
         const data = await response.json();
-        
+
         const productsArray = Array.isArray(data)
           ? data
           : data.productos || [];
-          
+
         if (productsArray && productsArray.length > 0) {
           // Mapeamos los productos de PostgreSQL al formato del frontend
           const mappedProducts = productsArray.map(p => ({
@@ -40,12 +50,12 @@ function Home({ toggleFavorite, favorites }) {
             description: p.descripcion,
             price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
             image: p.imagenUrl || 'https://via.placeholder.com/300',
-            category: 
-              p.categoria === 'pulsera' ? 'pulseras' : 
-              p.categoria === 'collar' ? 'collares' : 
-              p.categoria === 'anillo' ? 'anillos' : 
-              p.categoria === 'pendiente' ? 'pendientes' : 
-              p.categoria,
+            category:
+              p.categoria === 'pulsera' ? 'pulseras' :
+                p.categoria === 'collar' ? 'collares' :
+                  p.categoria === 'anillo' ? 'anillos' :
+                    p.categoria === 'pendiente' ? 'pendientes' :
+                      p.categoria,
             stock: p.stock
           }));
           setDbProducts(mappedProducts);
@@ -56,7 +66,7 @@ function Home({ toggleFavorite, favorites }) {
     };
     fetchProducts();
   }, []);
-  
+
   // Curated products for the hero carousel (first 4 products)
   const carouselProducts = dbProducts.slice(0, 4);
 
@@ -111,17 +121,17 @@ function Home({ toggleFavorite, favorites }) {
             </Link>
           </div>
         </div>
-          
+
         <div className="hero-carousel-wrapper">
-          <button 
-            className="carousel-arrow prev" 
+          <button
+            className="carousel-arrow prev"
             onClick={prevSlide}
             aria-label="Anterior producto"
           >
             <ChevronLeft size={20} strokeWidth={1.5} />
           </button>
-          
-          <div 
+
+          <div
             className="hero-carousel-track"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -137,7 +147,7 @@ function Home({ toggleFavorite, favorites }) {
               }
 
               return (
-                <Link 
+                <Link
                   key={product.id}
                   to={`/producto/${product.id}`}
                   className={`hero-carousel-card ${positionClass}`}
@@ -154,8 +164,8 @@ function Home({ toggleFavorite, favorites }) {
             })}
           </div>
 
-          <button 
-            className="carousel-arrow next" 
+          <button
+            className="carousel-arrow next"
             onClick={nextSlide}
             aria-label="Siguiente producto"
           >
@@ -221,11 +231,13 @@ function Home({ toggleFavorite, favorites }) {
                 <h3 className="product-title font-serif">{product.name}</h3>
                 <p className="product-price">{product.price}</p>
 
-                <button 
-                  className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''}`}
+                <button
+                  className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
                   onClick={() => handleAddToCartClick(product)}
                 >
-                  {addedItem === product.id ? (
+                  {errorItem === product.id ? (
+                    '¡Stock Máximo Alcanzado! ❌'
+                  ) : addedItem === product.id ? (
                     '¡AGREGADO! ✓'
                   ) : (
                     <>
@@ -241,7 +253,7 @@ function Home({ toggleFavorite, favorites }) {
 
         {totalPages > 1 && (
           <div className="pagination-container">
-            <button 
+            <button
               className="pagination-arrow"
               onClick={() => {
                 setCurrentPage(prev => Math.max(prev - 1, 1));
@@ -265,7 +277,7 @@ function Home({ toggleFavorite, favorites }) {
                 </button>
               ))}
             </div>
-            <button 
+            <button
               className="pagination-arrow"
               onClick={() => {
                 setCurrentPage(prev => Math.min(prev + 1, totalPages));

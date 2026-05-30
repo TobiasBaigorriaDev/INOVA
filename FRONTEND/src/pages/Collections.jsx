@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, ShoppingCart, Search, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
 function Collections({ toggleFavorite, favorites, addToCart }) {
+    const { cartItems } = useCart();
     const [searchParams, setSearchParams] = useSearchParams();
     const urlSearchQuery = searchParams.get('search') || '';
 
@@ -16,8 +18,18 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const [sortOrder, setSortOrder] = useState('');
     const [isAnimatingSort, setIsAnimatingSort] = useState(false);
     const [addedItem, setAddedItem] = useState(null);
+    const [errorItem, setErrorItem] = useState(null);
 
     const handleAddToCartClick = (product) => {
+        const existingItem = cartItems.find(item => item.id === product.id);
+        const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
+
+        if (cartQuantity + 1 > Number(product.stock)) {
+            setErrorItem(product.id);
+            setTimeout(() => setErrorItem(null), 1500);
+            return;
+        }
+
         addToCart(product);
         setAddedItem(product.id);
         setTimeout(() => setAddedItem(null), 1500);
@@ -185,11 +197,13 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
                                 </div>
                                 <h3 className="product-title font-serif">{product.nombre}</h3>
                                 <p className="product-price">${product.precio?.toFixed(2)}</p>
-                                <button 
-                                    className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''}`}
+                                <button
+                                    className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
                                     onClick={() => handleAddToCartClick(product)}
                                 >
-                                    {addedItem === product.id ? (
+                                    {errorItem === product.id ? (
+                                        '¡Stock Máximo Alcanzado! ❌'
+                                    ) : addedItem === product.id ? (
                                         '¡AGREGADO! ✓'
                                     ) : (
                                         <>

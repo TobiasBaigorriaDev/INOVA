@@ -17,7 +17,7 @@ function Historia() {
           
           <div className="historia-placeholder">
             <p>
-              (informacion de la historia del emprendimiento de la abril escrita por la abril)
+              (información de la historia del emprendimiento de Abril escrita por Abril)
             </p>
           </div>
           
