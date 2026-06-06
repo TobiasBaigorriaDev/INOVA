@@ -18,17 +18,28 @@ function Contacto() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'telefono') {
+      const onlyNumbers = value.replace(/[^0-9]/g, '');
+      setFormData(prev => ({ ...prev, [name]: onlyNumbers }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.nombre.trim() || !formData.apellido.trim() || !formData.email.trim() || !formData.mensaje.trim()) {
+      setError('Por favor, complete todos los campos requeridos con información válida.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       // Enviar datos al webhook de n8n
-      const response = await fetch('http://localhost:5678/webhook/f3d4d1ef-5e70-46e1-8540-d167d357b729', {
+      const response = await fetch('http://localhost:5678/webhook-test/f3d4d1ef-5e70-46e1-8540-d167d357b729', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

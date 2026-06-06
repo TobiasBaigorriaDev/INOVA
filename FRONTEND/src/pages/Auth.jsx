@@ -248,6 +248,17 @@ function Auth({ setUsuario }) {
 
     e.preventDefault();
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMensaje('El formato del email no es válido.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMensaje('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
     try {
 
       setErrorMensaje('');
