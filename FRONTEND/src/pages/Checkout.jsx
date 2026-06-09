@@ -91,8 +91,33 @@ function Checkout() {
   const [successMsg, setSuccessMsg] =
     useState('');
 
+  // Función para obtener los próximos Lunes, Martes y Miércoles
+  const getNextAvailableDays = () => {
+    const availableDates = [];
+    const today = new Date();
+    
+    // Revisamos los próximos 7 días buscando Lunes(1), Martes(2) y Miércoles(3)
+    for (let i = 1; i <= 7; i++) {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + i);
+      const dayOfWeek = nextDate.getDay();
+      
+      if (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 3) {
+        const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+        let formatted = nextDate.toLocaleDateString('es-AR', opciones);
+        // Capitalizar y quitar coma si existe
+        formatted = formatted.replace(',', '');
+        formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        availableDates.push(formatted);
+      }
+    }
+    return availableDates;
+  };
+
+  const availableDays = getNextAvailableDays();
+
   const [selectedDay, setSelectedDay] =
-    useState('Lunes');
+    useState(availableDays[0]);
 
   const [selectedTime, setSelectedTime] =
     useState('13:00');
@@ -403,10 +428,9 @@ function Checkout() {
               DÍA DISPONIBLE
             </div>
 
-            <div className="days-grid">
+            <div className="days-grid" style={{ gridTemplateColumns: '1fr', gap: '10px' }}>
 
-              {['Lunes', 'Martes', 'Miércoles']
-                .map(day => (
+              {availableDays.map(day => (
 
                 <button
                   key={day}
@@ -418,6 +442,7 @@ function Checkout() {
                   onClick={() =>
                     setSelectedDay(day)
                   }
+                  style={{ width: '100%', textAlign: 'left', padding: '12px 20px' }}
                 >
                   {day}
                 </button>

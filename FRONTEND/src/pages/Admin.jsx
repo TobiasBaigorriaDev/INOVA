@@ -787,27 +787,27 @@ function Admin() {
                 <tbody>
                   {productos.map((producto) => (
                     <tr key={producto.id}>
-                      <td>
+                      <td data-label="Imagen">
                         <div className="table-img-container">
                           {producto.imagenUrl ? <img src={producto.imagenUrl} alt={producto.nombre} /> : <ImageIcon size={24} color="#ccc" />}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Nombre y Categoría">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <input type="text" value={producto.nombre || ''} onChange={(e) => handleTableFieldChange(producto.id, 'nombre', e.target.value)} style={{ width: '145px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }} />
                           <span className={`badge badge-${producto.categoria}`} style={{ alignSelf: 'flex-start' }}>{producto.categoria}</span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Descripción">
                         <textarea value={producto.descripcion || ''} onChange={(e) => handleTableFieldChange(producto.id, 'descripcion', e.target.value)} style={{ width: '190px', height: '55px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '13px', resize: 'none' }} />
                       </td>
-                      <td>
+                      <td data-label="Precio">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <span>$</span>
                           <input type="number" value={producto.precio !== undefined ? producto.precio : ''} onChange={(e) => handleTableFieldChange(producto.id, 'precio', e.target.value)} style={{ width: '85px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '14px' }} step="0.01" min="0" />
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Stock">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <input 
                             type="number" 
@@ -837,7 +837,7 @@ function Admin() {
                           )}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Acciones">
                         <button onClick={() => handleTableSave(producto)} style={{ marginRight: '16px', backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Guardar</button>
                         <button className="delete-btn" onClick={() => handleDelete(producto.id)} title="Eliminar"><Trash2 size={16} /> Eliminar</button>
                       </td>
@@ -889,23 +889,23 @@ function Admin() {
                       style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
                       className={expandedOrderId === order.id ? 'row-expanded' : ''}
                     >
-                      <td style={{ fontWeight: '700', color: '#5A406B' }}>#{order.id}</td>
-                      <td style={{ fontSize: '13px', color: '#555' }}>
+                      <td data-label="Nº Pedido" style={{ fontWeight: '700', color: '#5A406B' }}>#{order.id}</td>
+                      <td data-label="Fecha y Hora" style={{ fontSize: '13px', color: '#555' }}>
                         {new Date(order.createdAt).toLocaleDateString('es-AR')} - {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
                       </td>
-                      <td>
+                      <td data-label="Cliente">
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: '600', color: '#333' }}>{order.nombreCliente} {order.apellidoCliente}</span>
                           <span style={{ fontSize: '12px', color: '#888' }}>{order.email}</span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Método de Pago">
                         <span className={`badge badge-payment-${order.metodoPago || 'efectivo'}`}>
                           {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}
                         </span>
                       </td>
-                      <td style={{ fontWeight: '700', color: '#5A406B' }}>${Number(order.total).toFixed(2)}</td>
-                      <td onClick={(e) => e.stopPropagation()}>
+                      <td data-label="Monto Total" style={{ fontWeight: '700', color: '#5A406B' }}>${Number(order.total).toFixed(2)}</td>
+                      <td data-label="Estado" onClick={(e) => e.stopPropagation()}>
                         <select 
                           value={order.status} 
                           onChange={(e) => handleTableFieldChange(order.id, 'status', e.target.value, true)}
@@ -924,7 +924,7 @@ function Admin() {
                           <option value="cancelado">Cancelado</option>
                         </select>
                       </td>
-                      <td onClick={(e) => e.stopPropagation()}>
+                      <td data-label="Acción" onClick={(e) => e.stopPropagation()}>
                         <button 
                           onClick={() => handleUpdateOrderStatus(order.id, order.status)}
                           style={{
@@ -948,23 +948,33 @@ function Admin() {
                     {expandedOrderId === order.id && (
                       <tr className="expanded-detail-row">
                         <td colSpan={7}>
-                          <div className="order-items-detail-container">
-                            <h4 className="detail-title">Productos Comprados (Pedido #{order.id})</h4>
-                            <div className="detail-items-list">
+                          <div className="order-items-detail-container" style={{ padding: '15px 0' }}>
+                            <div className="order-meeting-point-info" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5eff9', borderRadius: '10px', border: '1px solid rgba(90, 64, 107, 0.1)' }}>
+                              <h5 style={{ margin: '0 0 10px 0', color: '#5A406B', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                📍 Punto de Encuentro Pactado
+                              </h5>
+                              <p style={{ margin: 0, fontSize: '13px', color: '#444', display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
+                                <span><strong>Día:</strong> {order.diaEncuentro || 'No especificado'}</span>
+                                <span><strong>Hora:</strong> {order.horaEncuentro || 'No especificada'}</span>
+                              </p>
+                            </div>
+                            
+                            <h4 className="detail-title" style={{ fontSize: '14px', marginBottom: '12px', color: '#333' }}>Productos Comprados (Pedido #{order.id})</h4>
+                            <div className="detail-items-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                               {order.items && order.items.map((item) => (
-                                <div key={item.id} className="detail-item-card">
-                                  <div className="detail-item-img-container">
-                                    <img src={item.producto?.imagenUrl || 'https://via.placeholder.com/60'} alt={item.producto?.nombre} />
+                                <div key={item.id} className="detail-item-card" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px', backgroundColor: '#fafafa', borderRadius: '10px', border: '1px solid #eee' }}>
+                                  <div className="detail-item-img-container" style={{ width: '50px', height: '50px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #eaeaea', backgroundColor: '#fff' }}>
+                                    <img src={item.producto?.imagenUrl || 'https://via.placeholder.com/60'} alt={item.producto?.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                   </div>
-                                  <div className="detail-item-info">
-                                    <span className="item-name">{item.producto?.nombre || 'Producto eliminado'}</span>
-                                    <span className="item-price">${Number(item.precioUnitario).toFixed(2)} c/u</span>
+                                  <div className="detail-item-info" style={{ flex: 1, minWidth: '100px' }}>
+                                    <div className="item-name" style={{ fontWeight: '600', fontSize: '13px', color: '#333', marginBottom: '4px' }}>{item.producto?.nombre || 'Producto eliminado'}</div>
+                                    <div className="item-price" style={{ fontSize: '12px', color: '#888' }}>${Number(item.precioUnitario).toFixed(2)} c/u</div>
                                   </div>
-                                  <div className="detail-item-qty">
-                                    <span>{item.cantidad} {item.cantidad === 1 ? 'unidad' : 'unidades'}</span>
+                                  <div className="detail-item-qty" style={{ fontSize: '12px', fontWeight: '600', color: '#5A406B', backgroundColor: '#f3eef7', padding: '4px 10px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                                    {item.cantidad} {item.cantidad === 1 ? 'ud.' : 'uds.'}
                                   </div>
-                                  <div className="detail-item-total">
-                                    <span>Subtotal: ${(item.cantidad * Number(item.precioUnitario)).toFixed(2)}</span>
+                                  <div className="detail-item-total" style={{ fontSize: '13px', fontWeight: '700', color: '#333', minWidth: '70px', textAlign: 'right' }}>
+                                    ${(item.cantidad * Number(item.precioUnitario)).toFixed(2)}
                                   </div>
                                 </div>
                               ))}

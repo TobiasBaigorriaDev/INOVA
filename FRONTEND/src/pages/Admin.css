@@ -24,10 +24,15 @@
   gap: 40px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1440px) {
   .admin-content {
     flex-direction: row;
     align-items: flex-start;
+  }
+  
+  .admin-form-section {
+    position: sticky;
+    top: 100px;
   }
 }
 
@@ -38,8 +43,6 @@
   padding: 40px;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
-  position: sticky;
-  top: 100px;
 }
 
 .admin-form-title {
@@ -271,21 +274,137 @@
 }
 
 /* --- Responsive Design --- */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .admin-container {
-    padding: 40px 20px;
+    padding: 20px 15px;
   }
+  
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .admin-header > div {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
   .admin-title {
-    font-size: 28px;
+    font-size: 24px;
   }
-  .admin-form-section, .admin-list-section {
+
+  .admin-content {
+    flex-direction: column;
+  }
+
+  .admin-form-section, .admin-list-section, .admin-history-section, .analytics-card {
     padding: 20px;
+    width: 100%;
+    position: static;
   }
-  .products-table th, .products-table td {
-    padding: 10px;
+
+  /* Make forms stack vertically */
+  .admin-form > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 20px;
   }
+
+  /* Stack admin stats grid */
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Responsive Tables as Cards */
   .products-table-container {
-    overflow-x: auto;
+    overflow-x: hidden; /* No more horizontal scroll needed */
+  }
+
+  .products-table,
+  .products-table thead,
+  .products-table tbody,
+  .products-table th,
+  .products-table td,
+  .products-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  /* Hide table headers (but not display: none for accessibility, just off-screen) */
+  .products-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .products-table tr {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    background: #fff;
+  }
+
+  .products-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #f0f0f0;
+    padding: 12px 0;
+    text-align: right;
+  }
+
+  .products-table td:last-child {
+    border-bottom: 0;
+  }
+
+  /* Add column labels from data-label attribute */
+  .products-table td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: #888;
+    margin-right: 15px;
+  }
+
+  /* Adjust specific cell contents for card view */
+  .table-img-container {
+    width: 50px;
+    height: 50px;
+  }
+
+  .products-table td > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align inputs to the right in mobile */
+  }
+
+  .products-table td input[type="text"],
+  .products-table td textarea {
+    width: 100% !important;
+    text-align: right;
+  }
+
+  .products-table td textarea {
+    height: 70px !important;
+  }
+
+  .products-table td button {
+    margin: 5px 0 0 0 !important;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .expanded-detail-row td {
+    display: block;
+    text-align: left;
+  }
+
+  .expanded-detail-row td::before {
+    display: none;
   }
 }
 
