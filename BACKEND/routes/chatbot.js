@@ -39,12 +39,7 @@ router.post('/', async (req, res) => {
     - Si el cliente te pregunta sobre temas totalmente ajenos a la joyería, la moda, el estilismo o INOVA, responde con respeto que tu propósito es ayudarlos con consultas relacionadas con la joyería de INOVA.`;
 
     // 3. Obtener modelo generativo configurado con las instrucciones de sistema y el modelo Gemini 3.5 Flash
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.5-flash',
-      systemInstruction: systemPrompt
-    });
-
-    // 4. Adaptar el historial para que Gemini lo procese correctamente (roles: user / model)
+    // 3. Adaptar el historial para que Gemini lo procese correctamente (roles: user / model)
     let formattedHistory = (history || [])
       .filter(msg => msg.text && (msg.type === 'user' || msg.type === 'bot'))
       .map(msg => ({
@@ -60,15 +55,46 @@ router.post('/', async (req, res) => {
       formattedHistory = [];
     }
 
-    // 5. Iniciar la sesión de chat con el historial
-    const chat = model.startChat({
-      history: formattedHistory
-    });
-
-    // 6. Enviar mensaje actual y obtener respuesta de la IA
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
+    let text;
+    try {
+      // 4. Intentar con el modelo nuevo (gemini-3.5-flash)
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-3.5-flash',
+        systemInstruction: systemPrompt
+      });
+      const chat = model.startChat({
+        history: formattedHistory
+      });
+      const result = await chat.sendMessage(message);
+      const response = await result.response;
+      text = response.text();
+    } catch (primaryError) {
+      console.warn('Fallo con gemini-3.5-flash (posible sobrecarga o límite de cuota), intentando fallback con gemini-3.1-flash-lite...', primaryError.message);
+      try {
+        const fallbackModel = genAI.getGenerativeModel({
+          model: 'gemini-3.1-flash-lite',
+          systemInstruction: systemPrompt
+        });
+        const chat = fallbackModel.startChat({
+          history: formattedHistory
+        });
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        text = response.text();
+      } catch (fallbackError) {
+        console.warn('Fallo con gemini-3.1-flash-lite, intentando fallback con gemini-1.5-flash...', fallbackError.message);
+        const legacyModel = genAI.getGenerativeModel({
+          model: 'gemini-1.5-flash',
+          systemInstruction: systemPrompt
+        });
+        const chat = legacyModel.startChat({
+          history: formattedHistory
+        });
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        text = response.text();
+      }
+    }
 
     res.json({ text });
   } catch (error) {
