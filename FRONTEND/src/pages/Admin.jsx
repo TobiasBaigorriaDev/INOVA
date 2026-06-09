@@ -17,6 +17,68 @@ function Admin() {
   // Estado para mostrar/ocultar el panel de estadísticas y métricas
   const [showMetrics, setShowMetrics] = useState(true);
 
+  // Estado para mostrar/ocultar los productos más vendidos
+  const [showMostSold, setShowMostSold] = useState(false);
+
+  // Estado para mostrar/ocultar el desglose de ventas diarias del mes actual
+  const [showDailyBreakdown, setShowDailyBreakdown] = useState(false);
+
+  // Estado para el mes y año seleccionado (formato YYYY-MM)
+  const [selectedMonthYear, setSelectedMonthYear] = useState(() => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${today.getFullYear()}-${month}`;
+  });
+
+  // Funciones auxiliares para el carrusel de navegación del mes
+  const handlePrevMonth = (e) => {
+    e.stopPropagation();
+    const [year, month] = selectedMonthYear.split('-').map(Number);
+    let newMonth = month - 1;
+    let newYear = year;
+    if (newMonth === 0) {
+      newMonth = 12;
+      newYear = year - 1;
+    }
+    setSelectedMonthYear(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = (e) => {
+    e.stopPropagation();
+    const today = new Date();
+    const currentM = today.getMonth() + 1;
+    const currentY = today.getFullYear();
+    const [year, month] = selectedMonthYear.split('-').map(Number);
+    
+    // Si ya estamos en el mes actual o posterior, no avanzamos
+    if (year > currentY || (year === currentY && month >= currentM)) {
+      return;
+    }
+    
+    let newMonth = month + 1;
+    let newYear = year;
+    if (newMonth === 13) {
+      newMonth = 1;
+      newYear = year + 1;
+    }
+    setSelectedMonthYear(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+  };
+
+  const isCurrentMonth = () => {
+    const today = new Date();
+    const currentM = today.getMonth() + 1;
+    const currentY = today.getFullYear();
+    const [year, month] = selectedMonthYear.split('-').map(Number);
+    return year > currentY || (year === currentY && month >= currentM);
+  };
+
+  const formatSelectedMonth = () => {
+    const [year, month] = selectedMonthYear.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    const monthName = date.toLocaleString('es-AR', { month: 'long' });
+    return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+  };
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -51,16 +113,41 @@ function Admin() {
   const paidOrders = orders.filter(order => order.status === 'pagado');
   const totalSalesVal = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
   
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Obtener año y mes a partir de selectedMonthYear (YYYY-MM)
+  const [selYear, selMonth] = selectedMonthYear.split('-').map(Number);
+
   const monthlyOrders = paidOrders.filter(order => {
     const orderDate = new Date(order.createdAt);
-    return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+    return orderDate.getMonth() === (selMonth - 1) && orderDate.getFullYear() === selYear;
   });
   const monthlySalesVal = monthlyOrders.reduce((sum, order) => sum + Number(order.total), 0);
 
   const totalOrdersCount = paidOrders.length;
   const monthlyOrdersCount = monthlyOrders.length;
+
+  // --- CÁLCULO DE VENTAS DIARIAS ---
+  const getDailySalesBreakdown = () => {
+    const daysInMonth = {};
+    
+    monthlyOrders.forEach(order => {
+      const date = new Date(order.createdAt);
+      const day = date.getDate(); // 1 - 31
+      
+      if (!daysInMonth[day]) {
+        daysInMonth[day] = {
+          day: day,
+          count: 0,
+          revenue: 0
+        };
+      }
+      daysInMonth[day].count += 1;
+      daysInMonth[day].revenue += Number(order.total);
+    });
+    
+    return Object.values(daysInMonth).sort((a, b) => a.day - b.day);
+  };
+
+  const dailySales = getDailySalesBreakdown();
 
   // Productos con bajo stock (3 unidades o menos)
   const lowStockProducts = productos.filter(p => p.stock !== undefined && Number(p.stock) <= 3);
@@ -372,12 +459,85 @@ function Admin() {
             <div className="stat-icon-wrapper sales-month">
               <TrendingUp size={24} />
             </div>
-            <div className="stat-info">
+            <div className="stat-info" style={{ flex: 1 }}>
               <span className="stat-label">Ventas del Mes</span>
+              
+              {/* Carrusel del Mes (Navegación con flechas) */}
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '8px',
+                  marginBottom: '8px'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handlePrevMonth}
+                  style={{
+                    background: '#f3eef7',
+                    border: '1px solid rgba(90, 64, 107, 0.15)',
+                    color: '#5A406B',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    outline: 'none',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Mes anterior"
+                >
+                  ◀
+                </button>
+                <span 
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: '#333',
+                    minWidth: '95px',
+                    textAlign: 'center',
+                    userSelect: 'none'
+                  }}
+                >
+                  {formatSelectedMonth()}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  disabled={isCurrentMonth()}
+                  style={{
+                    background: isCurrentMonth() ? '#f5f5f5' : '#f3eef7',
+                    border: '1px solid rgba(90, 64, 107, 0.15)',
+                    color: isCurrentMonth() ? '#cccccc' : '#5A406B',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isCurrentMonth() ? 'default' : 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    outline: 'none',
+                    opacity: isCurrentMonth() ? 0.5 : 1,
+                    transition: 'all 0.2s'
+                  }}
+                  title="Mes siguiente"
+                >
+                  ▶
+                </button>
+              </div>
+
               <h3 className="stat-value">
                 ${monthlySalesVal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
-              <span className="stat-subtext">{monthlyOrdersCount} pedidos este mes</span>
+              <span className="stat-subtext">{monthlyOrdersCount} pedidos confirmados</span>
             </div>
           </div>
 
@@ -392,63 +552,146 @@ function Admin() {
             </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon-wrapper average-ticket">
-              <Calendar size={24} />
+          <div 
+            className={`stat-card ${showDailyBreakdown ? 'active' : ''}`}
+            onClick={() => setShowDailyBreakdown(prev => !prev)}
+            style={{ 
+              cursor: 'pointer', 
+              flexDirection: 'column', 
+              alignItems: 'stretch',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="stat-icon-wrapper average-ticket">
+                <Calendar size={24} />
+              </div>
+              <div className="stat-info" style={{ flex: 1 }}>
+                <span className="stat-label">Desglose Diario</span>
+                <h3 className="stat-value" style={{ textTransform: 'capitalize' }}>
+                  {new Date(selYear, selMonth - 1).toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
+                </h3>
+                <span className="stat-subtext" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{showDailyBreakdown ? 'Ocultar detalle' : 'Ver detalle diario'}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#5A406B' }}>
+                    {showDailyBreakdown ? '▲' : '▼'}
+                  </span>
+                </span>
+              </div>
             </div>
-            <div className="stat-info">
-              <span className="stat-label">Mes Actual</span>
-              <h3 className="stat-value" style={{ textTransform: 'capitalize' }}>
-                {new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
-              </h3>
-              <span className="stat-subtext">Reporte en tiempo real</span>
-            </div>
+
+            {/* Desglose diario colapsable */}
+            {showDailyBreakdown && (
+              <div 
+                className="daily-sales-breakdown"
+                onClick={(e) => e.stopPropagation()} // Evita que se cierre al hacer scroll o clic en el listado
+                style={{
+                  marginTop: '15px',
+                  borderTop: '1px solid #f0f0f0',
+                  paddingTop: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  animation: 'fadeIn 0.3s ease-out'
+                }}
+              >
+                {dailySales.length === 0 ? (
+                  <span style={{ fontSize: '12px', color: '#888', textAlign: 'center', padding: '10px 0' }}>
+                    No hay ventas registradas este mes.
+                  </span>
+                ) : (
+                  dailySales.map(ds => (
+                    <div 
+                      key={ds.day} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '12px', 
+                        color: '#444',
+                        padding: '6px 4px',
+                        borderBottom: '1px dashed #f5f5f5'
+                      }}
+                    >
+                      <span style={{ fontWeight: '500' }}>Día {ds.day}</span>
+                      <span style={{ color: '#5A406B' }}>
+                        <strong>{ds.count} {ds.count === 1 ? 'venta' : 'ventas'}</strong> (${ds.revenue.toFixed(2)})
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* SECCIÓN ANALÍTICA: PRODUCTOS MÁS VENDIDOS */}
+        {/* SECCIÓN ANALÍTICA: PRODUCTOS MÁS VENDIDOS (COLAPSABLE) */}
         <div className="analytics-card most-sold-card">
-          <h2 className="admin-form-title font-serif" style={{ marginBottom: '24px', borderBottom: '1px solid #eee', paddingBottom: '15px' }}>
-            <TrendingUp size={24} />
-            Productos Más Vendidos
-          </h2>
+          <button 
+            type="button"
+            className="most-sold-toggle-header"
+            onClick={() => setShowMostSold(prev => !prev)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'none',
+              border: 'none',
+              padding: '0 0 15px 0',
+              borderBottom: '1px solid #eee',
+              cursor: 'pointer',
+              outline: 'none',
+              color: 'inherit',
+              textAlign: 'left'
+            }}
+          >
+            <h2 className="admin-form-title font-serif" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <TrendingUp size={24} />
+              Productos Más Vendidos
+            </h2>
+            {showMostSold ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
           
-          {loadingOrders ? (
-            <div className="empty-state"><p>Cargando estadísticas de productos...</p></div>
-          ) : mostSoldProducts.length === 0 ? (
-            <div className="empty-state">
-              <Package size={48} strokeWidth={1} />
-              <p>No se registran ventas para clasificar productos aún.</p>
-            </div>
-          ) : (
-            <div className="most-sold-list">
-              {mostSoldProducts.map((prod, index) => {
-                const maxQty = mostSoldProducts[0].cantidadVendida;
-                const percentage = (prod.cantidadVendida / maxQty) * 100;
+          <div className={`most-sold-content-wrapper ${showMostSold ? 'expanded' : 'collapsed'}`}>
+            {loadingOrders ? (
+              <div className="empty-state" style={{ marginTop: '15px' }}><p>Cargando estadísticas de productos...</p></div>
+            ) : mostSoldProducts.length === 0 ? (
+              <div className="empty-state" style={{ marginTop: '15px' }}>
+                <Package size={48} strokeWidth={1} />
+                <p>No se registran ventas para clasificar productos aún.</p>
+              </div>
+            ) : (
+              <div className="most-sold-list" style={{ marginTop: '15px' }}>
+                {mostSoldProducts.map((prod, index) => {
+                  const maxQty = mostSoldProducts[0].cantidadVendida;
+                  const percentage = (prod.cantidadVendida / maxQty) * 100;
 
-                return (
-                  <div key={prod.id} className="most-sold-item">
-                    <div className="ranking-number">#{index + 1}</div>
-                    <div className="most-sold-img-container">
-                      <img src={prod.imagenUrl} alt={prod.nombre} />
+                  return (
+                    <div key={prod.id} className="most-sold-item">
+                      <div className="ranking-number">#{index + 1}</div>
+                      <div className="most-sold-img-container">
+                        <img src={prod.imagenUrl} alt={prod.nombre} />
+                      </div>
+                      <div className="most-sold-info">
+                        <div className="most-sold-header">
+                          <span className="most-sold-name">{prod.nombre}</span>
+                          <span className="most-sold-qty">{prod.cantidadVendida} uds.</span>
+                        </div>
+                        <div className="progress-bar-container">
+                          <div className="progress-bar-fill" style={{ width: `${percentage}%` }}></div>
+                        </div>
+                        <div className="most-sold-revenue">
+                          Recaudado total: <strong>${prod.recaudado.toFixed(2)}</strong>
+                        </div>
+                      </div>
                     </div>
-                    <div className="most-sold-info">
-                      <div className="most-sold-header">
-                        <span className="most-sold-name">{prod.nombre}</span>
-                        <span className="most-sold-qty">{prod.cantidadVendida} uds.</span>
-                      </div>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{ width: `${percentage}%` }}></div>
-                      </div>
-                      <div className="most-sold-revenue">
-                        Recaudado total: <strong>${prod.recaudado.toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

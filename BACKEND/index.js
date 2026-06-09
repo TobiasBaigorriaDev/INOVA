@@ -8,6 +8,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authRoutes = require('./routes/authRoutes');
 const paymentMPRoutes = require('./routes/paymentMPRoutes');
+const chatbotRoutes = require('./routes/chatbot');
 
 // 2. Importamos las Rutas (Controllers)
 const productRoutes = require('./routes/productRoutes');
@@ -39,6 +40,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/mp', paymentMPRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 app.get('/api/private', validarJWT, (req, res) => {
 

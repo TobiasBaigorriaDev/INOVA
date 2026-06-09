@@ -15,7 +15,8 @@ function Checkout() {
     subtotal,
     envio,
     total,
-    clearCart
+    clearCart,
+    setIsCartOpen
   } = useCart();
 
   // =========================
@@ -153,6 +154,43 @@ function Checkout() {
     }
 
     setLoading(true);
+
+    // NUEVA VALIDACIÓN: Verificar el stock en tiempo real antes de crear el pedido
+    try {
+      const stockRes = await fetch('http://localhost:3000/api/products');
+      if (!stockRes.ok) throw new Error('No se pudo verificar el stock de los productos.');
+      
+      const dbData = await stockRes.json();
+      const dbProducts = Array.isArray(dbData) ? dbData : (dbData.productos || []);
+
+      const unavailableItems = [];
+
+      for (const item of cartItems) {
+        const dbProduct = dbProducts.find(p => p.id === item.id);
+        // Si el producto no existe en la DB o el stock disponible es menor a la cantidad solicitada
+        if (!dbProduct || dbProduct.stock < item.qty) {
+          unavailableItems.push(item);
+        }
+      }
+
+      if (unavailableItems.length > 0) {
+        // Eliminar los productos del carrito que no tienen stock suficiente
+        for (const item of unavailableItems) {
+          removeFromCart(item.id);
+        }
+
+        const names = unavailableItems.map(item => `"${item.name}"`).join(', ');
+        setErrorMsg(`⚠️ Uno o más productos ya no cuentan con stock suficiente y fueron retirados de tu carrito: ${names}.`);
+        setIsCartOpen(true); // Abrir el panel del carrito automáticamente
+        setLoading(false);
+        return; // Detener el proceso de pago
+      }
+    } catch (stockError) {
+      console.error('Error al validar stock en checkout:', stockError);
+      setErrorMsg('Ocurrió un error al validar el stock de tu carrito. Intenta de nuevo.');
+      setLoading(false);
+      return;
+    }
 
     try {
 

@@ -6,10 +6,24 @@ const CartContext = createContext();
 
 // 2. CREAMOS EL PROVEEDOR (PROVIDER)
 export const CartProvider = ({ children }) => {
-  // Lógica de persistencia: Intentar cargar el carrito guardado del localStorage al iniciar
+  // Lógica de persistencia con expiración de 24 horas: Intentar cargar del localStorage
   const [cartItems, setCartItems] = useState(() => {
     const localData = localStorage.getItem('inova_cart');
-    return localData ? JSON.parse(localData) : [];
+    const timestamp = localStorage.getItem('inova_cart_timestamp');
+
+    if (localData && timestamp) {
+      const now = Date.now();
+      const expirationTime = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+
+      if (now - Number(timestamp) > expirationTime) {
+        // El carrito ha expirado, lo limpiamos
+        localStorage.removeItem('inova_cart');
+        localStorage.removeItem('inova_cart_timestamp');
+        return [];
+      }
+      return JSON.parse(localData);
+    }
+    return [];
   });
 
   // Estado para controlar si el sidebar del carrito está abierto o cerrado
@@ -41,6 +55,17 @@ export const CartProvider = ({ children }) => {
   // Guardar automáticamente en localStorage cada vez que cambien los artículos del carrito
   useEffect(() => {
     localStorage.setItem('inova_cart', JSON.stringify(cartItems));
+
+    // Gestionar el timestamp de expiración del carrito
+    if (cartItems.length > 0) {
+      // Si se agrega el primer elemento, establecemos el timestamp de inicio
+      if (!localStorage.getItem('inova_cart_timestamp')) {
+        localStorage.setItem('inova_cart_timestamp', Date.now().toString());
+      }
+    } else {
+      // Si el carrito queda vacío, limpiamos el timestamp
+      localStorage.removeItem('inova_cart_timestamp');
+    }
   }, [cartItems]);
 
   // Sincronizar automáticamente en segundo plano los precios y nombres con la base de datos PostgreSQL
