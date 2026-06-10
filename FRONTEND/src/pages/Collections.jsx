@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, ShoppingCart, Search, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import Fuse from 'fuse.js';
 
-function Collections({ toggleFavorite, favorites, addToCart }) {
-    const { cartItems } = useCart();
+function Collections({ toggleFavorite, favorites }) {
+    const { cartItems, addToCart } = useCart();
     const [searchParams, setSearchParams] = useSearchParams();
     const urlSearchQuery = searchParams.get('search') || '';
 
@@ -59,24 +60,69 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const fetchProducts = useCallback(async () => {
         setIsLoading(true);
         try {
-            let url = `http://localhost:3000/api/products?page=${currentPage}&limit=12`;
+            const isSearching = searchQuery.trim() !== '';
+            // Si buscamos, traemos el catálogo completo (límite alto) de esa categoría 
+            // para aplicar Búsqueda Difusa en cliente.
+            const limit = isSearching ? 1000 : 12;
+            const page = isSearching ? 1 : currentPage;
+
+            let url = `http://localhost:3000/api/products?page=${page}&limit=${limit}`;
             if (filter !== 'todos') url += `&categoria=${filter}`;
-            if (searchQuery.trim() !== '') url += `&search=${searchQuery}`;
             if (sortOrder) url += `&sortPrice=${sortOrder}`;
 
             const response = await fetch(url);
             if (!response.ok) throw new Error('Error al obtener productos');
             const data = await response.json();
 
+            const mapProducts = (productsArray) => {
+                return productsArray.map(p => ({
+                    id: p.id,
+                    name: p.nombre,
+                    description: p.descripcion,
+                    price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+                    image: p.imagenUrl || 'https://via.placeholder.com/300',
+                    category:
+                        p.categoria === 'pulsera' ? 'pulseras' :
+                        p.categoria === 'collar' ? 'collares' :
+                        p.categoria === 'anillo' ? 'anillos' :
+                        p.categoria === 'pendiente' ? 'pendientes' :
+                        p.categoria,
+                    stock: p.stock !== undefined ? Number(p.stock) : 0
+                }));
+            };
+
+            let mappedData = [];
+            let totalPgs = 1;
+
             if (data && data.productos) {
-                setDbProducts(data.productos);
-                setTotalPages(data.totalPages || 1);
+                mappedData = mapProducts(data.productos);
+                totalPgs = data.totalPages || 1;
             } else if (Array.isArray(data)) {
-                setDbProducts(data);
-                setTotalPages(1);
+                mappedData = mapProducts(data);
+            }
+
+            if (isSearching) {
+                // Algoritmo de Búsqueda Difusa (Fuzzy Search)
+                const fuse = new Fuse(mappedData, {
+                    keys: ['name', 'category', 'description'],
+                    threshold: 0.4, // Tolerancia a errores/typos
+                    ignoreLocation: true, // Coincidencia en cualquier parte del texto
+                    includeScore: true // Para que Fuse ordene por relevancia implícitamente
+                });
+
+                const results = fuse.search(searchQuery.trim());
+                const fuzzyProducts = results.map(res => res.item);
+
+                // Paginación manual en el cliente
+                const itemsPerPage = 12;
+                const totalFuzzyPages = Math.ceil(fuzzyProducts.length / itemsPerPage) || 1;
+                setTotalPages(totalFuzzyPages);
+
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                setDbProducts(fuzzyProducts.slice(startIndex, startIndex + itemsPerPage));
             } else {
-                setDbProducts([]);
-                setTotalPages(1);
+                setDbProducts(mappedData);
+                setTotalPages(totalPgs);
             }
         } catch (error) {
             console.error('Error al conectar con el backend:', error);
@@ -185,23 +231,31 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
                 <div className="products-grid">
                     {dbProducts.map((product) => {
                         const isFavorite = favorites.some(fav => fav.id === product.id);
+                        
+                        const cartItem = cartItems.find(item => item.id === product.id);
+                        const currentCartQty = cartItem ? Number(cartItem.qty) : 0;
+                        const isMaxStock = currentCartQty >= Number(product.stock);
+
                         return (
                             <div key={product.id} className="product-card">
                                 <div className="product-image-container">
-                                    <button className="wishlist-btn" onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
+                                    <button className={`wishlist-btn ${isFavorite ? 'heart-pop' : ''}`} onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
                                         <Heart size={18} fill={isFavorite ? '#e74c3c' : 'none'} strokeWidth={2} />
                                     </button>
                                     <Link to={`/producto/${product.id}`} style={{ display: 'block' }}>
-                                        <img src={product.imagenUrl} alt={product.nombre} />
+                                        <img src={product.image} alt={product.name} />
                                     </Link>
                                 </div>
-                                <h3 className="product-title font-serif">{product.nombre}</h3>
-                                <p className="product-price">${product.precio?.toFixed(2)}</p>
+                                <h3 className="product-title font-serif">{product.name}</h3>
+                                <p className="product-price">{product.price}</p>
                                 <button
-                                    className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
-                                    onClick={() => handleAddToCartClick(product)}
+                                    disabled={isMaxStock}
+                                    className={`add-to-cart-btn ${isMaxStock ? 'max-stock-btn' : ''} ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
+                                    onClick={() => !isMaxStock && handleAddToCartClick(product)}
                                 >
-                                    {errorItem === product.id ? (
+                                    {isMaxStock ? (
+                                        'STOCK MÁXIMO ALCANZADO'
+                                    ) : errorItem === product.id ? (
                                         '¡Stock Máximo Alcanzado! ❌'
                                     ) : addedItem === product.id ? (
                                         '¡AGREGADO! ✓'

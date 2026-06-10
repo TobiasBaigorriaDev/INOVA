@@ -308,6 +308,15 @@ function ProductDetail({
     );
 
   // =========================
+  // CONTROL DE STOCK GLOBAL
+  // =========================
+
+  const currentCartItem = cartItems.find(item => item.id === productInfo.id);
+  const currentCartQty = currentCartItem ? Number(currentCartItem.qty) : 0;
+  const isMaxStock = currentCartQty >= Number(productInfo.stock);
+  const availableToAdd = Math.max(0, Number(productInfo.stock) - currentCartQty);
+
+  // =========================
   // AGREGAR AL CARRITO
   // =========================
 
@@ -373,14 +382,9 @@ function ProductDetail({
 
     setQuantity(prev => {
 
-      const maxStock =
-        productInfo.stock !== undefined
-          ? Number(productInfo.stock)
-          : 99;
-
-      if (maxStock === 0) {
+      if (availableToAdd <= 0) {
         showToast('Límite de stock alcanzado', 'error');
-        return 0;
+        return 1;
 
       }
 
@@ -393,9 +397,9 @@ function ProductDetail({
 
       }
 
-      if (newQty > maxStock) {
+      if (newQty > availableToAdd) {
         showToast('Límite de stock alcanzado', 'error');
-        return maxStock;
+        return availableToAdd;
 
       }
 
@@ -581,20 +585,20 @@ function ProductDetail({
                   fontSize: '20px',
                   cursor:
                     quantity <= 1 ||
-                      Number(productInfo.stock) === 0
+                      availableToAdd === 0
                       ? 'not-allowed'
                       : 'pointer',
                   padding: '10px',
                   color:
                     quantity <= 1 ||
-                      Number(productInfo.stock) === 0
+                      availableToAdd === 0
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
                 onClick={() => updateQty(-1)}
                 disabled={
                   quantity <= 1 ||
-                  Number(productInfo.stock) === 0
+                  availableToAdd === 0
                 }
               >
                 -
@@ -619,17 +623,18 @@ function ProductDetail({
                   cursor: 'pointer',
                   padding: '10px',
                   color:
-                    quantity >= Number(productInfo.stock)
+                    quantity >= availableToAdd
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
                 onClick={() => {
-                  if (quantity >= Number(productInfo.stock)) {
+                  if (quantity >= availableToAdd) {
                     showToast('Límite de stock alcanzado', 'error');
                   } else {
                     updateQty(1);
                   }
                 }}
+                disabled={quantity >= availableToAdd}
               >
                 +
               </button>
@@ -639,7 +644,7 @@ function ProductDetail({
             {/* AGREGAR */}
 
             <button
-              className={`add-to-cart-btn ${mainItemAdded ? 'item-added' : ''} ${isStockLimitReached ? 'item-error shake' : ''}`}
+              className={`add-to-cart-btn ${isMaxStock ? 'max-stock-btn' : ''} ${mainItemAdded ? 'item-added' : ''} ${isStockLimitReached ? 'item-error shake' : ''}`}
               style={{
                 flex: 1,
                 minWidth: '180px',
@@ -651,16 +656,18 @@ function ProductDetail({
                     ? 0.5
                     : 1,
                 cursor:
-                  Number(productInfo.stock) === 0 || isStockLimitReached
+                  Number(productInfo.stock) === 0 || isStockLimitReached || isMaxStock
                     ? 'not-allowed'
                     : 'pointer'
               }}
-              onClick={handleAddToCart}
+              onClick={() => !isMaxStock && handleAddToCart()}
               disabled={
-                Number(productInfo.stock) === 0
+                Number(productInfo.stock) === 0 || isMaxStock
               }
             >
-              {isStockLimitReached ? (
+              {isMaxStock ? (
+                'STOCK MÁXIMO ALCANZADO'
+              ) : isStockLimitReached ? (
                 '¡Stock Máximo Alcanzado! ❌'
               ) : mainItemAdded ? (
                 '¡AGREGADO! ✓'
@@ -683,7 +690,7 @@ function ProductDetail({
             {/* COMPRAR */}
 
             <button
-              className="add-to-cart-btn"
+              className={`add-to-cart-btn ${isMaxStock ? 'max-stock-btn' : ''}`}
               style={{
                 flex: 1,
                 minWidth: '180px',
@@ -703,19 +710,21 @@ function ProductDetail({
                     ? 0.5
                     : 1,
                 cursor:
-                  Number(productInfo.stock) === 0
+                  Number(productInfo.stock) === 0 || isMaxStock
                     ? 'not-allowed'
                     : 'pointer'
               }}
-              onClick={handleBuyNow}
+              onClick={() => !isMaxStock && handleBuyNow()}
               disabled={
-                Number(productInfo.stock) === 0
+                Number(productInfo.stock) === 0 || isMaxStock
               }
             >
 
               {
                 Number(productInfo.stock) === 0
                   ? 'SIN STOCK'
+                  : isMaxStock
+                  ? 'STOCK MÁXIMO ALCANZADO'
                   : 'COMPRAR AHORA'
               }
 
@@ -724,7 +733,7 @@ function ProductDetail({
             {/* FAVORITO */}
 
             <button
-              className="wishlist-btn"
+              className={`wishlist-btn ${isFavorite ? 'heart-pop' : ''}`}
               style={{
                 position: 'relative',
                 top: 'auto',
@@ -774,12 +783,15 @@ function ProductDetail({
           <div className="products-grid">
             {similarProducts.map((product) => {
               const isFav = favorites.some(fav => fav.id === product.id);
+              const cartItemSimilar = cartItems.find(item => item.id === product.id);
+              const currentCartQtySimilar = cartItemSimilar ? Number(cartItemSimilar.qty) : 0;
+              const isMaxStockSimilar = currentCartQtySimilar >= Number(product.stock);
 
               return (
                 <div key={product.id} className="product-card">
                   <div className="product-image-container">
                     <button
-                      className="wishlist-btn"
+                      className={`wishlist-btn ${isFav ? 'heart-pop' : ''}`}
                       onClick={(e) => {
                         e.preventDefault();
                         toggleFavorite(cleanProductPrice(product));
@@ -805,10 +817,13 @@ function ProductDetail({
                   <p className="product-price">{product.price}</p>
 
                   <button
-                    className={`add-to-cart-btn ${addedSimilarItem === product.id ? 'item-added' : ''} ${errorSimilarItem === product.id ? 'item-error shake' : ''}`}
-                    onClick={() => handleSimilarAddToCartClick(product)}
+                    disabled={isMaxStockSimilar}
+                    className={`add-to-cart-btn ${isMaxStockSimilar ? 'max-stock-btn' : ''} ${addedSimilarItem === product.id ? 'item-added' : ''} ${errorSimilarItem === product.id ? 'item-error shake' : ''}`}
+                    onClick={() => !isMaxStockSimilar && handleSimilarAddToCartClick(product)}
                   >
-                    {errorSimilarItem === product.id ? (
+                    {isMaxStockSimilar ? (
+                      'STOCK MÁXIMO ALCANZADO'
+                    ) : errorSimilarItem === product.id ? (
                       '¡Stock Máximo Alcanzado! ❌'
                     ) : addedSimilarItem === product.id ? (
                       '¡AGREGADO! ✓'

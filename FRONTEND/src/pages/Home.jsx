@@ -67,8 +67,8 @@ function Home({ toggleFavorite, favorites }) {
     fetchProducts();
   }, []);
 
-  // Curated products for the hero carousel (first 4 products)
-  const carouselProducts = dbProducts.slice(0, 4);
+  // All products for the hero carousel (dynamic length)
+  const carouselProducts = dbProducts;
 
   // Pagination calculations
   const indexOfLastProduct = currentPage * itemsPerPage;
@@ -78,11 +78,15 @@ function Home({ toggleFavorite, favorites }) {
 
   useEffect(() => {
     if (isHovered || carouselProducts.length === 0) return;
-    const interval = setInterval(() => {
+
+    // Al añadir currentSlide a las dependencias, cualquier cambio manual 
+    // reinicia el temporizador de 5000ms automáticamente.
+    const timeout = setTimeout(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselProducts.length);
     }, 5000);
-    return () => clearInterval(interval);
-  }, [isHovered, carouselProducts.length]);
+
+    return () => clearTimeout(timeout);
+  }, [isHovered, carouselProducts.length, currentSlide]);
 
   const nextSlide = (e) => {
     e.preventDefault();
@@ -146,6 +150,9 @@ function Home({ toggleFavorite, favorites }) {
                 positionClass = 'next-slide';
               }
 
+              // Optimization: Eager load only the 3 initially visible images, lazy load the rest
+              const isInitialVisible = idx === 0 || idx === 1 || idx === carouselProducts.length - 1;
+
               return (
                 <Link
                   key={product.id}
@@ -153,7 +160,11 @@ function Home({ toggleFavorite, favorites }) {
                   className={`hero-carousel-card ${positionClass}`}
                 >
                   <div className="hero-card-image-container">
-                    <img src={product.image} alt={product.name} />
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      loading={isInitialVisible ? "eager" : "lazy"}
+                    />
                   </div>
                   <div className="hero-card-info">
                     <h3 className="hero-card-title font-serif">{product.name}</h3>
@@ -173,17 +184,30 @@ function Home({ toggleFavorite, favorites }) {
           </button>
 
           <div className="carousel-dots">
-            {carouselProducts.map((_, idx) => (
-              <button
-                key={idx}
-                className={`carousel-dot ${idx === currentSlide ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentSlide(idx);
-                }}
-                aria-label={`Ir al producto ${idx + 1}`}
-              />
-            ))}
+            {carouselProducts.map((_, idx) => {
+              // Si hay muchos productos, limitamos los dots a una ventana de 5 alrededor del currentSlide
+              if (carouselProducts.length > 5) {
+                // Calcular distancia considerando el comportamiento circular
+                const dist1 = Math.abs(currentSlide - idx);
+                const dist2 = Math.abs(currentSlide + carouselProducts.length - idx);
+                const dist3 = Math.abs(currentSlide - carouselProducts.length - idx);
+                const minDistance = Math.min(dist1, dist2, dist3);
+
+                if (minDistance > 2) return null; // Solo renderizar 5 dots en pantalla
+              }
+
+              return (
+                <button
+                  key={idx}
+                  className={`carousel-dot ${idx === currentSlide ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentSlide(idx);
+                  }}
+                  aria-label={`Ir al producto ${idx + 1}`}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
@@ -200,12 +224,16 @@ function Home({ toggleFavorite, favorites }) {
         <div className="products-grid">
           {currentProducts.map((product) => {
             const isFavorite = favorites.some(fav => fav.id === product.id);
+            
+            const cartItem = cartItems.find(item => item.id === product.id);
+            const currentCartQty = cartItem ? Number(cartItem.qty) : 0;
+            const isMaxStock = currentCartQty >= Number(product.stock);
 
             return (
               <div key={product.id} className="product-card">
                 <div className="product-image-container">
                   <button
-                    className="wishlist-btn"
+                    className={`wishlist-btn ${isFavorite ? 'heart-pop' : ''}`}
                     onClick={(e) => {
                       e.preventDefault();
                       // Limpiamos el producto antes de guardarlo en favoritos
@@ -232,10 +260,13 @@ function Home({ toggleFavorite, favorites }) {
                 <p className="product-price">{product.price}</p>
 
                 <button
-                  className={`add-to-cart-btn ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
-                  onClick={() => handleAddToCartClick(product)}
+                  disabled={isMaxStock}
+                  className={`add-to-cart-btn ${isMaxStock ? 'max-stock-btn' : ''} ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
+                  onClick={() => !isMaxStock && handleAddToCartClick(product)}
                 >
-                  {errorItem === product.id ? (
+                  {isMaxStock ? (
+                    'STOCK MÁXIMO ALCANZADO'
+                  ) : errorItem === product.id ? (
                     '¡Stock Máximo Alcanzado! ❌'
                   ) : addedItem === product.id ? (
                     '¡AGREGADO! ✓'

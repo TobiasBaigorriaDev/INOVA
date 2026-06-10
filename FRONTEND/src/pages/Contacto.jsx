@@ -41,14 +41,11 @@ function Contacto() {
       }
 
       setSuccess(true);
-      setFormData({
-        nombre: '',
-        apellido: '',
-        email: '',
-        telefono: '',
+      setFormData(prev => ({
+        ...prev,
         asunto: 'consulta',
         mensaje: ''
-      });
+      }));
     } catch (err) {
       console.error(err);
       setError('Hubo un error al enviar el mensaje. Por favor intente de nuevo.');

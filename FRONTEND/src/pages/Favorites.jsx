@@ -45,7 +45,12 @@ function Favorites({ favorites, toggleFavorite }) {
                 </div>
             ) : (
                 <div className="products-grid">
-                    {favorites.map((product) => (
+                    {favorites.map((product) => {
+                        const cartItem = cartItems.find(item => item.id === product.id);
+                        const currentCartQty = cartItem ? Number(cartItem.qty) : 0;
+                        const isMaxStock = currentCartQty >= Number(product.stock);
+
+                        return (
                         <div key={product.id} className="product-card">
                             <div className="product-image-container">
                                 <img src={product.image} alt={product.name} />
@@ -55,16 +60,31 @@ function Favorites({ favorites, toggleFavorite }) {
 
                             {/* Protección para el precio: si es número usa toFixed, si no, lo muestra directo */}
                             <p className="product-price">
-                                ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
+                                {typeof product.price === 'number' ? `$${product.price.toFixed(2)}` : product.price}
                             </p>
 
                             <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                                 <button
-                                    className={`${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
-                                    onClick={() => handleAddToCartClick(product)}
-                                    style={{ flex: 1, backgroundColor: errorItem === product.id ? '#e74c3c' : (addedItem === product.id ? '#2ecc71' : '#2b0e2b'), color: 'white', border: 'none', padding: '10px', cursor: errorItem === product.id ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px', transition: 'all 0.3s' }}
+                                    disabled={isMaxStock}
+                                    className={`add-to-cart-btn ${isMaxStock ? 'max-stock-btn' : ''} ${addedItem === product.id ? 'item-added' : ''} ${errorItem === product.id ? 'item-error shake' : ''}`}
+                                    onClick={() => !isMaxStock && handleAddToCartClick(product)}
+                                    style={{ 
+                                        flex: 1, 
+                                        backgroundColor: isMaxStock ? '#f5f5f5' : (errorItem === product.id ? '#e74c3c' : (addedItem === product.id ? '#2ecc71' : '#2b0e2b')), 
+                                        color: isMaxStock ? '#999' : 'white', 
+                                        border: isMaxStock ? '1px solid #e0e0e0' : 'none', 
+                                        padding: '10px', 
+                                        cursor: isMaxStock || errorItem === product.id ? 'not-allowed' : 'pointer', 
+                                        display: 'flex', 
+                                        justifyContent: 'center', 
+                                        alignItems: 'center', 
+                                        gap: '5px', 
+                                        transition: 'all 0.3s' 
+                                    }}
                                 >
-                                    {errorItem === product.id ? (
+                                    {isMaxStock ? (
+                                        <span style={{ fontSize: '10px' }}>STOCK MÁXIMO</span>
+                                    ) : errorItem === product.id ? (
                                         <span style={{ fontSize: '10px' }}>¡Stock Máximo Alcanzado! ❌</span>
                                     ) : addedItem === product.id ? (
                                         '¡AGREGADO! ✓'
@@ -80,7 +100,8 @@ function Favorites({ favorites, toggleFavorite }) {
                                 </button>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

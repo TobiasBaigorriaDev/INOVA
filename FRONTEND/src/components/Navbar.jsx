@@ -3,10 +3,13 @@ import { Heart, ShoppingCart, User, Search } from 'lucide-react'; // <-- AGREGAM
 import { Link, useNavigate } from 'react-router-dom'; // <-- AGREGAMOS useNavigate
 import { useCart } from '../context/CartContext';
 
-function Navbar() {
+function Navbar({ usuario, logout, favorites = [] }) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isFavAnimating, setIsFavAnimating] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
   const navigate = useNavigate();
+
+  const totalFavs = favorites.length;
 
   // Estados para la animación de la barra de búsqueda global
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -21,6 +24,16 @@ function Navbar() {
       return () => clearTimeout(timer);
     }
   }, [totalItems]);
+
+  useEffect(() => {
+    if (totalFavs > 0) {
+      setIsFavAnimating(true);
+      const timer = setTimeout(() => {
+        setIsFavAnimating(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [totalFavs]);
 
   // Función para ejecutar la búsqueda global
   const handleGlobalSearch = (e) => {
@@ -86,8 +99,9 @@ function Navbar() {
         </div>
         {/* ---------------------------------------------------- */}
 
-        <Link to="/favoritos" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}>
+        <Link to="/favoritos" className={`${isFavAnimating ? 'cart-animating' : ''}`} style={{ color: 'inherit', display: 'flex', alignItems: 'center', position: 'relative' }}>
           <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
+          {totalFavs > 0 && <span className="cart-badge" style={{ backgroundColor: '#e74c3c' }}>{totalFavs}</span>}
         </Link>
 
         <span onClick={() => setIsCartOpen(true)} className={`cart-icon-container ${isAnimating ? 'cart-animating' : ''}`}>
