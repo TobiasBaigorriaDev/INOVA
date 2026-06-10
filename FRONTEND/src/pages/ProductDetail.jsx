@@ -724,7 +724,7 @@ function ProductDetail({
             {/* FAVORITO */}
 
             <button
-              className="wishlist-btn"
+              className={`wishlist-btn ${isFavorite ? 'is-favorite' : ''}`}
               style={{
                 position: 'relative',
                 top: 'auto',
@@ -779,7 +779,7 @@ function ProductDetail({
                 <div key={product.id} className="product-card">
                   <div className="product-image-container">
                     <button
-                      className="wishlist-btn"
+                      className={`wishlist-btn ${isFav ? 'is-favorite' : ''}`}
                       onClick={(e) => {
                         e.preventDefault();
                         toggleFavorite(cleanProductPrice(product));

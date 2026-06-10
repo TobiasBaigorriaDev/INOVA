@@ -44,9 +44,23 @@ router.get('/', async (req, res) => {
         let whereClause = {};
 
         if (search) {
-            whereClause.nombre = {
-                [Op.iLike]: `%${search}%`
-            };
+            const searchTerm = search.trim();
+            const searchConditions = [
+                { nombre: { [Op.iLike]: `%${searchTerm}%` } }
+            ];
+
+            // Si el término termina en 's', buscamos también la versión en singular
+            if (searchTerm.toLowerCase().endsWith('s')) {
+                const singular1 = searchTerm.slice(0, -1);
+                searchConditions.push({ nombre: { [Op.iLike]: `%${singular1}%` } });
+                
+                if (searchTerm.toLowerCase().endsWith('es')) {
+                    const singular2 = searchTerm.slice(0, -2);
+                    searchConditions.push({ nombre: { [Op.iLike]: `%${singular2}%` } });
+                }
+            }
+
+            whereClause[Op.or] = searchConditions;
         }
 
         if (categoria) {

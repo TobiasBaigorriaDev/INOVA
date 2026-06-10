@@ -67,8 +67,8 @@ function Home({ toggleFavorite, favorites }) {
     fetchProducts();
   }, []);
 
-  // Curated products for the hero carousel (first 4 products)
-  const carouselProducts = dbProducts.slice(0, 4);
+  // Curated products for the hero carousel (all products)
+  const carouselProducts = dbProducts;
 
   // Pagination calculations
   const indexOfLastProduct = currentPage * itemsPerPage;
@@ -205,7 +205,7 @@ function Home({ toggleFavorite, favorites }) {
               <div key={product.id} className="product-card">
                 <div className="product-image-container">
                   <button
-                    className="wishlist-btn"
+                    className={`wishlist-btn ${isFavorite ? 'is-favorite' : ''}`}
                     onClick={(e) => {
                       e.preventDefault();
                       // Limpiamos el producto antes de guardarlo en favoritos

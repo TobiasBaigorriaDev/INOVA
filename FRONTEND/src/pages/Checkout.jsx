@@ -489,8 +489,16 @@ function Checkout() {
 
             </div>
 
-            <div className="map-placeholder">
-              <div className="map-pin"></div>
+            <div className="map-container" style={{ marginTop: '20px', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3350.187123908953!2d-68.84674398481489!3d-32.887890680938634!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x967e09062319c5c7%3A0xc3c51f496156e5f3!2sPlaza%20Independencia!5e0!3m2!1sen!2sar!4v1689088806283!5m2!1sen!2sar" 
+                width="100%" 
+                height="250" 
+                style={{ border: 0, display: 'block' }} 
+                allowFullScreen="" 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade">
+              </iframe>
             </div>
 
           </div>

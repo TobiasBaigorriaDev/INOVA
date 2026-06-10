@@ -3,8 +3,9 @@ import { Heart, ShoppingCart, User, Search } from 'lucide-react'; // <-- AGREGAM
 import { Link, useNavigate } from 'react-router-dom'; // <-- AGREGAMOS useNavigate
 import { useCart } from '../context/CartContext';
 
-function Navbar() {
+function Navbar({ usuario, logout, favorites = [] }) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimatingFav, setIsAnimatingFav] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
   const navigate = useNavigate();
 
@@ -21,6 +22,16 @@ function Navbar() {
       return () => clearTimeout(timer);
     }
   }, [totalItems]);
+
+  useEffect(() => {
+    if (favorites.length > 0) {
+      setIsAnimatingFav(true);
+      const timer = setTimeout(() => {
+        setIsAnimatingFav(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [favorites.length]);
 
   // Función para ejecutar la búsqueda global
   const handleGlobalSearch = (e) => {
@@ -86,7 +97,7 @@ function Navbar() {
         </div>
         {/* ---------------------------------------------------- */}
 
-        <Link to="/favoritos" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}>
+        <Link to="/favoritos" style={{ color: 'inherit', display: 'flex', alignItems: 'center' }} className={isAnimatingFav ? 'cart-animating' : ''}>
           <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
         </Link>
 

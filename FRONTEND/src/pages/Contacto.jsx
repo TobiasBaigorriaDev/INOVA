@@ -91,7 +91,7 @@ function Contacto() {
               <MapPin className="info-icon" size={20} />
               <div>
                 <h4>Ubicación & Puntos de Encuentro</h4>
-                <p>Mendoza, Argentina</p>
+                <p>Plaza Independencia, Mendoza Argentina</p>
                 <p className="highlight-text">Entregas coordinadas en puntos estratégicos</p>
               </div>
             </div>
@@ -109,7 +109,7 @@ function Contacto() {
               <Mail className="info-icon" size={20} />
               <div>
                 <h4>Consultas Generales</h4>
-                <p>info@inova.com</p>
+                <p>inova.accesorios0@gmail.com</p>
                 {/* inova.accesorios0@gmail.com */}
               </div>
             </div>

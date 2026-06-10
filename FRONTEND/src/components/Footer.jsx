@@ -20,7 +20,7 @@ function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <p>© 2024 INOVA. GENDERLESS JEWELRY.</p>
+        <p>© 2024 INOVA.</p>
       </div>
     </footer>
   );

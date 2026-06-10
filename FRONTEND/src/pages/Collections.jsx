@@ -188,7 +188,7 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
                         return (
                             <div key={product.id} className="product-card">
                                 <div className="product-image-container">
-                                    <button className="wishlist-btn" onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
+                                    <button className={`wishlist-btn ${isFavorite ? 'is-favorite' : ''}`} onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
                                         <Heart size={18} fill={isFavorite ? '#e74c3c' : 'none'} strokeWidth={2} />
                                     </button>
                                     <Link to={`/producto/${product.id}`} style={{ display: 'block' }}>

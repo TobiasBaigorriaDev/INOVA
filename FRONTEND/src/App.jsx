@@ -142,6 +142,7 @@ function App() {
         <Navbar
           usuario={usuario}
           logout={logout}
+          favorites={favorites}
         />
 
         <Routes>
