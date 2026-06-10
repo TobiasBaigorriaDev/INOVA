@@ -1,15 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import {
-  X,
-  Sparkles,
-  CreditCard,
-  MapPin,
-  MessageCircle,
-  Gem,
-  AtSign,
-  Phone,
-  ShoppingBag
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Sparkles, Send } from 'lucide-react';
 import './Chatbot.css';
 
 const initialMessages = [
@@ -19,43 +9,11 @@ const initialMessages = [
   }
 ];
 
-const optionButtons = [
-  {
-    key: 'pagos',
-    label: 'Pagos',
-    icon: CreditCard,
-    userText: 'Medios de pago'
-  },
-  {
-    key: 'encuentro',
-    label: 'Encuentro',
-    icon: MapPin,
-    userText: 'Puntos de encuentro'
-  },
-  {
-    key: 'asesor',
-    label: 'Asesor',
-    icon: MessageCircle,
-    userText: 'Hablar con asesor'
-  },
-  {
-    key: 'personalizado',
-    label: 'Personalizado',
-    icon: Gem,
-    userText: 'Crear algo personalizado'
-  },
-  {
-    key: 'colecciones',
-    label: 'Colecciones',
-    icon: ShoppingBag,
-    userText: 'Ver colecciones'
-  }
-];
-
 function Chatbot({ isOpen, onClose }) {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [typing, setTyping] = useState(false);
   const [messages, setMessages] = useState(initialMessages);
+  const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -71,124 +29,53 @@ function Chatbot({ isOpen, onClose }) {
     });
   }, [messages, typing]);
 
-  const addBotResponse = (responseData) => {
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim()) return;
+
+    const userText = inputMessage;
+    setInputMessage(''); // Limpiar el input inmediatamente
+
+    // 1. Agregar mensaje del usuario a la pantalla
+    setMessages((prev) => [...prev, { type: 'user', text: userText }]);
+    
+    // 2. Mostrar la animación de "escribiendo" (typing)
     setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((prev) => [...prev, responseData]);
-    }, 1200);
-  };
 
-  const handleOption = (option, userText) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        type: 'user',
-        text: userText
+    try {
+      // 3. Enviar el mensaje actual e historial al backend
+      const response = await fetch('http://localhost:3000/api/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userText,
+          history: messages
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error de comunicación con el servidor');
       }
-    ]);
 
-    switch (option) {
-      case 'pagos':
-        addBotResponse({
+      const data = await response.json();
+
+      // 4. Mostrar respuesta de la IA
+      setMessages((prev) => [...prev, { type: 'bot', text: data.text }]);
+    } catch (error) {
+      console.error('Error al conectar con la IA:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
           type: 'bot',
-          text: `Queremos que tu experiencia sea cómoda, segura y simple.\nPor eso trabajamos con múltiples medios de pago:\n• Efectivo\n• Mercado Pago\n• Tarjetas débito/crédito\n• Criptomonedas`
-        });
-        break;
-      case 'encuentro':
-        addBotResponse({
-          type: 'map',
-          text: `Coordinamos puntos de encuentro dentro de Gran Mendoza.\nPodés elegir ubicación, fecha y horario según disponibilidad.`
-        });
-        break;
-      case 'asesor':
-        addBotResponse({
-          type: 'advisor',
-          text: `Para brindarte una atención exclusiva y ayudarte a encontrar piezas únicas.\nPodés comunicarte directamente con nosotros por Instagram o WhatsApp.`
-        });
-        break;
-      case 'personalizado':
-        addBotResponse({
-          type: 'personalizado',
-          text: `Nos encanta crear piezas únicas para cada persona.\nContanos tu idea y creemos algo totalmente personalizado para vos.`
-        });
-        break;
-      case 'colecciones':
-        addBotResponse({
-          type: 'collections',
-          text: `Descubrí nuestras colecciones exclusivas.\nEncontrá piezas minimalistas, elegantes y personalizadas.`
-        });
-        break;
-      default:
-        break;
+          text: 'Lo siento, en este momento estoy experimentando problemas de conexión. Por favor, intenta de nuevo más tarde.'
+        }
+      ]);
+    } finally {
+      // 5. Apagar animación de escribiendo
+      setTyping(false);
     }
-  };
-
-  const renderAction = (msg) => {
-    if (msg.type === 'map') {
-      return (
-        <a
-          href="https://www.google.com/maps/place/Gran+Mendoza"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="chatbot-action-link map"
-        >
-          Ver mapa
-        </a>
-      );
-    }
-
-    if (msg.type === 'advisor') {
-      return (
-        <div className="chatbot-action-group">
-          <a
-            href="https://instagram.com/inova.accesorios"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="chatbot-action-link instagram"
-          >
-            <AtSign size={16} />
-            Instagram
-          </a>
-          <a
-            href="https://wa.me/542615166802"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="chatbot-action-link whatsapp"
-          >
-            <Phone size={16} />
-            WhatsApp
-          </a>
-        </div>
-      );
-    }
-
-    if (msg.type === 'personalizado') {
-      return (
-        <div className="chatbot-action-group">
-          <a
-            href="https://instagram.com/inova.accesorios"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="chatbot-action-link instagram"
-          >
-            <AtSign size={16} />
-            Crear diseño
-          </a>
-        </div>
-      );
-    }
-
-    if (msg.type === 'collections') {
-      return (
-        <a href="/colecciones" className="chatbot-action-link collections">
-          <ShoppingBag size={16} />
-          Ver colecciones
-        </a>
-      );
-    }
-
-    return null;
   };
 
   if (!shouldRender) {
@@ -219,7 +106,6 @@ function Chatbot({ isOpen, onClose }) {
           <div key={index} className={`chatbot-message-row ${msg.type === 'user' ? 'user' : 'bot'}`}>
             <div className={`chatbot-message-bubble ${msg.type === 'user' ? 'user' : 'bot'}`}>
               {msg.text}
-              {renderAction(msg)}
             </div>
           </div>
         ))}
@@ -233,24 +119,21 @@ function Chatbot({ isOpen, onClose }) {
         <div ref={messagesEndRef} className="chatbot-scroll-anchor" />
       </div>
 
-      <div className="chatbot-buttons">
-        {optionButtons.map((option) => {
-          const Icon = option.icon;
-          return (
-            <button
-              key={option.key}
-              className="chat-option-btn"
-              onClick={() => handleOption(option.key, option.userText)}
-              type="button"
-            >
-              <Icon size={16} />
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      <form onSubmit={handleSendMessage} className="chatbot-input-container">
+        <input
+          type="text"
+          placeholder="Escribe tu mensaje..."
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          className="chatbot-input"
+        />
+        <button type="submit" className="chatbot-send-btn" aria-label="Enviar mensaje">
+          <Send size={18} />
+        </button>
+      </form>
     </div>
   );
 }
 
 export default Chatbot;
+

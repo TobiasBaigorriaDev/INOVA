@@ -321,7 +321,7 @@ function ProductDetail({
   // =========================
 
   const handleAddToCart = () => {
-    const existingItem = cartItems.find(item => item.id === productInfo.id);
+    const existingItem = cartItems.find(item => String(item.id) === String(productInfo.id));
     const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
     if (cartQuantity + quantity > Number(productInfo.stock)) {
@@ -344,7 +344,7 @@ function ProductDetail({
   };
 
   const handleSimilarAddToCartClick = (product) => {
-    const existingItem = cartItems.find(item => item.id === product.id);
+    const existingItem = cartItems.find(item => String(item.id) === String(product.id));
     const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
     if (cartQuantity + 1 > Number(product.stock)) {
@@ -733,7 +733,7 @@ function ProductDetail({
             {/* FAVORITO */}
 
             <button
-              className={`wishlist-btn ${isFavorite ? 'heart-pop' : ''}`}
+              className={`wishlist-btn ${isFavorite ? 'heart-pop is-favorite' : ''}`}
               style={{
                 position: 'relative',
                 top: 'auto',
@@ -791,7 +791,7 @@ function ProductDetail({
                 <div key={product.id} className="product-card">
                   <div className="product-image-container">
                     <button
-                      className={`wishlist-btn ${isFav ? 'heart-pop' : ''}`}
+                      className={`wishlist-btn ${isFav ? 'heart-pop is-favorite' : ''}`}
                       onClick={(e) => {
                         e.preventDefault();
                         toggleFavorite(cleanProductPrice(product));

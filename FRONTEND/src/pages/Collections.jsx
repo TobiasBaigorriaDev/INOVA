@@ -22,7 +22,7 @@ function Collections({ toggleFavorite, favorites }) {
     const [errorItem, setErrorItem] = useState(null);
 
     const handleAddToCartClick = (product) => {
-        const existingItem = cartItems.find(item => item.id === product.id);
+        const existingItem = cartItems.find(item => String(item.id) === String(product.id));
         const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
         if (cartQuantity + 1 > Number(product.stock)) {
@@ -239,7 +239,7 @@ function Collections({ toggleFavorite, favorites }) {
                         return (
                             <div key={product.id} className="product-card">
                                 <div className="product-image-container">
-                                    <button className={`wishlist-btn ${isFavorite ? 'heart-pop' : ''}`} onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
+                                    <button className={`wishlist-btn ${isFavorite ? 'heart-pop is-favorite' : ''}`} onClick={(e) => { e.preventDefault(); toggleFavorite(product); }} style={{ color: isFavorite ? '#e74c3c' : 'inherit', transition: 'all 0.3s' }}>
                                         <Heart size={18} fill={isFavorite ? '#e74c3c' : 'none'} strokeWidth={2} />
                                     </button>
                                     <Link to={`/producto/${product.id}`} style={{ display: 'block' }}>

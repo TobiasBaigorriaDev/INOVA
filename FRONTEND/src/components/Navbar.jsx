@@ -34,7 +34,6 @@ function Navbar({ usuario, logout, favorites = [] }) {
       return () => clearTimeout(timer);
     }
   }, [totalFavs]);
-
   // Función para ejecutar la búsqueda global
   const handleGlobalSearch = (e) => {
     e.preventDefault();
@@ -98,9 +97,7 @@ function Navbar({ usuario, logout, favorites = [] }) {
           </form>
         </div>
         {/* ---------------------------------------------------- */}
-
-        <Link to="/favoritos" className={`${isFavAnimating ? 'cart-animating' : ''}`} style={{ color: 'inherit', display: 'flex', alignItems: 'center', position: 'relative' }}>
-          <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
+        <Link to="/favoritos" className={`${isFavAnimating ? 'cart-animating' : ''}`} style={{ color: 'inherit', display: 'flex', alignItems: 'center', position: 'relative' }}>          <Heart size={20} strokeWidth={1.5} style={{ cursor: 'pointer' }} />
           {totalFavs > 0 && <span className="cart-badge" style={{ backgroundColor: '#e74c3c' }}>{totalFavs}</span>}
         </Link>
 

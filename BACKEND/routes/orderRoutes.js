@@ -6,6 +6,7 @@ const OrderItem = require('../models/OrderItem');
 const Product = require('../models/Products');
 const { sequelize } = require('../config/dbSQL');
 const validarJWT = require('../middlewares/authMiddleware');
+const esAdmin = require('../middlewares/adminMiddleware');
 
 // ==========================================
 // CREAR UN PEDIDO (POST /api/orders)
@@ -111,7 +112,7 @@ router.post('/', validarJWT, async (req, res) => {
 // ==========================================
 // OBTENER TODAS LAS ÓRDENES (GET /api/orders)
 // ==========================================
-router.get('/', async (req, res) => {
+router.get('/', validarJWT, esAdmin, async (req, res) => {
     try {
         const orders = await Order.findAll({ 
             include: [
@@ -132,7 +133,7 @@ router.get('/', async (req, res) => {
 // ==========================================
 // OBTENER DETALLE DE UNA ORDEN (GET /api/orders/:id)
 // ==========================================
-router.get('/:id', async (req, res) => {
+router.get('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
         const order = await Order.findByPk(req.params.id, { 
             include: [
@@ -154,7 +155,7 @@ router.get('/:id', async (req, res) => {
 // ==========================================
 // ACTUALIZAR ESTADO DE UNA ORDEN (PUT /api/orders/:id)
 // ==========================================
-router.put('/:id', async (req, res) => {
+router.put('/:id', validarJWT, esAdmin, async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const { status } = req.body;
@@ -209,17 +210,20 @@ router.put('/:id', async (req, res) => {
 // ==========================================
 // SEED DEMO DATA (POST /api/orders/seed-demo)
 // ==========================================
-router.post('/seed-demo', async (req, res) => {
+router.post('/seed-demo', validarJWT, esAdmin, async (req, res) => {
     try {
         const User = require('../models/User');
 
         // 1. Asegurar usuario de prueba
         let defaultUser = await User.findOne({ where: { email: 'admin@inova.com' } });
         if (!defaultUser) {
+            const bcrypt = require('bcrypt');
+            const salt = await bcrypt.genSalt(10);
+            const hashedAdminPassword = await bcrypt.hash('demo-password-1234', salt);
             defaultUser = await User.create({
                 nombre: 'Administrador INOVA',
                 email: 'admin@inova.com',
-                password: 'demo-password-1234',
+                password: hashedAdminPassword,
                 rol: 'ADMIN_ROLE',
                 estado: true
             });
@@ -338,7 +342,7 @@ router.post('/seed-demo', async (req, res) => {
 // ==========================================
 // APAGAR DEMO DATA (DELETE /api/orders/seed-demo)
 // ==========================================
-router.delete('/seed-demo', async (req, res) => {
+router.delete('/seed-demo', validarJWT, esAdmin, async (req, res) => {
     try {
         const { Op } = require('sequelize');
         

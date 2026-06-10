@@ -162,6 +162,10 @@ function Auth({ setUsuario }) {
 
                   localStorage.removeItem('favoritos');
 
+                  localStorage.removeItem('inova_cart');
+
+                  localStorage.removeItem('inova_cart_timestamp');
+
                   localStorage.removeItem(
                     'redirectAfterLogin'
                   );
@@ -247,6 +251,17 @@ function Auth({ setUsuario }) {
   const handleSubmit = async (e) => {
 
     e.preventDefault();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMensaje('El formato del email no es válido.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMensaje('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
 
     try {
 
