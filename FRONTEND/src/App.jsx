@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import './index.css';
 
@@ -127,6 +127,10 @@ function App() {
 
     localStorage.removeItem('favoritos');
 
+    localStorage.removeItem('inova_cart');
+
+    localStorage.removeItem('inova_cart_timestamp');
+
     setUsuario(null);
 
     window.location.href = '/login';
@@ -219,7 +223,9 @@ function App() {
             path="/admin"
             element={
               usuario
-                ? <Admin />
+                ? usuario.rol === 'ADMIN_ROLE'
+                  ? <Admin />
+                  : <Navigate to="/" replace />
                 : <Auth setUsuario={setUsuario} />
             }
           />

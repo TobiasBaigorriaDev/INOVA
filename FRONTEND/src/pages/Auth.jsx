@@ -162,6 +162,10 @@ function Auth({ setUsuario }) {
 
                   localStorage.removeItem('favoritos');
 
+                  localStorage.removeItem('inova_cart');
+
+                  localStorage.removeItem('inova_cart_timestamp');
+
                   localStorage.removeItem(
                     'redirectAfterLogin'
                   );

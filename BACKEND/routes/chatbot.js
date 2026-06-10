@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
     ${formattedCatalog}
     - **Políticas de Venta sobre Productos:** Usa estrictamente la lista de arriba para responder si un producto existe, su precio, descripción o disponibilidad. Si el stock de un producto es 0, aclara que actualmente no tenemos stock de ese producto, pero podemos hacerlo a pedido.
     - **Productos no listados:** Si te preguntan por un producto que no está en la lista de arriba, explícales con amabilidad que no está en nuestro catálogo de stock inmediato, pero que como nos especializamos en joyería personalizada, podemos diseñarlo a medida si nos contactan por Instagram o WhatsApp.
-    - **Medios de Pago:** Aceptamos efectivo, transferencia bancaria, Mercado Pago (con redirección directa de pago), tarjetas de débito/crédito y criptomonedas.
+    - **Medios de Pago:** Aceptamos efectivo, transferencia bancaria, Mercado Pago y tarjeta de crédito.
     - **Entregas / Envíos:** Coordinamos puntos de encuentro estratégicos dentro del Gran Mendoza de mutuo acuerdo. No poseemos tienda física abierta al público general, nos manejamos mediante entregas pactadas y venta online.
     - **Contacto Directo:**
       * Instagram: @inova.accesorios (https://www.instagram.com/inova.accesorios/)
@@ -57,9 +57,9 @@ router.post('/', async (req, res) => {
 
     let text;
     try {
-      // 4. Intentar con el modelo nuevo (gemini-3.5-flash)
+      // 4. Intentar con el modelo de baja latencia estable (gemini-3.1-flash-lite)
       const model = genAI.getGenerativeModel({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.1-flash-lite',
         systemInstruction: systemPrompt
       });
       const chat = model.startChat({
@@ -69,10 +69,10 @@ router.post('/', async (req, res) => {
       const response = await result.response;
       text = response.text();
     } catch (primaryError) {
-      console.warn('Fallo con gemini-3.5-flash (posible sobrecarga o límite de cuota), intentando fallback con gemini-3.1-flash-lite...', primaryError.message);
+      console.warn('Fallo con gemini-3.1-flash-lite, intentando fallback con gemini-2.5-flash...', primaryError.message);
       try {
         const fallbackModel = genAI.getGenerativeModel({
-          model: 'gemini-3.1-flash-lite',
+          model: 'gemini-2.5-flash',
           systemInstruction: systemPrompt
         });
         const chat = fallbackModel.startChat({
@@ -82,9 +82,9 @@ router.post('/', async (req, res) => {
         const response = await result.response;
         text = response.text();
       } catch (fallbackError) {
-        console.warn('Fallo con gemini-3.1-flash-lite, intentando fallback con gemini-1.5-flash...', fallbackError.message);
+        console.warn('Fallo con gemini-2.5-flash, intentando fallback con gemini-3.5-flash...', fallbackError.message);
         const legacyModel = genAI.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-3.5-flash',
           systemInstruction: systemPrompt
         });
         const chat = legacyModel.startChat({

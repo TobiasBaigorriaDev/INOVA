@@ -9,10 +9,14 @@ function Favorites({ favorites, toggleFavorite }) {
     const [errorItem, setErrorItem] = useState(null);
 
     const handleAddToCartClick = (product) => {
-        const existingItem = cartItems.find(item => item.id === product.id);
+        const existingItem = cartItems.find(item => String(item.id) === String(product.id));
         const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
-        if (cartQuantity + 1 > Number(product.stock)) {
+        const maxStock = (product.stock !== undefined && product.stock !== null && !isNaN(product.stock))
+            ? Number(product.stock)
+            : 99;
+
+        if (cartQuantity + 1 > maxStock) {
             setErrorItem(product.id);
             setTimeout(() => setErrorItem(null), 1500);
             return;

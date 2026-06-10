@@ -98,7 +98,12 @@ function Admin() {
   const fetchOrders = async () => {
     try {
       setLoadingOrders(true);
-      const res = await fetch('http://localhost:3000/api/orders');
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:3000/api/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!res.ok) throw new Error('Error al obtener órdenes');
       const data = await res.json();
       setOrders(data || []);
@@ -235,9 +240,13 @@ function Admin() {
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status: newStatus })
       });
 
@@ -263,9 +272,13 @@ function Admin() {
         stock: Number(producto.stock)
       };
 
+      const token = localStorage.getItem('token');
       const res = await fetch(`${apiUrl}/${producto.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -288,9 +301,13 @@ function Admin() {
         stock: Number(formData.stock)
       };
 
+      const token = localStorage.getItem('token');
       const res = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -316,8 +333,12 @@ function Admin() {
     if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${apiUrl}/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!res.ok) throw new Error('Error al eliminar el producto');
@@ -338,8 +359,12 @@ function Admin() {
 
     try {
       showToast('Generando ventas simuladas...', 'info');
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:3000/api/orders/seed-demo', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!res.ok) throw new Error('Error al generar datos de prueba');
@@ -360,8 +385,12 @@ function Admin() {
 
     try {
       showToast('Apagando simulación...', 'info');
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:3000/api/orders/seed-demo', {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!res.ok) throw new Error('Error al limpiar datos demo');

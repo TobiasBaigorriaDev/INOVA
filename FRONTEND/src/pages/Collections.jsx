@@ -3,8 +3,8 @@ import { Heart, ShoppingCart, Search, X, ArrowUp, ArrowDown, ArrowUpDown } from 
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
-function Collections({ toggleFavorite, favorites, addToCart }) {
-    const { cartItems } = useCart();
+function Collections({ toggleFavorite, favorites }) {
+    const { addToCart, cartItems } = useCart();
     const [searchParams, setSearchParams] = useSearchParams();
     const urlSearchQuery = searchParams.get('search') || '';
 
@@ -21,7 +21,7 @@ function Collections({ toggleFavorite, favorites, addToCart }) {
     const [errorItem, setErrorItem] = useState(null);
 
     const handleAddToCartClick = (product) => {
-        const existingItem = cartItems.find(item => item.id === product.id);
+        const existingItem = cartItems.find(item => String(item.id) === String(product.id));
         const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
         if (cartQuantity + 1 > Number(product.stock)) {

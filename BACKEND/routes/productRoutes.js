@@ -5,6 +5,8 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { Op } = require('sequelize'); // Importamos los operadores de Sequelize
+const validarJWT = require('../middlewares/authMiddleware');
+const esAdmin = require('../middlewares/adminMiddleware');
 
 //Cloudinary
 cloudinary.config({
@@ -118,7 +120,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/products
-router.post('/', async (req, res) => {
+router.post('/', validarJWT, esAdmin, async (req, res) => {
     try {
         const productoGuardado = await Product.create(req.body);
         res.status(201).json(productoGuardado);
@@ -128,7 +130,7 @@ router.post('/', async (req, res) => {
 });
 
 // POST /api/products/upload
-router.post('/upload', upload.single('imagen'), (req, res) => {
+router.post('/upload', validarJWT, esAdmin, upload.single('imagen'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ mensaje: 'No se subió ninguna imagen o el formato es inválido' });
@@ -166,7 +168,7 @@ const getPublicIdFromUrl = (url) => {
 };
 
 // DELETE /api/products/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
         if (!product) {
@@ -193,7 +195,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ACTUALIZAR UN PRODUCTO (PUT)
-router.put('/:id', async (req, res) => {
+router.put('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
         const { nombre, descripcion, precio, categoria, imagenUrl, stock } = req.body;
         const producto = await Product.findByPk(req.params.id);

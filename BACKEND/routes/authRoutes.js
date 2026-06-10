@@ -45,11 +45,18 @@ router.post('/register', async (req, res) => {
             salt
         );
 
+        // Verificar si el email está en la lista de ADMIN_EMAILS del .env
+        const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
+        const esEmailAdmin = adminEmails.includes(email.trim().toLowerCase());
+        const rol = esEmailAdmin ? 'ADMIN_ROLE' : 'USER_ROLE';
+
         // Crear usuario
         const nuevoUsuario = await User.create({
             nombre,
             email,
-            password: passwordHasheado
+            password: passwordHasheado,
+            rol
         });
 
         res.status(201).json({
@@ -57,7 +64,8 @@ router.post('/register', async (req, res) => {
             usuario: {
                 id: nuevoUsuario.id,
                 nombre: nuevoUsuario.nombre,
-                email: nuevoUsuario.email
+                email: nuevoUsuario.email,
+                rol: nuevoUsuario.rol
             }
         });
 
@@ -103,6 +111,14 @@ router.post('/login', async (req, res) => {
                 mensaje: 'Usuario no encontrado'
             });
 
+        }
+
+        // Auto-upgrade a admin si el email está en ADMIN_EMAILS y era USER_ROLE
+        const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
+        if (adminEmails.includes(usuario.email.trim().toLowerCase()) && usuario.rol !== 'ADMIN_ROLE') {
+            await usuario.update({ rol: 'ADMIN_ROLE' });
+            console.log(`[Auto-Upgrade] Rol de usuario ${usuario.email} actualizado a ADMIN_ROLE`);
         }
 
         // Comparar password
@@ -169,17 +185,30 @@ router.post('/google', async (req, res) => {
         // Buscar si el usuario ya existe
         let usuario = await User.findOne({ where: { email } });
 
+        const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
+
         if (!usuario) {
             // Si no existe, lo creamos con una contraseña aleatoria
             const randomPassword = Math.random().toString(36).slice(-10);
             const salt = await bcrypt.genSalt(10);
             const passwordHasheado = await bcrypt.hash(randomPassword, salt);
 
+            const esEmailAdmin = adminEmails.includes(email.trim().toLowerCase());
+            const rol = esEmailAdmin ? 'ADMIN_ROLE' : 'USER_ROLE';
+
             usuario = await User.create({
                 nombre,
                 email,
-                password: passwordHasheado
+                password: passwordHasheado,
+                rol
             });
+        } else {
+            // Auto-upgrade a admin si el email está en ADMIN_EMAILS y era USER_ROLE
+            if (adminEmails.includes(usuario.email.trim().toLowerCase()) && usuario.rol !== 'ADMIN_ROLE') {
+                await usuario.update({ rol: 'ADMIN_ROLE' });
+                console.log(`[Google Auto-Upgrade] Rol de usuario ${usuario.email} actualizado a ADMIN_ROLE`);
+            }
         }
 
         // Generar JWT válido

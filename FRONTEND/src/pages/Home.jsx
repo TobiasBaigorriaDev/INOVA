@@ -16,10 +16,14 @@ function Home({ toggleFavorite, favorites }) {
   const [errorItem, setErrorItem] = useState(null);
 
   const handleAddToCartClick = (product) => {
-    const existingItem = cartItems.find(item => item.id === product.id);
+    const existingItem = cartItems.find(item => String(item.id) === String(product.id));
     const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
-    if (cartQuantity + 1 > Number(product.stock)) {
+    const maxStock = (product.stock !== undefined && product.stock !== null && !isNaN(product.stock))
+      ? Number(product.stock)
+      : 99;
+
+    if (cartQuantity + 1 > maxStock) {
       setErrorItem(product.id);
       setTimeout(() => setErrorItem(null), 1500);
       return;
@@ -98,12 +102,28 @@ function Home({ toggleFavorite, favorites }) {
     setCurrentSlide((prev) => (prev - 1 + carouselProducts.length) % carouselProducts.length);
   };
 
-  // Función para limpiar el precio
+  // Función para limpiar el precio y normalizar campos
   const cleanProductPrice = (product) => {
-    const numericPrice = typeof product.price === 'string'
-      ? parseFloat(product.price.replace('$', ''))
-      : product.price;
-    return { ...product, price: numericPrice };
+    if (!product) return product;
+
+    let rawPrice = product.price;
+    let numericPrice = 0;
+
+    if (typeof rawPrice === 'string') {
+      numericPrice = parseFloat(rawPrice.replace('$', '')) || 0;
+    } else if (typeof rawPrice === 'number') {
+      numericPrice = rawPrice;
+    } else if (product.precio !== undefined && product.precio !== null) {
+      numericPrice = Number(product.precio) || 0;
+    }
+
+    return {
+      ...product,
+      price: numericPrice,
+      precio: numericPrice,
+      nombre: product.name || product.nombre,
+      imagenUrl: product.image || product.imagenUrl
+    };
   };
 
   return (
@@ -199,7 +219,7 @@ function Home({ toggleFavorite, favorites }) {
 
         <div className="products-grid">
           {currentProducts.map((product) => {
-            const isFavorite = favorites.some(fav => fav.id === product.id);
+            const isFavorite = favorites.some(fav => String(fav.id) === String(product.id));
 
             return (
               <div key={product.id} className="product-card">

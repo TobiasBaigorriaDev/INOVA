@@ -84,7 +84,7 @@ export const CartProvider = ({ children }) => {
           let hasChanges = false;
 
           const updatedItems = prevItems.map((item) => {
-            const dbProduct = productsArray.find((p) => p.id === item.id);
+            const dbProduct = productsArray.find((p) => String(p.id) === String(item.id));
 
             if (dbProduct) {
               const dbPrice = dbProduct.precio;
@@ -127,11 +127,11 @@ export const CartProvider = ({ children }) => {
       ? parseFloat(rawPrice.replace('$', ''))
       : Number(rawPrice);
 
-    const availableStock = product.stock !== undefined ? Number(product.stock) : 99;
+    const availableStock = (product.stock !== undefined && product.stock !== null && !isNaN(product.stock)) ? Number(product.stock) : 99;
     const qtyNumber = Number(quantity);
 
     // Buscar si el producto ya está en el carrito
-    const existingItem = cartItems.find((item) => item.id === product.id);
+    const existingItem = cartItems.find((item) => String(item.id) === String(product.id));
     const currentQtyInCart = existingItem ? Number(existingItem.qty) : 0;
 
     // Calcular la cantidad final que resultaría de esta operación
@@ -156,12 +156,12 @@ export const CartProvider = ({ children }) => {
     }
 
     setCartItems((prevItems) => {
-      const existingItemInState = prevItems.find((item) => item.id === product.id);
+      const existingItemInState = prevItems.find((item) => String(item.id) === String(product.id));
 
       if (existingItemInState) {
         // Si ya existe, incrementamos su cantidad asegurando no superar el stock, o la sobreescribimos si forceSetQty es true
         return prevItems.map((item) => {
-          if (item.id === product.id) {
+          if (String(item.id) === String(product.id)) {
             const newQty = forceSetQty ? qtyNumber : Number(item.qty) + qtyNumber;
             return { ...item, qty: newQty > availableStock ? availableStock : newQty };
           }
@@ -180,33 +180,34 @@ export const CartProvider = ({ children }) => {
         }];
       }
     });
+    setIsCartOpen(true);
   };
 
   // Actualizar la cantidad de un artículo (+1 o -1)
   const updateQuantity = (id, amount) => {
-    const item = cartItems.find((p) => p.id === id);
+    const item = cartItems.find((p) => String(p.id) === String(id));
     if (!item) return;
 
     const newQty = item.qty + amount;
     const maxStock = item.stock !== undefined ? item.stock : 99;
 
     if (newQty < 1) {
-      setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: 1 } : p));
+      setCartItems((prev) => prev.map((p) => String(p.id) === String(id) ? { ...p, qty: 1 } : p));
       return;
     }
 
     if (newQty > maxStock) {
       showToast('Límite de stock alcanzado', 'error');
-      setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: maxStock } : p));
+      setCartItems((prev) => prev.map((p) => String(p.id) === String(id) ? { ...p, qty: maxStock } : p));
       return;
     }
 
-    setCartItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: newQty } : p));
+    setCartItems((prev) => prev.map((p) => String(p.id) === String(id) ? { ...p, qty: newQty } : p));
   };
 
   // Eliminar un producto del carrito
   const removeFromCart = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setCartItems((prevItems) => prevItems.filter((item) => String(item.id) !== String(id)));
   };
 
   // Vaciar por completo el carrito (para después de la compra)
