@@ -4,6 +4,12 @@ require('dotenv').config({ override: true }); // Lee el archivo .env y fuerza su
 const express = require('express');
 const cors = require('cors');
 const { connectSQL } = require('./config/dbSQL');
+// Importamos todos los modelos para que Sequelize los registre
+require('./models/User');
+require('./models/Products');
+require('./models/Order');
+require('./models/OrderItem');
+require('./models/Payment');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -20,7 +26,7 @@ const app = express();
 // 4. Ejecutamos la conexión a la base de datos
 connectSQL();
 
-// 5. Middlewares (los "patovicas" de la entrada)
+// 5. Middlewares 
 app.use(cors()); // Permite la comunicación con el frontend
 app.use(express.json()); // Permite leer datos en formato JSON
 app.use('/api/auth', authRoutes); // Enchufamos las rutas de autenticación (registro y login)
