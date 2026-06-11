@@ -16,8 +16,12 @@ function Contacto() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // URL del webhook de n8n para pruebas locales
+  const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/inova-contacto';
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === 'telefono') {
       const onlyNumbers = value.replace(/[^0-9]/g, '');
       setFormData(prev => ({ ...prev, [name]: onlyNumbers }));
@@ -29,7 +33,12 @@ function Contacto() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.nombre.trim() || !formData.apellido.trim() || !formData.email.trim() || !formData.mensaje.trim()) {
+    if (
+      !formData.nombre.trim() ||
+      !formData.apellido.trim() ||
+      !formData.email.trim() ||
+      !formData.mensaje.trim()
+    ) {
       setError('Por favor, complete todos los campos requeridos con información válida.');
       return;
     }
@@ -39,12 +48,19 @@ function Contacto() {
 
     try {
       // Enviar datos al webhook de n8n
-      const response = await fetch('http://localhost:5678/webhook-test/f3d4d1ef-5e70-46e1-8540-d167d357b729', {
+      const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          nombre: formData.nombre.trim(),
+          apellido: formData.apellido.trim(),
+          email: formData.email.trim(),
+          telefono: formData.telefono.trim(),
+          asunto: formData.asunto,
+          mensaje: formData.mensaje.trim()
+        })
       });
 
       if (!response.ok) {
@@ -52,11 +68,14 @@ function Contacto() {
       }
 
       setSuccess(true);
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
         asunto: 'consulta',
         mensaje: ''
-      }));
+      });
     } catch (err) {
       console.error(err);
       setError('Hubo un error al enviar el mensaje. Por favor intente de nuevo.');
@@ -107,7 +126,6 @@ function Contacto() {
               <div>
                 <h4>Consultas Generales</h4>
                 <p>inova.accesorios0@gmail.com</p>
-                {/* inova.accesorios0@gmail.com */}
               </div>
             </div>
           </div>
@@ -117,7 +135,6 @@ function Contacto() {
             <p>Conéctese directamente con nosotros para una atención inmediata en un solo clic.</p>
 
             <div className="social-buttons">
-              {/* BOTÓN WHATSAPP */}
               <a
                 href="https://wa.me/5492615166802"
                 target="_blank"
@@ -128,7 +145,6 @@ function Contacto() {
                 <span>WHATSAPP INOVA</span>
               </a>
 
-              {/* BOTÓN INSTAGRAM */}
               <a
                 href="https://www.instagram.com/inova.accesorios/"
                 target="_blank"
@@ -258,7 +274,7 @@ function Contacto() {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
 
