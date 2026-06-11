@@ -56,6 +56,9 @@ function Navbar({ usuario, logout, favorites = [] }) {
         <li><Link to="/colecciones">COLECCIONES</Link></li>
         <li><Link to="/historia">HISTORIA</Link></li>
         <li><Link to="/contacto">CONTACTO</Link></li>
+        {usuario && usuario.rol === 'ADMIN_ROLE' && (
+          <li><Link to="/admin" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>ADMIN</Link></li>
+        )}
       </ul>
       <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
 

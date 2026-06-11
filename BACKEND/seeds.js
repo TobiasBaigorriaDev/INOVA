@@ -199,7 +199,7 @@ const productos = [
 
 const seed = async () => {
     await connectSQL();
-    await Product.destroy({ where: {}, truncate: true });
+    await Product.destroy({ where: {}, truncate: true, cascade: true });
     await Product.bulkCreate(productos);
     console.log(`✅ ${productos.length} productos cargados con éxito`);
     process.exit(0);

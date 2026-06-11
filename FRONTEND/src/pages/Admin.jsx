@@ -889,10 +889,10 @@ function Admin() {
         <div className="products-table-container">
           {loadingOrders ? (
             <div className="empty-state"><p>Cargando historial de ventas...</p></div>
-          ) : orders.filter(o => o.status !== 'pendiente').length === 0 ? (
+          ) : orders.length === 0 ? (
             <div className="empty-state">
               <ShoppingBag size={48} strokeWidth={1} />
-              <p>No se registran ventas confirmadas en el historial aún.</p>
+              <p>No se registran pedidos en el historial aún.</p>
             </div>
           ) : (
             <table className="products-table">
@@ -910,7 +910,6 @@ function Admin() {
               <tbody>
                 {[...orders]
                   .reverse()
-                  .filter((order) => order.status !== 'pendiente')
                   .map((order) => (
                   <React.Fragment key={order.id}>
                     <tr 

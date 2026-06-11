@@ -68,11 +68,13 @@ router.post('/', validarJWT, async (req, res) => {
         const costoEnvio = 0.00;
         const totalFinal = subtotal + costoEnvio;
 
+        const status = (metodoPago === 'cripto' || metodoPago === 'mercadolibre') ? 'pagado' : 'pendiente';
+
         // 3. Crear el registro de la Orden principal
         const order = await Order.create({
             userId,
             total: totalFinal,
-            status: 'pendiente',
+            status,
             email,
             nombreCliente,
             apellidoCliente,
@@ -83,7 +85,7 @@ router.post('/', validarJWT, async (req, res) => {
             cryptoNetwork: metodoPago === 'cripto' ? cryptoNetwork : null
         }, { transaction: t });
 
-        // 4. Crear los detalles de productos (OrderItem) y restar el stock (si no es Mercado Pago)
+        // 4. Crear los detalles de productos (OrderItem) y restar el stock
         for (const item of itemsToCreate) {
             // Guardamos el detalle
             await OrderItem.create({
@@ -93,8 +95,8 @@ router.post('/', validarJWT, async (req, res) => {
                 precioUnitario: item.precioUnitario
             }, { transaction: t });
 
-            // Descontamos stock del producto inmediatamente SOLO si no es Mercado Pago (mercadolibre)
-            if (metodoPago !== 'mercadolibre') {
+            // Descontamos stock si no es Mercado Pago, O si forzamos el estado a 'pagado' de entrada
+            if (metodoPago !== 'mercadolibre' || status === 'pagado') {
                 await item.dbProduct.update({
                     stock: item.dbProduct.stock - item.cantidad
                 }, { transaction: t });
