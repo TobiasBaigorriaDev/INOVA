@@ -16,7 +16,6 @@ const client = new MercadoPagoConfig({
     accessToken
 });
 
-// POST /api/mp/create-preference
 router.post('/create-preference', async (req, res) => {
     try {
         if (!accessToken || accessToken.includes('TEST-aqui')) {
@@ -121,74 +120,11 @@ router.post('/webhook', async (req, res) => {
 // GET /api/mp/config
 router.get('/config', (req, res) => {
     res.json({
-        publicKey: process.env.MP_PUBLIC_KEY || ''
+        publicKey: process.env.MP_PUBLIC_KEY || '',
+        cryptoWalletAddress: process.env.CRYPTO_WALLET_ADDRESS || 'PEGAR_DIRECCION_USDT_TRC20_LEMON_AQUI'
     });
 });
 
-// POST /api/mp/process-payment
-router.post('/process-payment', async (req, res) => {
-    try {
-        const { token, paymentMethodId, email, amount, orderId } = req.body;
 
-        const payment = new MPPayment(client);
-
-        const response = await payment.create({
-            body: {
-                token,
-                installments: 1,
-                payment_method_id: paymentMethodId,
-                transaction_amount: Number(amount),
-                payer: {
-                    email
-                },
-                external_reference: orderId ? orderId.toString() : '0'
-            }
-        });
-
-        // Si el pago es aprobado, descontamos stock y actualizamos el estado de la Orden
-        if (response.status === 'approved' && orderId && orderId !== '0') {
-            const t = await sequelize.transaction();
-            try {
-                // Buscamos la orden con sus detalles (items)
-                const order = await Order.findByPk(orderId, {
-                    include: [{ model: OrderItem, as: 'items' }],
-                    transaction: t
-                });
-
-                if (order && order.status === 'pendiente') {
-                    // Descontamos stock para cada producto de la orden
-                    for (const item of order.items) {
-                        const product = await Product.findByPk(item.productId, { transaction: t });
-                        if (product) {
-                            const newStock = Math.max(0, product.stock - item.cantidad);
-                            await product.update({ stock: newStock }, { transaction: t });
-                            console.log(`[API Pago Tarjeta] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
-                        }
-                    }
-
-                    // Actualizamos el estado de la Orden a 'pagado'
-                    await order.update({ status: 'pagado' }, { transaction: t });
-                    console.log(`[API Pago Tarjeta] Orden ${orderId} marcada como PAGADA con éxito.`);
-                }
-
-                await t.commit();
-            } catch (webhookErr) {
-                await t.rollback();
-                console.error('[API Pago Tarjeta] Error crítico procesando la transacción de pago y stock:', webhookErr);
-                throw webhookErr;
-            }
-        }
-
-        res.status(200).json({
-            status: response.status,
-            status_detail: response.status_detail,
-            id: response.id
-        });
-
-    } catch (error) {
-        console.error('Error procesando pago con tarjeta:', error);
-        res.status(500).json({ mensaje: 'Error al procesar el pago con tarjeta', error: error.message });
-    }
-});
 
 module.exports = router;

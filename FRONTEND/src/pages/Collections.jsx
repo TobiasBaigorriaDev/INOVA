@@ -80,6 +80,7 @@ function Collections({ toggleFavorite, favorites }) {
                     name: p.nombre,
                     description: p.descripcion,
                     price: typeof p.precio === 'number' ? `$${p.precio.toFixed(2)}` : p.precio,
+                    rawPrice: typeof p.precio === 'number' ? p.precio : parseFloat(p.precio) || 0,
                     image: p.imagenUrl || 'https://via.placeholder.com/300',
                     category:
                         p.categoria === 'pulsera' ? 'pulseras' :
@@ -111,7 +112,14 @@ function Collections({ toggleFavorite, favorites }) {
                 });
 
                 const results = fuse.search(searchQuery.trim());
-                const fuzzyProducts = results.map(res => res.item);
+                let fuzzyProducts = results.map(res => res.item);
+
+                // Aplicar ordenamiento por precio en cliente si hay sortOrder
+                if (sortOrder === 'asc') {
+                    fuzzyProducts.sort((a, b) => a.rawPrice - b.rawPrice);
+                } else if (sortOrder === 'desc') {
+                    fuzzyProducts.sort((a, b) => b.rawPrice - a.rawPrice);
+                }
 
                 // Paginación manual en el cliente
                 const itemsPerPage = 12;

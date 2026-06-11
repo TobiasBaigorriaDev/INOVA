@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Wallet, Lock, MapPin } from 'lucide-react';
+import { Wallet, Lock, MapPin } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './Checkout.css';
 
@@ -42,16 +42,9 @@ function Checkout() {
   const [apellidos, setApellidos] =
     useState('');
 
-  // =========================
-  // ESTADOS TARJETA DE CRÉDITO
-  // =========================
-  const [numeroTarjeta, setNumeroTarjeta] = useState('');
-  const [nombreTarjeta, setNombreTarjeta] = useState('');
-  const [vencimientoTarjeta, setVencimientoTarjeta] = useState('');
-  const [cvvTarjeta, setCvvTarjeta] = useState('');
-  const [tarjetaGirada, setTarjetaGirada] = useState(false);
-  const [marcaTarjeta, setMarcaTarjeta] = useState('default'); // 'visa', 'mastercard', etc.
-  const [mpPublicKey, setMpPublicKey] = useState('');
+  const [cryptoWalletAddress, setCryptoWalletAddress] = useState('');
+  const [cryptoTxId, setCryptoTxId] = useState('');
+  const [cryptoNetwork, setCryptoNetwork] = useState('Red Dogecoin (Nativa)');
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -59,55 +52,15 @@ function Checkout() {
       try {
         const res = await fetch('http://localhost:3000/api/mp/config');
         const data = await res.json();
-        if (data.publicKey) {
-          setMpPublicKey(data.publicKey);
+        if (data.cryptoWalletAddress) {
+          setCryptoWalletAddress(data.cryptoWalletAddress);
         }
       } catch (err) {
-        console.error('Error al cargar config de Mercado Pago:', err);
+        console.error('Error al cargar config de Mercado Pago / Cripto:', err);
       }
     };
     fetchMpConfig();
   }, []);
-
-  // Formatear número de tarjeta y detectar marca
-  const handleNumeroTarjetaChange = (e) => {
-    let val = e.target.value.replace(/\D/g, ''); // Eliminar no numéricos
-    val = val.substring(0, 16); // Max 16 dígitos
-    
-    // Detectar marca
-    if (val.startsWith('4')) {
-      setMarcaTarjeta('visa');
-    } else if (/^5[1-5]/.test(val) || /^2[2-7]/.test(val)) {
-      setMarcaTarjeta('mastercard');
-    } else if (val.startsWith('34') || val.startsWith('37')) {
-      setMarcaTarjeta('amex');
-    } else {
-      setMarcaTarjeta('default');
-    }
-
-    // Poner espacios
-    const matches = val.match(/\d{1,4}/g);
-    const formatted = matches ? matches.join(' ') : '';
-    setNumeroTarjeta(formatted);
-  };
-
-  // Formatear fecha de vencimiento (MM/AA)
-  const handleVencimientoTarjetaChange = (e) => {
-    let val = e.target.value.replace(/\D/g, ''); // Eliminar no numéricos
-    val = val.substring(0, 4); // Max 4 dígitos (MMYY)
-    
-    if (val.length >= 3) {
-      val = `${val.substring(0, 2)}/${val.substring(2, 4)}`;
-    }
-    setVencimientoTarjeta(val);
-  };
-
-  // Validar y limitar CVV
-  const handleCvvTarjetaChange = (e) => {
-    let val = e.target.value.replace(/\D/g, ''); // Eliminar no numéricos
-    val = val.substring(0, 3); // Max 3 dígitos
-    setCvvTarjeta(val);
-  };
 
   useEffect(() => {
 
@@ -258,29 +211,10 @@ function Checkout() {
 
     }
 
-    // Validar tarjeta si es el método de pago seleccionado
-    if (paymentMethod === 'tarjeta') {
-      const limpioTarjeta = numeroTarjeta.replace(/\s/g, '');
-      const expectedLength = (marcaTarjeta === 'amex') ? 15 : 16;
-      if (limpioTarjeta.length !== expectedLength) {
-        setErrorMsg(`El número de tarjeta de crédito debe tener ${expectedLength} dígitos.`);
-        return;
-      }
-      if (!nombreTarjeta.trim()) {
-        setErrorMsg('Por favor ingresa el nombre impreso en la tarjeta.');
-        return;
-      }
-      if (vencimientoTarjeta.length < 5) {
-        setErrorMsg('La fecha de vencimiento debe tener formato MM/AA.');
-        return;
-      }
-      const [mes, anio] = vencimientoTarjeta.split('/').map(Number);
-      if (!mes || mes < 1 || mes > 12) {
-        setErrorMsg('El mes de vencimiento no es válido.');
-        return;
-      }
-      if (cvvTarjeta.length < 3) {
-        setErrorMsg('El código CVV debe tener 3 dígitos.');
+
+    if (paymentMethod === 'cripto') {
+      if (!cryptoTxId.trim()) {
+        setErrorMsg('Por favor ingresa el Hash de la transacción (TXID).');
         return;
       }
     }
@@ -343,7 +277,9 @@ function Checkout() {
             diaEncuentro: selectedDay,
             horaEncuentro: selectedTime,
             metodoPago: paymentMethod,
-            cartItems
+            cartItems,
+            cryptoTxId: paymentMethod === 'cripto' ? cryptoTxId.trim() : null,
+            cryptoNetwork: paymentMethod === 'cripto' ? cryptoNetwork : null
           })
         }
       );
@@ -355,7 +291,7 @@ function Checkout() {
       }
 
       // ==========================================
-      // INTEGRACIÓN CON MERCADO PAGO
+      // INTEGRACIÓN CON MERCADO PAGO / TARJETA
       // ==========================================
       if (paymentMethod === 'mercadolibre') {
         setSuccessMsg('Generando enlace de pago...');
@@ -389,114 +325,6 @@ function Checkout() {
         return; 
       }
 
-      // SI EL PAGO ES CON TARJETA DE CRÉDITO:
-      if (paymentMethod === 'tarjeta') {
-        setSuccessMsg('Procesando cobro seguro con tarjeta...');
-        
-        if (!window.MercadoPago) {
-          throw new Error('El procesador de pagos de Mercado Pago no está disponible. Recarga la página.');
-        }
-
-        if (!mpPublicKey) {
-          throw new Error('La clave de configuración de cobros no está disponible temporalmente.');
-        }
-
-        // Inicializar Mercado Pago
-        const mp = new window.MercadoPago(mpPublicKey);
-
-        // Separar fecha de vencimiento
-        const [mes, anio] = vencimientoTarjeta.split('/');
-        const limpioTarjeta = numeroTarjeta.replace(/\s/g, '');
-
-        // Tokenizar los datos de la tarjeta con Mercado Pago
-        let tokenResponse;
-        try {
-          tokenResponse = await mp.createCardToken({
-            cardNumber: limpioTarjeta,
-            cardholderName: nombreTarjeta,
-            cardExpirationMonth: mes,
-            cardExpirationYear: '20' + anio,
-            securityCode: cvvTarjeta
-          });
-        } catch (tokenErr) {
-          console.error('Error tokenizando tarjeta:', tokenErr);
-          let detail = '';
-          if (tokenErr) {
-            if (typeof tokenErr === 'string') {
-              detail = tokenErr;
-            } else {
-              const parts = [];
-              if (tokenErr.message) parts.push(tokenErr.message);
-              if (tokenErr.description) parts.push(tokenErr.description);
-              if (tokenErr.error) parts.push(tokenErr.error);
-              if (tokenErr.status) parts.push(`Status: ${tokenErr.status}`);
-              
-              if (tokenErr.cause) {
-                if (Array.isArray(tokenErr.cause)) {
-                  tokenErr.cause.forEach(c => {
-                    if (c.description) parts.push(c.description);
-                    else if (c.code) parts.push(`Code: ${c.code}`);
-                    else parts.push(JSON.stringify(c));
-                  });
-                } else if (typeof tokenErr.cause === 'string') {
-                  parts.push(tokenErr.cause);
-                } else if (tokenErr.cause.description) {
-                  parts.push(tokenErr.cause.description);
-                } else {
-                  parts.push(JSON.stringify(tokenErr.cause));
-                }
-              }
-              
-              if (parts.length === 0) {
-                try {
-                  const keys = Object.getOwnPropertyNames(tokenErr);
-                  const obj = {};
-                  keys.forEach(k => {
-                    obj[k] = tokenErr[k];
-                  });
-                  parts.push(JSON.stringify(obj));
-                } catch (e) {
-                  parts.push(String(tokenErr));
-                }
-              }
-              detail = parts.join(' | ');
-            }
-          }
-          throw new Error('No se pudo validar la tarjeta: ' + (detail || 'Revisa los datos ingresados.'));
-        }
-
-        if (!tokenResponse || !tokenResponse.id) {
-          throw new Error('Los datos de la tarjeta no son válidos para generar un token seguro.');
-        }
-
-        // Procesar el pago en el backend
-        const payResponse = await fetch('http://localhost:3000/api/mp/process-payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            token: tokenResponse.id,
-            paymentMethodId: marcaTarjeta === 'default' ? 'visa' : marcaTarjeta, // ID compatible con Mercado Pago
-            email: email,
-            amount: total,
-            orderId: data.orderId
-          })
-        });
-
-        const payData = await payResponse.json();
-
-        if (!payResponse.ok) {
-          throw new Error(payData.mensaje || 'Error al procesar el cargo con tarjeta.');
-        }
-
-        if (payData.status !== 'approved') {
-          const motivo = payData.status_detail === 'cc_rejected_insufficient_amount' 
-            ? 'Fondos insuficientes.' 
-            : 'Tarjeta rechazada por el banco emisor.';
-          throw new Error(`El pago fue rechazado. Motivo: ${motivo}`);
-        }
-      }
 
       // SI EL PAGO FUE APROBADO O ES EN EFECTIVO:
       setSuccessMsg('¡Pedido realizado con éxito!');
@@ -838,16 +666,18 @@ function Checkout() {
 
             </div>
 
-            {/* TARJETA */}
+
+
+            {/* CRIPTO */}
 
             <div
               className={`payment-method ${
-                paymentMethod === 'tarjeta'
+                paymentMethod === 'cripto'
                   ? 'active'
                   : ''
               }`}
               onClick={() =>
-                setPaymentMethod('tarjeta')
+                setPaymentMethod('cripto')
               }
             >
 
@@ -855,20 +685,17 @@ function Checkout() {
 
                 <div
                   className={`radio-circle ${
-                    paymentMethod === 'tarjeta'
+                    paymentMethod === 'cripto'
                       ? 'active'
                       : ''
                   }`}
                 ></div>
 
                 <span className="payment-method-name">
-                  TARJETA DE CRÉDITO
+                  CRIPTOMONEDAS (DOGE - Dogecoin)
                 </span>
 
-                <CreditCard
-                  size={18}
-                  className="payment-method-icon"
-                />
+                <span className="payment-method-icon" style={{ fontSize: '18px', fontWeight: 'bold' }}>🪙</span>
 
               </div>
 
@@ -876,243 +703,171 @@ function Checkout() {
 
           </div>
 
-          {paymentMethod === 'tarjeta' && (
-            <div className="credit-card-form-container">
-
-              {/* ACCESORIO AUTOCOMPLETAR PARA PRUEBAS (SOLO ADMIN) */}
-              {isAdmin && (
-                <div className="admin-simulator-panel">
-                  <div className="simulator-header">
-                    <span className="simulator-badge">Modo Admin</span>
-                    <h3 className="simulator-title">Simulador de Tarjetas de Prueba</h3>
-                  </div>
-                  <p className="simulator-subtitle">
-                    Como administrador, puedes hacer clic en cualquiera de las siguientes tarjetas de prueba para rellenar el formulario de Mercado Pago y probar distintas respuestas del sistema de cobros.
-                  </p>
-                  
-                  <div className="simulator-categories">
-                    <div>
-                      <h4 className="simulator-category-title">Transacciones Exitosas</h4>
-                      <div className="simulator-grid">
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('4012 8888 8888 8888');
-                            setMarcaTarjeta('visa');
-                            setNombreTarjeta('JUAN PEREZ');
-                            setVencimientoTarjeta('12/30');
-                            setCvvTarjeta('123');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">Visa Aprobada</span>
-                            <span className="sim-card-brand visa">Visa</span>
-                          </div>
-                          <div className="sim-card-number">4012 •••• •••• 8888</div>
-                          <div className="sim-card-desc">Transacción exitosa directa (Aprobada).</div>
-                          <span className="sim-card-badge success">Aprobada</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('5031 7500 0000 0027');
-                            setMarcaTarjeta('mastercard');
-                            setNombreTarjeta('MARIA GOMEZ');
-                            setVencimientoTarjeta('11/29');
-                            setCvvTarjeta('456');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">Mastercard Aprobada</span>
-                            <span className="sim-card-brand mastercard">Mastercard</span>
-                          </div>
-                          <div className="sim-card-number">5031 •••• •••• 0027</div>
-                          <div className="sim-card-desc">Transacción exitosa directa (Aprobada).</div>
-                          <span className="sim-card-badge success">Aprobada</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('3759 888888 88887');
-                            setMarcaTarjeta('amex');
-                            setNombreTarjeta('CARLOS RUIZ');
-                            setVencimientoTarjeta('08/28');
-                            setCvvTarjeta('789');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">Amex Aprobada</span>
-                            <span className="sim-card-brand amex">Amex</span>
-                          </div>
-                          <div className="sim-card-number">3759 •••••• •8887</div>
-                          <div className="sim-card-desc">Transacción exitosa directa (Aprobada).</div>
-                          <span className="sim-card-badge success">Aprobada</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="simulator-category-title">Transacciones Rechazadas (Simulaciones de Error)</h4>
-                      <div className="simulator-grid">
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('4012 8888 8888 8881');
-                            setMarcaTarjeta('visa');
-                            setNombreTarjeta('MARCOS LOPEZ');
-                            setVencimientoTarjeta('12/30');
-                            setCvvTarjeta('123');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">Fondos Insuficientes</span>
-                            <span className="sim-card-brand visa">Visa</span>
-                          </div>
-                          <div className="sim-card-number">4012 •••• •••• 8881</div>
-                          <div className="sim-card-desc">Simula falta de límite o saldo suficiente.</div>
-                          <span className="sim-card-badge error">Rechazada</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('4012 8888 8888 8882');
-                            setMarcaTarjeta('visa');
-                            setNombreTarjeta('ANA RUIZ');
-                            setVencimientoTarjeta('12/30');
-                            setCvvTarjeta('123');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">CVV Incorrecto</span>
-                            <span className="sim-card-brand visa">Visa</span>
-                          </div>
-                          <div className="sim-card-number">4012 •••• •••• 8882</div>
-                          <div className="sim-card-desc">Simula código de seguridad incorrecto.</div>
-                          <span className="sim-card-badge error">Rechazada</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="simulator-card-btn"
-                          onClick={() => {
-                            setNumeroTarjeta('4012 8888 8888 8883');
-                            setMarcaTarjeta('visa');
-                            setNombreTarjeta('PEDRO PAEZ');
-                            setVencimientoTarjeta('12/30');
-                            setCvvTarjeta('123');
-                          }}
-                        >
-                          <div className="sim-card-header">
-                            <span className="sim-card-name">Tarjeta Inactiva</span>
-                            <span className="sim-card-brand visa">Visa</span>
-                          </div>
-                          <div className="sim-card-number">4012 •••• •••• 8883</div>
-                          <div className="sim-card-desc">Simula tarjeta deshabilitada o suspendida.</div>
-                          <span className="sim-card-badge error">Rechazada</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+          {paymentMethod === 'cripto' && (
+            <div className="crypto-payment-container" style={{
+              padding: '30px 25px',
+              background: '#fcfaff',
+              borderRadius: '20px',
+              border: '2px solid #e8dff0',
+              marginTop: '25px',
+              boxShadow: '0 8px 30px rgba(90, 64, 107, 0.04)'
+            }}>
+              <h3 className="font-serif" style={{ fontSize: '20px', marginBottom: '15px', color: '#3b0a45', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '24px' }}>🪙</span> Pago Seguro con Dogecoin (DOGE)
+              </h3>
               
-              {/* VISTA PREVIA TARJETA 3D */}
-              <div className="card-container-3d">
-                <div className={`card-inner-3d ${tarjetaGirada ? 'flipped' : ''}`}>
-                  
-                  {/* FRENTE */}
-                  <div className={`card-front-3d ${marcaTarjeta}`}>
-                    <div className="card-logo-3d">
-                      {marcaTarjeta === 'visa' && <span className="logo-visa">Visa</span>}
-                      {marcaTarjeta === 'mastercard' && <span className="logo-mastercard">Mastercard</span>}
-                      {marcaTarjeta === 'amex' && <span className="logo-amex">Amex</span>}
-                      {marcaTarjeta === 'default' && <span className="logo-generic">Credit Card</span>}
+              <p style={{ fontSize: '14px', lineHeight: '1.6', color: '#555', marginBottom: '25px' }}>
+                Sigue estos sencillos pasos para completar tu pago de forma manual. Tu pedido se procesará tan pronto verifiquemos la transacción en la red.
+              </p>
+
+              {/* PASO 1 */}
+              <div style={{ marginBottom: '25px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '24px',
+                    height: '24px',
+                    background: '#5A406B',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>1</span>
+                  <strong style={{ fontSize: '14px', color: '#3b0a45', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Envía el pago desde tu Billetera
+                  </strong>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '15px',
+                  backgroundColor: '#fff',
+                  padding: '20px',
+                  borderRadius: '14px',
+                  border: '1px solid #e2d8eb',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>Red de Envío</span>
+                      <div style={{ fontSize: '15px', fontWeight: '700', color: '#009688', marginTop: '3px' }}>Dogecoin (Nativa)</div>
                     </div>
-                    <div className="card-chip-3d"></div>
-                    <div className="card-number-display-3d">
-                      {numeroTarjeta || '•••• •••• •••• ••••'}
-                    </div>
-                    <div className="card-details-display-3d">
-                      <div className="card-holder-display-3d">
-                        <span className="card-label-3d">Titular</span>
-                        <div className="card-value-3d">{nombreTarjeta.toUpperCase() || 'NOMBRE APELLIDO'}</div>
-                      </div>
-                      <div className="card-expiry-display-3d">
-                        <span className="card-label-3d">Vence</span>
-                        <div className="card-value-3d">{vencimientoTarjeta || 'MM/AA'}</div>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>Total a Transferir</span>
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: '#3b0a45', marginTop: '3px' }}>
+                        ${Number(total).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS
                       </div>
                     </div>
                   </div>
 
-                  {/* DORSO */}
-                  <div className="card-back-3d">
-                    <div className="card-magnetic-strip-3d"></div>
-                    <div className="card-signature-3d">
-                      <div className="signature-area-3d"></div>
-                      <div className="cvv-display-3d">{cvvTarjeta || '•••'}</div>
-                    </div>
-                    <div className="card-back-info-3d">
-                      Procesado con encriptación SSL de 256 bits.
+                  <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '15px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>Dirección de Wallet Destino</span>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginTop: '8px',
+                      backgroundColor: '#fdfbfe',
+                      padding: '12px 15px',
+                      borderRadius: '10px',
+                      border: '1px dashed #cbb0df'
+                    }}>
+                      <code style={{ flex: 1, fontSize: '13px', color: '#333', wordBreak: 'break-all', fontWeight: '600', fontFamily: 'monospace' }}>
+                        {cryptoWalletAddress}
+                      </code>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(cryptoWalletAddress);
+                          alert('¡Dirección de wallet copiada!');
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '12px',
+                          background: '#5A406B',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          transition: 'background 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Copiar Dirección
+                      </button>
                     </div>
                   </div>
-
                 </div>
               </div>
 
-              {/* INPUTS DEL FORMULARIO */}
-              <div className="card-inputs-grid">
-                <div className="checkout-form-group">
-                  <label className="checkout-label">NÚMERO DE TARJETA</label>
-                  <input
-                    type="text"
-                    className="checkout-input"
-                    placeholder="4000 1234 5678 9010"
-                    value={numeroTarjeta}
-                    onChange={handleNumeroTarjetaChange}
-                  />
+              {/* PASO 2 */}
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '24px',
+                    height: '24px',
+                    background: '#5A406B',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>2</span>
+                  <strong style={{ fontSize: '14px', color: '#3b0a45', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Pega el comprobante de transferencia aquí
+                  </strong>
                 </div>
 
-                <div className="checkout-form-group">
-                  <label className="checkout-label">NOMBRE DEL TITULAR (como figura en la tarjeta)</label>
-                  <input
-                    type="text"
-                    className="checkout-input"
-                    placeholder="JUAN PEREZ"
-                    value={nombreTarjeta}
-                    onChange={(e) => setNombreTarjeta(e.target.value)}
-                  />
-                </div>
-
-                <div className="checkout-row">
-                  <div className="checkout-form-group" style={{ flex: 1 }}>
-                    <label className="checkout-label">VENCIMIENTO</label>
+                <div style={{
+                  backgroundColor: '#fff',
+                  padding: '20px',
+                  borderRadius: '14px',
+                  border: '2px solid #5A406B',
+                  boxShadow: '0 4px 20px rgba(90, 64, 107, 0.08)'
+                }}>
+                  <label className="checkout-label" style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#5A406B', marginBottom: '8px', letterSpacing: '1px' }}>
+                    CÓDIGO HASH DE TRANSACCIÓN (TXID) *
+                  </label>
+                  
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ position: 'absolute', left: '15px', fontSize: '16px', color: '#888' }}>🔗</span>
                     <input
                       type="text"
                       className="checkout-input"
-                      placeholder="MM/AA"
-                      value={vencimientoTarjeta}
-                      onChange={handleVencimientoTarjetaChange}
+                      placeholder="Pega aquí el TXID (ej: d1e7046e18540d167d357b729f3d4...)"
+                      value={cryptoTxId}
+                      onChange={(e) => setCryptoTxId(e.target.value)}
+                      style={{
+                        textTransform: 'none',
+                        paddingLeft: '40px',
+                        border: '1px solid #ccc',
+                        borderRadius: '8px',
+                        width: '100%',
+                        height: '45px',
+                        fontSize: '13px'
+                      }}
                     />
                   </div>
-                  <div className="checkout-form-group" style={{ flex: 1 }}>
-                    <label className="checkout-label">CÓDIGO CVV</label>
-                    <input
-                      type="text"
-                      className="checkout-input"
-                      placeholder="123"
-                      value={cvvTarjeta}
-                      onChange={handleCvvTarjetaChange}
-                      onFocus={() => setTarjetaGirada(true)}
-                      onBlur={() => setTarjetaGirada(false)}
-                    />
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginTop: '12px',
+                    backgroundColor: '#fff8eb',
+                    border: '1px solid #ffe3b3',
+                    padding: '10px 12px',
+                    borderRadius: '8px'
+                  }}>
+                    <span style={{ fontSize: '14px' }}>⚠️</span>
+                    <p style={{ margin: 0, fontSize: '11.5px', color: '#825a17', lineHeight: '1.4' }}>
+                      <strong>Importante:</strong> El TXID o Hash es el identificador único de tu envío de cripto. Si pegas un código incorrecto o vacío, no podremos validar tu pago y tu pedido se demorará.
+                    </p>
                   </div>
                 </div>
               </div>

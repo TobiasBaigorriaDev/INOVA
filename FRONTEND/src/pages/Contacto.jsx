@@ -17,7 +17,7 @@ function Contacto() {
   const [error, setError] = useState('');
 
   // URL del webhook de n8n para pruebas locales
-  const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/inova-contacto';
+  const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/inova-contacto';
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
     ${formattedCatalog}
     - **Políticas de Venta sobre Productos:** Usa estrictamente la lista de arriba para responder si un producto existe, su precio, descripción o disponibilidad. Si el stock de un producto es 0, aclara que actualmente no tenemos stock de ese producto, pero podemos hacerlo a pedido.
     - **Productos no listados:** Si te preguntan por un producto que no está en la lista de arriba, explícales con amabilidad que no está en nuestro catálogo de stock inmediato, pero que como nos especializamos en joyería personalizada, podemos diseñarlo a medida si nos contactan por Instagram o WhatsApp.
-    - **Medios de Pago:** Aceptamos efectivo, transferencia bancaria, Mercado Pago y tarjeta de crédito.
+    - **Medios de Pago:** Aceptamos efectivo, Mercado Pago y criptomonedas (DOGE - Dogecoin).
     - **Entregas / Envíos:** Coordinamos puntos de encuentro estratégicos dentro del Gran Mendoza de mutuo acuerdo. No poseemos tienda física abierta al público general, nos manejamos mediante entregas pactadas y venta online.
     - **Contacto Directo:**
       * Instagram: @inova.accesorios (https://www.instagram.com/inova.accesorios/)

@@ -8,6 +8,9 @@ const { sequelize } = require('../config/dbSQL');
 const validarJWT = require('../middlewares/authMiddleware');
 const esAdmin = require('../middlewares/adminMiddleware');
 
+// Webhook de n8n para enviar mail automático cuando se registra una compra
+const N8N_ORDER_WEBHOOK_URL = process.env.N8N_ORDER_WEBHOOK_URL || 'http://localhost:5678/webhook/inova-compra';
+
 // ==========================================
 // CREAR UN PEDIDO (POST /api/orders)
 // Protegido con JWT
@@ -17,8 +20,14 @@ router.post('/', validarJWT, async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
-        const { email, nombreCliente, apellidoCliente, diaEncuentro, horaEncuentro, metodoPago, cartItems } = req.body;
+        const { email, nombreCliente, apellidoCliente, diaEncuentro, horaEncuentro, metodoPago, cartItems, cryptoTxId, cryptoNetwork } = req.body;
         const userId = req.usuario.id; // Extraemos el ID seguro del token de sesión
+
+        // Validación para método cripto
+        if (metodoPago === 'cripto' && (!cryptoTxId || !cryptoTxId.trim())) {
+            await t.rollback();
+            return res.status(400).json({ mensaje: 'El Hash de la transacción (TXID) es obligatorio para el pago con criptomonedas' });
+        }
 
         // 1. Validación básica de carrito
         if (!cartItems || cartItems.length === 0) {
@@ -32,7 +41,7 @@ router.post('/', validarJWT, async (req, res) => {
         // 2. Verificar disponibilidad de stock y recalcular precios en backend
         for (const item of cartItems) {
             const dbProduct = await Product.findByPk(item.id, { transaction: t });
-            
+
             if (!dbProduct) {
                 await t.rollback();
                 return res.status(404).json({ mensaje: `El producto ${item.name || 'desconocido'} no existe en la tienda` });
@@ -40,13 +49,13 @@ router.post('/', validarJWT, async (req, res) => {
 
             if (dbProduct.stock < item.qty) {
                 await t.rollback();
-                return res.status(400).json({ 
-                    mensaje: `Stock insuficiente para "${dbProduct.nombre}". Stock disponible: ${dbProduct.stock}` 
+                return res.status(400).json({
+                    mensaje: `Stock insuficiente para "${dbProduct.nombre}". Stock disponible: ${dbProduct.stock}`
                 });
             }
 
             subtotal += dbProduct.precio * item.qty;
-            
+
             itemsToCreate.push({
                 productId: item.id,
                 cantidad: item.qty,
@@ -69,10 +78,12 @@ router.post('/', validarJWT, async (req, res) => {
             apellidoCliente,
             diaEncuentro,
             horaEncuentro,
-            metodoPago
+            metodoPago,
+            cryptoTxId: metodoPago === 'cripto' ? cryptoTxId.trim() : null,
+            cryptoNetwork: metodoPago === 'cripto' ? cryptoNetwork : null
         }, { transaction: t });
 
-        // 4. Crear los detalles de productos (OrderItem) y restar el stock (si no es Mercado Pago ni Tarjeta)
+        // 4. Crear los detalles de productos (OrderItem) y restar el stock (si no es Mercado Pago)
         for (const item of itemsToCreate) {
             // Guardamos el detalle
             await OrderItem.create({
@@ -82,8 +93,8 @@ router.post('/', validarJWT, async (req, res) => {
                 precioUnitario: item.precioUnitario
             }, { transaction: t });
 
-            // Descontamos stock del producto inmediatamente SOLO si no es Mercado Pago (mercadolibre) ni Tarjeta (tarjeta)
-            if (metodoPago !== 'mercadolibre' && metodoPago !== 'tarjeta') {
+            // Descontamos stock del producto inmediatamente SOLO si no es Mercado Pago (mercadolibre)
+            if (metodoPago !== 'mercadolibre') {
                 await item.dbProduct.update({
                     stock: item.dbProduct.stock - item.cantidad
                 }, { transaction: t });
@@ -92,6 +103,42 @@ router.post('/', validarJWT, async (req, res) => {
 
         // Si todo anduvo perfecto, confirmamos los cambios en PostgreSQL
         await t.commit();
+
+        // Enviamos los datos de la compra a n8n para disparar el mail automático.
+        // Importante: si n8n falla, NO rompemos la compra.
+        try {
+            await fetch(N8N_ORDER_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: order.id,
+                    email,
+                    nombreCliente,
+                    apellidoCliente,
+                    diaEncuentro,
+                    horaEncuentro,
+                    metodoPago,
+                    cryptoTxId: order.cryptoTxId,
+                    cryptoNetwork: order.cryptoNetwork,
+                    subtotal,
+                    costoEnvio,
+                    total: totalFinal,
+                    status: order.status,
+                    productos: itemsToCreate.map(item => ({
+                        productId: item.productId,
+                        nombre: item.dbProduct.nombre,
+                        cantidad: item.cantidad,
+                        precioUnitario: item.precioUnitario
+                    }))
+                })
+            });
+
+            console.log(`[n8n] Webhook de compra enviado correctamente para la orden ${order.id}`);
+        } catch (webhookError) {
+            console.error('[n8n] Error al enviar webhook de compra:', webhookError.message);
+        }
 
         res.status(201).json({
             mensaje: '¡Pedido registrado con éxito! El stock ha sido actualizado.',
@@ -102,9 +149,9 @@ router.post('/', validarJWT, async (req, res) => {
     } catch (error) {
         // Si hubo algún error insospechado, revertimos todo
         await t.rollback();
-        res.status(500).json({ 
-            mensaje: 'Error grave al procesar tu pedido', 
-            error: error.message 
+        res.status(500).json({
+            mensaje: 'Error grave al procesar tu pedido',
+            error: error.message
         });
     }
 });
@@ -114,13 +161,13 @@ router.post('/', validarJWT, async (req, res) => {
 // ==========================================
 router.get('/', validarJWT, esAdmin, async (req, res) => {
     try {
-        const orders = await Order.findAll({ 
+        const orders = await Order.findAll({
             include: [
                 { model: Payment },
-                { 
-                    model: OrderItem, 
+                {
+                    model: OrderItem,
                     as: 'items',
-                    include: [{ model: Product, as: 'producto' }] 
+                    include: [{ model: Product, as: 'producto' }]
                 }
             ]
         });
@@ -135,13 +182,13 @@ router.get('/', validarJWT, esAdmin, async (req, res) => {
 // ==========================================
 router.get('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
-        const order = await Order.findByPk(req.params.id, { 
+        const order = await Order.findByPk(req.params.id, {
             include: [
                 { model: Payment },
-                { 
-                    model: OrderItem, 
+                {
+                    model: OrderItem,
                     as: 'items',
-                    include: [{ model: Product, as: 'producto' }] 
+                    include: [{ model: Product, as: 'producto' }]
                 }
             ]
         });
@@ -169,13 +216,13 @@ router.put('/:id', validarJWT, esAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Orden no encontrada' });
         }
 
-        // Si pasa a 'pagado' y estaba en 'pendiente', descontamos stock si es tarjeta o MP
+        // Si pasa a 'pagado' y estaba en 'pendiente', descontamos stock si es MP
         if (status === 'pagado' && order.status === 'pendiente') {
             for (const item of order.items) {
                 const product = await Product.findByPk(item.productId, { transaction: t });
                 if (product) {
-                    // Solo descontamos si es tarjeta o mercadolibre (ya que los demás ya descontaron stock al crearse)
-                    if (order.metodoPago === 'tarjeta' || order.metodoPago === 'mercadolibre') {
+                    // Solo descontamos si es mercadolibre (ya que los demás ya descontaron stock al crearse)
+                    if (order.metodoPago === 'mercadolibre') {
                         const newStock = Math.max(0, product.stock - item.cantidad);
                         await product.update({ stock: newStock }, { transaction: t });
                         console.log(`[Admin PUT] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
@@ -189,7 +236,7 @@ router.put('/:id', validarJWT, esAdmin, async (req, res) => {
             for (const item of order.items) {
                 const product = await Product.findByPk(item.productId, { transaction: t });
                 if (product) {
-                    if (order.metodoPago !== 'tarjeta' && order.metodoPago !== 'mercadolibre') {
+                    if (order.metodoPago !== 'mercadolibre') {
                         const newStock = product.stock + item.cantidad;
                         await product.update({ stock: newStock }, { transaction: t });
                         console.log(`[Admin PUT] Devuelto stock para producto ${product.nombre} por cancelación. Nuevo stock: ${newStock}`);
@@ -261,7 +308,7 @@ router.post('/seed-demo', validarJWT, esAdmin, async (req, res) => {
                 }
             }
         });
-        
+
         if (oldDemoOrders.length > 0) {
             const oldDemoIds = oldDemoOrders.map(o => o.id);
             await OrderItem.destroy({ where: { orderId: oldDemoIds } });
@@ -271,13 +318,13 @@ router.post('/seed-demo', validarJWT, esAdmin, async (req, res) => {
         // 4. Generar datos de órdenes completamente aleatorios
         const nombres = ['Sofía', 'Mateo', 'Valentina', 'Nicolás', 'Camila', 'Lucas', 'Martina', 'Diego', 'Emma', 'Santiago', 'Zoe', 'Bautista', 'Catalina', 'Felipe', 'Delfina'];
         const apellidos = ['Rodríguez', 'Pérez', 'Fernández', 'Gómez', 'Díaz', 'Torres', 'Romero', 'Silva', 'Castro', 'Benítez', 'Soler', 'Peralta', 'Martínez', 'Álvarez', 'Ruiz'];
-        const metodos = ['mercadolibre', 'tarjeta', 'efectivo'];
+        const metodos = ['mercadolibre', 'cripto', 'efectivo'];
         const estados = ['pagado', 'pagado', 'pagado', 'pagado', 'pendiente', 'cancelado'];
         const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
         const horas = ['10:00', '11:30', '13:00', '14:30', '15:00', '16:30', '17:00', '18:30', '19:00', '20:15'];
 
         const numOrders = Math.floor(Math.random() * 6) + 8; // Genera entre 8 y 13 órdenes aleatorias
-        
+
         for (let i = 0; i < numOrders; i++) {
             const nombre = nombres[Math.floor(Math.random() * nombres.length)];
             const apellido = apellidos[Math.floor(Math.random() * apellidos.length)];
@@ -345,7 +392,7 @@ router.post('/seed-demo', validarJWT, esAdmin, async (req, res) => {
 router.delete('/seed-demo', validarJWT, esAdmin, async (req, res) => {
     try {
         const { Op } = require('sequelize');
-        
+
         // Buscar todas las órdenes de demo
         const demoOrders = await Order.findAll({
             where: {
@@ -354,7 +401,7 @@ router.delete('/seed-demo', validarJWT, esAdmin, async (req, res) => {
                 }
             }
         });
-        
+
         if (demoOrders.length > 0) {
             const demoIds = demoOrders.map(o => o.id);
             // Eliminar detalles

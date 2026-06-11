@@ -930,7 +930,7 @@ function Admin() {
                       </td>
                       <td data-label="Método de Pago">
                         <span className={`badge badge-payment-${order.metodoPago || 'efectivo'}`}>
-                          {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}
+                          {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : order.metodoPago === 'cripto' ? 'Cripto' : 'Efectivo'}
                         </span>
                       </td>
                       <td data-label="Monto Total" style={{ fontWeight: '700', color: '#5A406B' }}>${Number(order.total).toFixed(2)}</td>
@@ -987,6 +987,43 @@ function Admin() {
                                 <span><strong>Hora:</strong> {order.horaEncuentro || 'No especificada'}</span>
                               </p>
                             </div>
+                            
+                            {order.metodoPago === 'cripto' && (
+                              <div className="order-crypto-info" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#eef8f5', borderRadius: '10px', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
+                                <h5 style={{ margin: '0 0 10px 0', color: '#27ae60', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  🪙 Detalles del Pago en Criptomoneda
+                                </h5>
+                                <p style={{ margin: 0, fontSize: '13px', color: '#444', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <span><strong>Red seleccionada:</strong> {order.cryptoNetwork || 'No especificada'}</span>
+                                  <span>
+                                    <strong>ID de Transacción (TXID):</strong>{' '}
+                                    <code style={{ background: '#f0f0f0', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', wordBreak: 'break-all' }}>
+                                      {order.cryptoTxId || 'No proporcionado'}
+                                    </code>
+                                  </span>
+                                  {order.cryptoTxId && (
+                                    <span>
+                                      <strong>Verificar en explorador:</strong>{' '}
+                                      <a 
+                                        href={order.cryptoNetwork?.includes('Dogecoin') || order.cryptoNetwork?.includes('DOGE')
+                                          ? `https://dogechain.info/tx/${order.cryptoTxId}`
+                                          : order.cryptoNetwork === 'USDS - Red Polygon' || order.cryptoNetwork?.includes('Polygon')
+                                            ? `https://polygonscan.com/tx/${order.cryptoTxId}` 
+                                            : order.cryptoNetwork === 'TRON (TRC20)' 
+                                              ? `https://tronscan.org/#/transaction/${order.cryptoTxId}` 
+                                              : `https://etherscan.io/tx/${order.cryptoTxId}`
+                                        } 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{ color: '#27ae60', fontWeight: 'bold', textDecoration: 'underline' }}
+                                      >
+                                        Ver en Dogechain/Explorer ↗
+                                      </a>
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            )}
                             
                             <h4 className="detail-title" style={{ fontSize: '14px', marginBottom: '12px', color: '#333' }}>Productos Comprados (Pedido #{order.id})</h4>
                             <div className="detail-items-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

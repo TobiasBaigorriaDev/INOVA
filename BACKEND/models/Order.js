@@ -47,6 +47,14 @@ const Order = sequelize.define('Order', {
     metodoPago: {
         type: DataTypes.ENUM('tarjeta', 'efectivo', 'mercadolibre', 'cripto'),
         allowNull: false
+    },
+    cryptoTxId: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    cryptoNetwork: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 });
 
