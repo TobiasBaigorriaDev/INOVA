@@ -244,4 +244,54 @@ router.post('/google', async (req, res) => {
     }
 });
 
+// ============================
+// VERIFY / REFRESH SESSION
+// ============================
+const validarJWT = require('../middlewares/authMiddleware');
+router.get('/verify', validarJWT, async (req, res) => {
+    try {
+        const usuario = await User.findByPk(req.usuario.id);
+        if (!usuario) {
+            return res.status(404).json({
+                mensaje: 'Usuario no encontrado'
+            });
+        }
+
+        // Auto-upgrade a admin si el email está en ADMIN_EMAILS y era USER_ROLE
+        const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
+        if (adminEmails.includes(usuario.email.trim().toLowerCase()) && usuario.rol !== 'ADMIN_ROLE') {
+            await usuario.update({ rol: 'ADMIN_ROLE' });
+            console.log(`[Verify Auto-Upgrade] Rol de usuario ${usuario.email} actualizado a ADMIN_ROLE`);
+        }
+
+        // Generar JWT
+        const token = jwt.sign(
+            {
+                id: usuario.id,
+                rol: usuario.rol
+            },
+            process.env.JWT_SECRET || 'inova_secure_fallback_secret_key_2026',
+            {
+                expiresIn: '2h'
+            }
+        );
+
+        res.status(200).json({
+            usuario: {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                email: usuario.email,
+                rol: usuario.rol
+            },
+            token
+        });
+    } catch (error) {
+        res.status(500).json({
+            mensaje: 'Error al verificar sesión',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

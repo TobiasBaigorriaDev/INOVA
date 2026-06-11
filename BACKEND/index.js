@@ -24,7 +24,25 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 
 // 4. Ejecutamos la conexión a la base de datos
-connectSQL();
+connectSQL().then(async () => {
+    try {
+        const User = require('./models/User');
+        const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
+        if (adminEmails.length > 0 && adminEmails[0] !== '') {
+            const users = await User.findAll();
+            for (const u of users) {
+                if (adminEmails.includes(u.email.trim().toLowerCase()) && u.rol !== 'ADMIN_ROLE') {
+                    u.rol = 'ADMIN_ROLE';
+                    await u.save();
+                    console.log(`[Startup Admin Sync] Rol de ${u.email} actualizado a ADMIN_ROLE`);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Error al sincronizar administradores en el inicio:', err);
+    }
+});
 
 // 5. Middlewares 
 app.use(cors()); // Permite la comunicación con el frontend

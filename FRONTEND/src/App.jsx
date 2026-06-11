@@ -53,22 +53,53 @@ function App() {
     useState(null);
 
   // =========================
+  // LOGOUT
+  // =========================
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('favoritos');
+    localStorage.removeItem('inova_cart');
+    localStorage.removeItem('inova_cart_timestamp');
+    setUsuario(null);
+    window.location.href = '/login';
+  };
+
+  // =========================
   // CARGAR USUARIO
   // =========================
 
   useEffect(() => {
-
-    const usuarioGuardado =
-      localStorage.getItem('usuario');
+    const usuarioGuardado = localStorage.getItem('usuario');
+    const token = localStorage.getItem('token');
 
     if (usuarioGuardado) {
-
-      setUsuario(
-        JSON.parse(usuarioGuardado)
-      );
-
+      setUsuario(JSON.parse(usuarioGuardado));
     }
 
+    if (token) {
+      fetch('http://localhost:3000/api/auth/verify', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        if (!res.ok) {
+          logout();
+          throw new Error('Sesión inválida o expirada');
+        }
+        return res.json();
+      })
+      .then(data => {
+        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+        localStorage.setItem('token', data.token);
+        setUsuario(data.usuario);
+      })
+      .catch(err => {
+        console.error('Error al verificar sesión con backend:', err);
+      });
+    }
   }, []);
 
   // =========================
@@ -112,28 +143,6 @@ function App() {
       ]);
 
     }
-
-  };
-
-  // =========================
-  // LOGOUT
-  // =========================
-
-  const logout = () => {
-
-    localStorage.removeItem('token');
-
-    localStorage.removeItem('usuario');
-
-    localStorage.removeItem('favoritos');
-
-    localStorage.removeItem('inova_cart');
-
-    localStorage.removeItem('inova_cart_timestamp');
-
-    setUsuario(null);
-
-    window.location.href = '/login';
 
   };
 
