@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbSQL');
 
-// Definimos el modelo de usuarios en PostgreSQL usando Sequelize
 const User = sequelize.define('User', {
     id: {
         type: DataTypes.INTEGER,
@@ -28,9 +27,17 @@ const User = sequelize.define('User', {
     estado: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+    },
+    resetToken: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    resetTokenExpira: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
-    timestamps: true // Esto nos crea automáticamente createdAt y updatedAt
+    timestamps: true
 });
 
 module.exports = User;

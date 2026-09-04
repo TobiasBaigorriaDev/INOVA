@@ -63,7 +63,7 @@ function Collections({ toggleFavorite, favorites }) {
             const isSearching = searchQuery.trim() !== '';
             // Si buscamos, traemos el catálogo completo (límite alto) de esa categoría 
             // para aplicar Búsqueda Difusa en cliente.
-            const limit = isSearching ? 1000 : 12;
+            const limit = isSearching ? 1000 : 6;
             const page = isSearching ? 1 : currentPage;
 
             let url = `http://localhost:3000/api/products?page=${page}&limit=${limit}`;
@@ -122,7 +122,7 @@ function Collections({ toggleFavorite, favorites }) {
                 }
 
                 // Paginación manual en el cliente
-                const itemsPerPage = 12;
+                const itemsPerPage = 6;
                 const totalFuzzyPages = Math.ceil(fuzzyProducts.length / itemsPerPage) || 1;
                 setTotalPages(totalFuzzyPages);
 
@@ -279,7 +279,7 @@ function Collections({ toggleFavorite, favorites }) {
                 </div>
             )}
 
-            {!isLoading && totalPages > 1 && (
+            {!isLoading && totalPages > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '60px' }}>
                     <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} style={{ background: 'none', border: 'none', cursor: currentPage === 1 ? 'default' : 'pointer', color: currentPage === 1 ? '#ccc' : 'inherit', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Anterior</button>
                     <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{currentPage} / {totalPages}</span>
