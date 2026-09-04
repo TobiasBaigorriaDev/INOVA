@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Send, MapPin, Clock, MessageSquare, CheckCircle } from 'lucide-react';
 import './Contacto.css';
 
@@ -18,6 +18,23 @@ function Contacto() {
 
   // URL del webhook de n8n para pruebas locales
   const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/inova-contacto';
+
+  useEffect(() => {
+    const usuarioGuardado = localStorage.getItem('usuario');
+    if (usuarioGuardado) {
+      try {
+        const usuario = JSON.parse(usuarioGuardado);
+        setFormData(prev => ({
+          ...prev,
+          nombre: usuario.nombre || '',
+          apellido: usuario.apellido || '',
+          email: usuario.email || ''
+        }));
+      } catch (err) {
+        console.error('Error parseando usuario en Contacto:', err);
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
