@@ -22,8 +22,12 @@ router.post('/', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
         const Order = require('../models/Order');
         const OrderItem = require('../models/OrderItem');
+        const { Op } = require('sequelize');
         const ordenes = await Order.findAll({
-          where: { userId: decoded.id },
+          where: { 
+              userId: decoded.id,
+              status: { [Op.ne]: 'pendiente' }
+          },
           include: [{ model: OrderItem, as: 'items', include: [{ model: Product, as: 'producto' }] }],
           order: [['createdAt', 'DESC']],
           limit: 5

@@ -68,7 +68,7 @@ router.post('/', validarJWT, async (req, res) => {
         const costoEnvio = 0.00;
         const totalFinal = subtotal + costoEnvio;
 
-        const status = (metodoPago === 'cripto' || metodoPago === 'mercadolibre') ? 'pagado' : 'pendiente';
+        const status = 'pendiente';
 
         // 3. Crear el registro de la Orden principal
         const order = await Order.create({
@@ -163,7 +163,13 @@ router.post('/', validarJWT, async (req, res) => {
 // ==========================================
 router.get('/', validarJWT, esAdmin, async (req, res) => {
     try {
+        const { Op } = require('sequelize');
         const orders = await Order.findAll({
+            where: {
+                status: {
+                    [Op.ne]: 'pendiente'
+                }
+            },
             include: [
                 { model: Payment },
                 {
