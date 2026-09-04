@@ -133,6 +133,25 @@
 
 .products-table-container {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+/* Estilo para la barra de desplazamiento interna (opcional para que se vea más estética) */
+.products-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.products-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 4px;
+}
+.products-table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1; 
+  border-radius: 4px;
+}
+.products-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8; 
 }
 
 .products-table {
@@ -150,6 +169,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
 }
 
 .products-table td {

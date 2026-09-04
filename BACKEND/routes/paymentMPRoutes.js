@@ -30,8 +30,7 @@ router.post('/create-preference', async (req, res) => {
                 // external_reference nos sirve para identificar la orden cuando MP nos mande el webhook
                 external_reference: orderId ? orderId.toString() : '0',
                 // notification_url es donde Mercado Pago enviará los avisos por POST
-                // TODO: Reemplazar por tu dominio público o ngrok en desarrollo
-                notification_url: 'https://TU_DOMINIO.ngrok.app/api/mp/webhook',
+                notification_url: process.env.WEBHOOK_URL || 'https://TU_DOMINIO.ngrok.app/api/mp/webhook',
                 items: items.map(item => ({
                     title: item.nombre,
                     quantity: item.cantidad,
