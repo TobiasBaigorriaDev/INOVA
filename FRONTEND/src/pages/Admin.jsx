@@ -937,6 +937,7 @@ function Admin() {
                         <select 
                           value={order.status} 
                           onChange={(e) => handleTableFieldChange(order.id, 'status', e.target.value, true)}
+                          disabled={order.status === 'pagado'}
                           className={`status-select status-${order.status}`}
                           style={{
                             padding: '8px 12px',
@@ -944,7 +945,8 @@ function Admin() {
                             border: '1px solid #ddd',
                             fontWeight: '600',
                             fontSize: '13px',
-                            cursor: 'pointer'
+                            cursor: order.status === 'pagado' ? 'not-allowed' : 'pointer',
+                            opacity: order.status === 'pagado' ? 0.6 : 1
                           }}
                         >
                           <option value="pendiente">Pendiente</option>
@@ -955,16 +957,18 @@ function Admin() {
                       <td data-label="Acción" onClick={(e) => e.stopPropagation()}>
                         <button 
                           onClick={() => handleUpdateOrderStatus(order.id, order.status)}
+                          disabled={order.status === 'pagado'}
                           style={{
                             backgroundColor: '#5A406B',
                             color: 'white',
                             border: 'none',
                             padding: '8px 16px',
                             borderRadius: '8px',
-                            cursor: 'pointer',
+                            cursor: order.status === 'pagado' ? 'not-allowed' : 'pointer',
                             fontSize: '13px',
                             fontWeight: '600',
-                            transition: 'background-color 0.2s'
+                            transition: 'background-color 0.2s',
+                            opacity: order.status === 'pagado' ? 0.6 : 1
                           }}
                         >
                           Actualizar

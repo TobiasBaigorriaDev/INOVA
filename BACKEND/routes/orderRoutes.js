@@ -224,6 +224,12 @@ router.put('/:id', validarJWT, esAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Orden no encontrada' });
         }
 
+        // Si la orden ya está pagada, bloqueamos cualquier intento de cambiar su estado
+        if (order.status === 'pagado') {
+            await t.rollback();
+            return res.status(403).json({ error: 'Acción denegada: No se puede modificar el estado de una orden que ya ha sido pagada.' });
+        }
+
         // Si pasa a 'pagado' y estaba en 'pendiente', descontamos stock si es MP
         if (status === 'pagado' && order.status === 'pendiente') {
             for (const item of order.items) {
