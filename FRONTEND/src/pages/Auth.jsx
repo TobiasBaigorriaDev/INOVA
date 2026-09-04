@@ -17,15 +17,14 @@ function Auth({ setUsuario }) {
   // =========================
 
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgot, setIsForgot] = useState(false);
+  const [highlightRegister, setHighlightRegister] = useState(false);
+  const [successMensaje, setSuccessMensaje] = useState('');
 
   const [nombre, setNombre] = useState('');
-
   const [email, setEmail] = useState('');
-
   const [password, setPassword] = useState('');
-
-  const [errorMensaje, setErrorMensaje] =
-    useState('');
+  const [errorMensaje, setErrorMensaje] = useState('');
 
   // =========================
   // FUNCION REDIRECT
@@ -198,11 +197,11 @@ function Auth({ setUsuario }) {
   // =========================
 
   const toggleAuthMode = () => {
-
     setErrorMensaje('');
-
+    setSuccessMensaje('');
+    setHighlightRegister(false);
+    setIsForgot(false);
     setIsLogin(!isLogin);
-
   };
 
   // =========================
@@ -219,11 +218,11 @@ function Auth({ setUsuario }) {
       const response = await fetch('http://localhost:3000/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ 
-    message: userText, 
-    history: messages,
-    token: localStorage.getItem('token') || null
-      }),
+        body: JSON.stringify({
+          nombre: user.displayName,
+          email: user.email,
+          foto: user.photoURL
+        }),
       });
 
       const data = await response.json();
@@ -241,6 +240,43 @@ function Auth({ setUsuario }) {
     } catch (error) {
       console.log(error);
       setErrorMensaje('Error al iniciar sesión con Google');
+    }
+  };
+
+  // =========================
+  // FORGOT PASSWORD
+  // =========================
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMensaje('El formato del email no es válido.');
+      return;
+    }
+    try {
+      setErrorMensaje('');
+      setSuccessMensaje('');
+      setHighlightRegister(false);
+      const response = await fetch('http://localhost:3000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 404 || (data.mensaje && data.mensaje.toLowerCase().includes('no encontrado'))) {
+          setErrorMensaje('No hay ninguna cuenta registrada con este email.');
+          setHighlightRegister(true);
+        } else {
+          setErrorMensaje(data.mensaje || 'Error al solicitar recuperación');
+        }
+        return;
+      }
+      setSuccessMensaje('Te hemos enviado un correo con instrucciones.');
+    } catch (error) {
+      console.log(error);
+      setErrorMensaje('Error conectando con el servidor');
     }
   };
 
@@ -391,20 +427,37 @@ function Auth({ setUsuario }) {
         <div className="auth-card">
 
           <h2 className="font-serif">
-
-            {isLogin
-              ? 'Bienvenido'
-              : 'Crear Cuenta'}
-
+            {isForgot
+              ? 'Recuperar Contraseña'
+              : isLogin
+                ? 'Bienvenido'
+                : 'Crear Cuenta'}
           </h2>
 
           <p>
-
-            {isLogin
-              ? 'Acceda a su cuenta exclusiva'
-              : 'Únase a INOVA'}
-
+            {isForgot
+              ? 'Ingresa tu email para recibir instrucciones'
+              : isLogin
+                ? 'Acceda a su cuenta exclusiva'
+                : 'Únase a INOVA'}
           </p>
+
+          {successMensaje && (
+            <div
+              style={{
+                background: 'rgba(0,255,0,0.1)',
+                border: '1px solid rgba(0,255,0,0.4)',
+                color: '#b3ffb3',
+                padding: '12px',
+                marginBottom: '20px',
+                textAlign: 'center',
+                fontSize: '14px',
+                borderRadius: '4px'
+              }}
+            >
+              {successMensaje}
+            </div>
+          )}
 
           {errorMensaje && (
 
@@ -425,9 +478,9 @@ function Auth({ setUsuario }) {
 
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={isForgot ? handleForgotSubmit : handleSubmit}>
 
-            {!isLogin && (
+            {!isLogin && !isForgot && (
 
               <div className="auth-form-group">
 
@@ -473,68 +526,82 @@ function Auth({ setUsuario }) {
 
             </div>
 
-            <div className="auth-form-group">
-
-              <div className="auth-labels">
-
-                <label>
-                  PASSWORD
-                </label>
-
+            {!isForgot && (
+              <div className="auth-form-group">
+                <div className="auth-labels">
+                  <label>PASSWORD</label>
+                  {isLogin && (
+                    <span
+                      style={{ fontSize: '12px', cursor: 'pointer', opacity: 0.8 }}
+                      onClick={() => {
+                        setIsForgot(true);
+                        setErrorMensaje('');
+                        setSuccessMensaje('');
+                        setHighlightRegister(false);
+                      }}
+                    >
+                      ¿Olvidó su contraseña?
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
-
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
-              />
-
-            </div>
+            )}
 
             <button
               type="submit"
               className="auth-btn-primary"
             >
-
-              {isLogin
-                ? 'INICIAR SESIÓN →'
-                : 'CREAR CUENTA →'}
-
+              {isForgot
+                ? 'ENVIAR CORREO →'
+                : isLogin
+                  ? 'INICIAR SESIÓN →'
+                  : 'CREAR CUENTA →'}
             </button>
 
           </form>
 
-          <div className="auth-divider">
-            O
-          </div>
-
-          <button
-            type="button"
-            className="auth-btn-google"
-            onClick={loginGoogle}
-          >
-
-            CONTINUAR CON GOOGLE
-
-          </button>
+          {!isForgot && (
+            <>
+              <div className="auth-divider">O</div>
+              <button
+                type="button"
+                className="auth-btn-google"
+                onClick={loginGoogle}
+              >
+                CONTINUAR CON GOOGLE
+              </button>
+            </>
+          )}
 
           <div className="auth-footer-text">
-
-            {isLogin
-              ? '¿No tiene una cuenta?'
-              : '¿Ya tiene una cuenta?'}
-
-            <span onClick={toggleAuthMode}>
-
-              {isLogin
-                ? 'CREAR UNA CUENTA'
-                : 'INICIAR SESIÓN'}
-
-            </span>
-
+            {isForgot ? (
+              <span onClick={() => { setIsForgot(false); setErrorMensaje(''); setSuccessMensaje(''); }}>
+                VOLVER AL LOGIN
+              </span>
+            ) : isLogin ? (
+              <>
+                ¿No tiene una cuenta?{' '}
+                <span 
+                  onClick={toggleAuthMode}
+                  style={highlightRegister ? { color: '#d4af37', textDecoration: 'underline', fontWeight: 'bold' } : {}}
+                >
+                  CREAR UNA CUENTA
+                </span>
+              </>
+            ) : (
+              <>
+                ¿Ya tiene una cuenta?{' '}
+                <span onClick={toggleAuthMode}>
+                  INICIAR SESIÓN
+                </span>
+              </>
+            )}
           </div>
 
         </div>

@@ -14,6 +14,7 @@ import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Favorites from './pages/Favorites';
 import Auth from './pages/Auth';
+import ResetPassword from './pages/ResetPassword';
 import Checkout from './pages/Checkout';
 import Collections from './pages/Collections';
 import Admin from './pages/Admin';
@@ -205,6 +206,12 @@ function App() {
                 setUsuario={setUsuario}
               />
             }
+          />
+
+          {/* RECUPERAR CONTRASEÑA */}
+          <Route
+            path="/recuperar/:token"
+            element={<ResetPassword />}
           />
 
           {/* CHECKOUT */}
