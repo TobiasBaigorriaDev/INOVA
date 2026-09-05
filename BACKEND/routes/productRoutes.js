@@ -36,14 +36,19 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// GET /api/products (MODIFICADO: Búsqueda, Filtros, Paginación y Ordenamiento por Precio)
+// GET /api/products (MODIFICADO: Búsqueda, Filtros, Paginación, Ordenamiento y Visibilidad)
 router.get('/', async (req, res) => {
     try {
         // 1. Extraemos los parámetros de la URL
-        const { search, categoria, precioMin, precioMax, page = 1, limit = 10, sortPrice } = req.query;
+        const { search, categoria, precioMin, precioMax, page = 1, limit = 10, sortPrice, includeHidden } = req.query;
 
         // 2. Armamos el objeto de filtros dinámicamente
         let whereClause = {};
+
+        // Por defecto, excluimos los productos ocultos para clientes normales
+        if (includeHidden !== 'true') {
+            whereClause.oculto = { [Op.not]: true };
+        }
 
         if (search) {
             const searchTerm = search.trim();
@@ -113,6 +118,28 @@ router.get('/:id', async (req, res) => {
         if (!producto) {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
+
+        // Si el producto está oculto, permitimos verlo solo a administradores autenticados
+        if (producto.oculto) {
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
+            let esAdminUser = false;
+            if (token) {
+                try {
+                    const jwt = require('jsonwebtoken');
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+                    if (decoded && decoded.rol === 'ADMIN_ROLE') {
+                        esAdminUser = true;
+                    }
+                } catch (e) {
+                    // Token inválido o expirado
+                }
+            }
+            if (!esAdminUser) {
+                return res.status(404).json({ mensaje: 'Producto no disponible' });
+            }
+        }
+
         res.status(200).json(producto);
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al obtener el producto', error: error.message });
@@ -167,7 +194,8 @@ const getPublicIdFromUrl = (url) => {
     }
 };
 
-// DELETE /api/products/:id
+// SOFT DELETE / OCULTAR PRODUCTO (DELETE /api/products/:id)
+// No elimina de la base de datos ni de Cloudinary para no romper historiales ni ventas
 router.delete('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
@@ -175,43 +203,53 @@ router.delete('/:id', validarJWT, esAdmin, async (req, res) => {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
 
-        if (product.imagenUrl) {
-            const publicId = getPublicIdFromUrl(product.imagenUrl);
-            if (publicId) {
-                try {
-                    await cloudinary.uploader.destroy(publicId);
-                    console.log(`🧹 Imagen eliminada de Cloudinary: ${publicId}`);
-                } catch (cloudinaryError) {
-                    console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
-                }
-            }
+        await product.update({ oculto: true });
+        res.status(200).json({ mensaje: 'Producto ocultado con éxito de la tienda', product });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al ocultar el producto', error: error.message });
+    }
+});
+
+// ALTERNAR VISIBILIDAD (PATCH /api/products/:id/toggle-oculto)
+router.patch('/:id/toggle-oculto', validarJWT, esAdmin, async (req, res) => {
+    try {
+        const producto = await Product.findByPk(req.params.id);
+        if (!producto) {
+            return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
 
-        await product.destroy();
-        res.status(200).json({ mensaje: 'Producto eliminado con éxito de la base de datos y Cloudinary' });
+        const nuevoEstado = !producto.oculto;
+        await producto.update({ oculto: nuevoEstado });
+
+        res.status(200).json({
+            mensaje: nuevoEstado ? 'Producto ocultado con éxito' : 'Producto visible en la tienda',
+            producto
+        });
     } catch (error) {
-        res.status(500).json({ mensaje: 'Error al eliminar el producto', error: error.message });
+        res.status(500).json({ mensaje: 'Error al cambiar visibilidad del producto', error: error.message });
     }
 });
 
 // ACTUALIZAR UN PRODUCTO (PUT)
 router.put('/:id', validarJWT, esAdmin, async (req, res) => {
     try {
-        const { nombre, descripcion, precio, categoria, imagenUrl, stock } = req.body;
+        const { nombre, descripcion, precio, categoria, imagenUrl, stock, oculto } = req.body;
         const producto = await Product.findByPk(req.params.id);
 
         if (!producto) {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
 
-        await producto.update({
-            nombre,
-            descripcion,
-            precio,
-            categoria,
-            imagenUrl,
-            stock
-        });
+        const updateData = {};
+        if (nombre !== undefined) updateData.nombre = nombre;
+        if (descripcion !== undefined) updateData.descripcion = descripcion;
+        if (precio !== undefined) updateData.precio = precio;
+        if (categoria !== undefined) updateData.categoria = categoria;
+        if (imagenUrl !== undefined) updateData.imagenUrl = imagenUrl;
+        if (stock !== undefined) updateData.stock = stock;
+        if (oculto !== undefined) updateData.oculto = Boolean(oculto);
+
+        await producto.update(updateData);
 
         res.status(200).json({ mensaje: 'Producto actualizado con éxito', producto });
     } catch (error) {

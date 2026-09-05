@@ -34,6 +34,10 @@ const Product = sequelize.define('Product', {
     stock: { 
         type: DataTypes.INTEGER, 
         defaultValue: 0 
+    },
+    oculto: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 }, { 
     timestamps: true

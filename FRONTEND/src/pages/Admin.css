@@ -228,6 +228,58 @@
   border-color: #ff4d4f;
 }
 
+.visibility-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.visibility-btn.hide-btn {
+  background-color: #fff7e6;
+  color: #d46b08;
+  border: 1px solid #ffd591;
+}
+
+.visibility-btn.hide-btn:hover {
+  background-color: #fa8c16;
+  color: white;
+  border-color: #fa8c16;
+}
+
+.visibility-btn.show-btn {
+  background-color: #f0f5ff;
+  color: #2f54eb;
+  border: 1px solid #adc6ff;
+}
+
+.visibility-btn.show-btn:hover {
+  background-color: #2f54eb;
+  color: white;
+  border-color: #2f54eb;
+}
+
+.badge-oculto {
+  background-color: #f0f0f0 !important;
+  color: #8c8c8c !important;
+  border: 1px solid #d9d9d9 !important;
+}
+
+.row-oculto {
+  background-color: #fafbfc;
+  opacity: 0.82;
+}
+
+.row-oculto:hover {
+  background-color: #f4f5f7 !important;
+  opacity: 1;
+}
+
 .badge {
   display: inline-block;
   padding: 4px 10px;

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Product = require('../models/Products');
+const { Op } = require('sequelize');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -44,8 +45,12 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Obtener catálogo en tiempo real
-    const dbProducts = await Product.findAll();
+    // Obtener catálogo en tiempo real (solo productos visibles)
+    const dbProducts = await Product.findAll({
+      where: {
+        oculto: { [Op.not]: true }
+      }
+    });
     const formattedCatalog = dbProducts.map(p =>
       `- **${p.nombre}**: ${p.descripcion}. Categoría: ${p.categoria}. Precio: $${p.precio}. Stock disponible: ${p.stock} unidades.`
     ).join('\n');

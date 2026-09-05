@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Trash2, LayoutDashboard, Image as ImageIcon, Package, AlertCircle, CheckCircle, DollarSign, TrendingUp, ShoppingBag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { PackagePlus, Trash2, Eye, EyeOff, LayoutDashboard, Image as ImageIcon, Package, AlertCircle, CheckCircle, DollarSign, TrendingUp, ShoppingBag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import './Admin.css';
 
 function Admin() {
@@ -203,7 +203,10 @@ function Admin() {
   const fetchProductos = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${apiUrl}?limit=100`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${apiUrl}?limit=100&includeHidden=true`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!res.ok) throw new Error('Error al obtener productos');
       const data = await res.json();
       setProductos(data.productos || data || []);
@@ -329,25 +332,29 @@ function Admin() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
+  const handleToggleOcultar = async (producto) => {
+    const confirmMsg = producto.oculto
+      ? `¿Deseas volver a mostrar "${producto.nombre}" en la tienda? Volverá a estar visible para todos los clientes.`
+      : `¿Deseas ocultar "${producto.nombre}" de la tienda? Los clientes ya no podrán verlo ni comprarlo, pero no se borrará de tu base de datos ni de tus historiales.`;
+
+    if (!window.confirm(confirmMsg)) return;
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${apiUrl}/${id}`, {
-        method: 'DELETE',
+      const res = await fetch(`${apiUrl}/${producto.id}/toggle-oculto`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (!res.ok) throw new Error('Error al eliminar el producto');
+      if (!res.ok) throw new Error('Error al cambiar la visibilidad del producto');
 
-      showToast('Producto eliminado');
+      showToast(producto.oculto ? '¡Producto ahora visible en la tienda!' : '¡Producto ocultado con éxito!');
       fetchProductos();
     } catch (error) {
       console.error(error);
-      showToast('Error al eliminar producto', 'error');
+      showToast('Error al modificar la visibilidad del producto', 'error');
     }
   };
 
@@ -815,7 +822,7 @@ function Admin() {
                 </thead>
                 <tbody>
                   {productos.map((producto) => (
-                    <tr key={producto.id}>
+                    <tr key={producto.id} className={producto.oculto ? 'row-oculto' : ''}>
                       <td data-label="Imagen">
                         <div className="table-img-container">
                           {producto.imagenUrl ? <img src={producto.imagenUrl} alt={producto.nombre} /> : <ImageIcon size={24} color="#ccc" />}
@@ -824,7 +831,12 @@ function Admin() {
                       <td data-label="Nombre y Categoría">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <input type="text" value={producto.nombre || ''} onChange={(e) => handleTableFieldChange(producto.id, 'nombre', e.target.value)} style={{ width: '145px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }} />
-                          <span className={`badge badge-${producto.categoria}`} style={{ alignSelf: 'flex-start' }}>{producto.categoria}</span>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <span className={`badge badge-${producto.categoria}`}>{producto.categoria}</span>
+                            {producto.oculto && (
+                              <span className="badge badge-oculto" title="Este producto está oculto para los usuarios">Oculto</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td data-label="Descripción">
@@ -867,8 +879,24 @@ function Admin() {
                         </div>
                       </td>
                       <td data-label="Acciones">
-                        <button onClick={() => handleTableSave(producto)} style={{ marginRight: '16px', backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Guardar</button>
-                        <button className="delete-btn" onClick={() => handleDelete(producto.id)} title="Eliminar"><Trash2 size={16} /> Eliminar</button>
+                        <button onClick={() => handleTableSave(producto)} style={{ marginRight: '12px', backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Guardar</button>
+                        <button 
+                          className={`visibility-btn ${producto.oculto ? 'show-btn' : 'hide-btn'}`} 
+                          onClick={() => handleToggleOcultar(producto)} 
+                          title={producto.oculto ? 'Hacer visible en la tienda para los usuarios' : 'Ocultar producto de la tienda para los usuarios'}
+                        >
+                          {producto.oculto ? (
+                            <>
+                              <Eye size={16} />
+                              <span>Mostrar</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff size={16} />
+                              <span>Ocultar</span>
+                            </>
+                          )}
+                        </button>
                       </td>
                     </tr>
                   ))}
