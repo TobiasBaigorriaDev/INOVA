@@ -16,8 +16,8 @@ function Contacto() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // URL del webhook de n8n para pruebas locales
-  const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/inova-contacto';
+  // Endpoint del backend de INOVA con automatización de IA y correo
+  const CONTACTO_API_URL = 'http://localhost:3000/api/contacto';
 
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuario');
@@ -64,8 +64,8 @@ function Contacto() {
     setError('');
 
     try {
-      // Enviar datos al webhook de n8n
-      const response = await fetch(N8N_WEBHOOK_URL, {
+      // Enviar datos al endpoint de contacto con IA y automatización de correo
+      const response = await fetch(CONTACTO_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,8 +185,8 @@ function Contacto() {
             {success ? (
               <div className="success-state">
                 <CheckCircle size={60} className="success-icon" />
-                <h3 className="font-serif">¡Mensaje Enviado!</h3>
-                <p>Agradecemos su interés en INOVA. Un asesor de INOVA se pondrá en contacto con usted a la brevedad posible.</p>
+                <h3 className="font-serif">¡Solicitud Enviada con Éxito!</h3>
+                <p>Tu solicitud ya fue enviada a uno de nuestros administradores. Te hemos enviado un correo de confirmación y en breve nos comunicaremos contigo para responder tu consulta.</p>
                 <button
                   onClick={() => setSuccess(false)}
                   className="btn-retry"

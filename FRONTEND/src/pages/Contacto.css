@@ -354,7 +354,7 @@
 .success-state p {
   color: var(--inova-text-light);
   margin-bottom: 2.5rem;
-  max-width: 400px;
+  max-width: 480px;
   line-height: 1.6;
 }
 
