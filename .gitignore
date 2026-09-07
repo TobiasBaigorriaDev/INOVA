@@ -7,3 +7,5 @@ node_modules/
 .env
 BACKEND/uploads/*
 !BACKEND/uploads/.gitkeep
+*.exe
+*.zip
