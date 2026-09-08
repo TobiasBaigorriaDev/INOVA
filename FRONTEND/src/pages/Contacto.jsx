@@ -2,7 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Send, MapPin, Clock, MessageSquare, CheckCircle } from 'lucide-react';
 import './Contacto.css';
 
-function Contacto() {
+function Contacto({ usuario: propUsuario }) {
+  // Estado de usuario autenticado
+  const [user, setUser] = useState(() => {
+    if (propUsuario) return propUsuario;
+    try {
+      const usuarioGuardado = localStorage.getItem('usuario');
+      return usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -20,21 +31,30 @@ function Contacto() {
   const CONTACTO_API_URL = 'http://localhost:3000/api/contacto';
 
   useEffect(() => {
-    const usuarioGuardado = localStorage.getItem('usuario');
-    if (usuarioGuardado) {
+    let currentUser = propUsuario;
+    if (!currentUser) {
       try {
-        const usuario = JSON.parse(usuarioGuardado);
-        setFormData(prev => ({
-          ...prev,
-          nombre: usuario.nombre || '',
-          apellido: usuario.apellido || '',
-          email: usuario.email || ''
-        }));
+        const usuarioGuardado = localStorage.getItem('usuario');
+        if (usuarioGuardado) {
+          currentUser = JSON.parse(usuarioGuardado);
+        }
       } catch (err) {
         console.error('Error parseando usuario en Contacto:', err);
       }
     }
-  }, []);
+
+    if (currentUser) {
+      setUser(currentUser);
+      setFormData(prev => ({
+        ...prev,
+        nombre: currentUser.nombre || '',
+        apellido: currentUser.apellido || '',
+        email: currentUser.email || prev.email
+      }));
+    } else {
+      setUser(null);
+    }
+  }, [propUsuario]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,8 +70,22 @@ function Contacto() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Determinar nombre y apellido efectivos según estado de autenticación
+    const effectiveNombre = (user?.nombre || formData.nombre || (user ? 'Cliente' : '')).trim();
+    const effectiveApellido = (user?.apellido || formData.apellido || '').trim();
+    const effectiveEmail = (formData.email || user?.email || '').trim();
+
+    // Si es invitado (!user), los campos nombre y apellido son requeridos
+    if (!user) {
+      if (!formData.nombre.trim() || !formData.apellido.trim()) {
+        setError('Por favor, complete su nombre y apellido.');
+        return;
+      }
+    }
+
     if (
-      !formData.email.trim() ||
+      !effectiveNombre ||
+      !effectiveEmail ||
       !formData.mensaje.trim()
     ) {
       setError('Por favor, complete todos los campos requeridos con información válida.');
@@ -69,10 +103,10 @@ function Contacto() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          nombre: formData.nombre.trim(),
-          apellido: formData.apellido.trim(),
-          email: formData.email.trim(),
-          telefono: formData.telefono.trim(),
+          nombre: effectiveNombre,
+          apellido: effectiveApellido,
+          email: effectiveEmail,
+          telefono: formData.telefono ? formData.telefono.trim() : '',
           asunto: formData.asunto,
           mensaje: formData.mensaje.trim()
         })
@@ -84,9 +118,9 @@ function Contacto() {
 
       setSuccess(true);
       setFormData({
-        nombre: '',
-        apellido: '',
-        email: '',
+        nombre: user?.nombre || '',
+        apellido: user?.apellido || '',
+        email: user?.email || '',
         telefono: '',
         asunto: 'consulta',
         mensaje: ''
@@ -200,6 +234,33 @@ function Contacto() {
                 {error && <div className="form-error-msg">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="contacto-form">
+                  {!user && (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>NOMBRE *</label>
+                        <input
+                          type="text"
+                          name="nombre"
+                          value={formData.nombre}
+                          onChange={handleChange}
+                          required
+                          placeholder="Su nombre"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>APELLIDO *</label>
+                        <input
+                          type="text"
+                          name="apellido"
+                          value={formData.apellido}
+                          onChange={handleChange}
+                          required
+                          placeholder="Su apellido"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label>CORREO ELECTRÓNICO *</label>
                     <input
@@ -208,6 +269,8 @@ function Contacto() {
                       value={formData.email}
                       onChange={handleChange}
                       required
+                      readOnly={Boolean(user)}
+                      className={user ? 'input-readonly' : ''}
                       placeholder="ejemplo@correo.com"
                     />
                   </div>

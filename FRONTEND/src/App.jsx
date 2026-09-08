@@ -261,7 +261,7 @@ function App() {
 
           <Route
             path="/contacto"
-            element={<Contacto />}
+            element={<Contacto usuario={usuario} />}
           />
 
           {/* HISTORIA */}

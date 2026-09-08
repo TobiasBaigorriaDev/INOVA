@@ -287,6 +287,16 @@
   box-shadow: 0 0 0 2px rgba(49, 10, 61, 0.1);
 }
 
+.form-group input.input-readonly,
+.form-group input.input-readonly:focus {
+  background-color: #ecebe9 !important;
+  color: #777777 !important;
+  cursor: not-allowed !important;
+  border-color: var(--inova-border) !important;
+  box-shadow: none !important;
+  user-select: none;
+}
+
 .form-group textarea {
   resize: vertical;
 }
