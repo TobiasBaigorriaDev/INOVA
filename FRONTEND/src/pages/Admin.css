@@ -1803,14 +1803,19 @@
   align-items: center;
   gap: 6px;
   transition: all 0.25s ease;
-  cursor: default;
+  cursor: pointer;
+  user-select: none;
 }
 
 .admin-stock-alert .alert-badge:hover {
   background-color: #ff4d4f;
   color: white;
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 8px rgba(255, 77, 79, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255, 77, 79, 0.2);
+}
+
+.admin-stock-alert .alert-badge:active {
+  transform: translateY(0);
 }
 
 /* --- Animación de Despliegue de Panel de Métricas --- */

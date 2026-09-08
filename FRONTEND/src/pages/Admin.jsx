@@ -494,7 +494,30 @@ function Admin() {
             <strong>Los siguientes productos están con poco stock (3 unidades o menos):</strong>
             <div className="alert-badges">
               {lowStockProducts.map(p => (
-                <span key={p.id} className="alert-badge">
+                <span
+                  key={p.id}
+                  className="alert-badge"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setShowInventory(true);
+                    const inventoryEl = document.getElementById('admin-inventory-section') || document.querySelector('.admin-list-section');
+                    if (inventoryEl) {
+                      inventoryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setShowInventory(true);
+                      const inventoryEl = document.getElementById('admin-inventory-section') || document.querySelector('.admin-list-section');
+                      if (inventoryEl) {
+                        inventoryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }
+                  }}
+                  title="Ir al Inventario"
+                >
                   {p.nombre} ({p.stock === 0 ? 'Sin stock' : `${p.stock} uds.`})
                 </span>
               ))}
@@ -823,7 +846,7 @@ function Admin() {
           </form>
         </div>
 
-        <div className="admin-list-section">
+        <div className="admin-list-section" id="admin-inventory-section">
           <div className="inventory-sticky-header">
             <button
               type="button"
