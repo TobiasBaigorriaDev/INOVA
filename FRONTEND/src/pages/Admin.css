@@ -149,6 +149,7 @@
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
   min-width: 0;
+  scroll-margin-top: 110px;
 }
 
 .admin-history-section {
@@ -508,6 +509,121 @@
   padding: 0 !important;
   pointer-events: none;
   overflow: hidden !important;
+}
+
+/* --- Barra de Filtros de Inventario (Todos / Stock Crítico) --- */
+.inventory-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.inventory-filter-chip {
+  background: #ffffff;
+  border: 1px solid #e2dce6;
+  color: #555555;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.inventory-filter-chip:hover {
+  background: #fbf8fc;
+  border-color: #5A406B;
+  color: #5A406B;
+}
+
+.inventory-filter-chip.active {
+  background: #5A406B;
+  color: #ffffff;
+  border-color: #5A406B;
+  box-shadow: 0 4px 12px rgba(90, 64, 107, 0.22);
+}
+
+.inventory-filter-chip .chip-count {
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.inventory-filter-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.inventory-filter-chip.critical-chip {
+  border-color: #ffccc7;
+  color: #cf1322;
+}
+
+.inventory-filter-chip.critical-chip:hover {
+  background: #fff1f0;
+  border-color: #ff4d4f;
+  color: #cf1322;
+}
+
+.inventory-filter-chip.critical-chip.active {
+  background: #ff4d4f;
+  color: #ffffff;
+  border-color: #ff4d4f;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.25);
+}
+
+.inventory-filter-chip.critical-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.inventory-critical-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  color: #a8071a;
+  box-shadow: 0 2px 6px rgba(255, 77, 79, 0.05);
+}
+
+.inventory-critical-banner .banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-critical-banner .btn-reset-filter,
+.empty-state .btn-reset-filter {
+  background: transparent;
+  border: 1px solid #a8071a;
+  color: #a8071a;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.inventory-critical-banner .btn-reset-filter:hover,
+.empty-state .btn-reset-filter:hover {
+  background: #a8071a;
+  color: #ffffff;
 }
 
 .delete-btn {

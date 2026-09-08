@@ -29,6 +29,9 @@ function Admin() {
   // Estado para expandir/contraer el inventario de productos
   const [showInventory, setShowInventory] = useState(true);
 
+  // Estado para filtro del inventario ('todos' | 'critico')
+  const [inventoryFilter, setInventoryFilter] = useState('todos');
+
   // Estado para el mes y año seleccionado (formato YYYY-MM)
   const [selectedMonthYear, setSelectedMonthYear] = useState(() => {
     const today = new Date();
@@ -169,6 +172,24 @@ function Admin() {
 
   // Productos con bajo stock (3 unidades o menos)
   const lowStockProducts = productos.filter(p => p.stock !== undefined && Number(p.stock) <= 3);
+
+  // Productos a mostrar en la tabla según el filtro de inventario ('todos' | 'critico')
+  const displayedProductos = inventoryFilter === 'critico' ? lowStockProducts : productos;
+
+  const handleGoToCriticalStock = () => {
+    setInventoryFilter('critico');
+    setShowInventory(true);
+    setTimeout(() => {
+      const inventoryEl = document.getElementById('admin-inventory-section') || document.querySelector('.admin-list-section');
+      if (inventoryEl) {
+        const navHeight = 110;
+        const topPos = inventoryEl.getBoundingClientRect().top + window.pageYOffset - navHeight;
+        window.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 50);
+  };
 
   const toggleOrderExpand = (orderId) => {
     setExpandedOrderId(prev => prev === orderId ? null : orderId);
@@ -499,24 +520,14 @@ function Admin() {
                   className="alert-badge"
                   role="button"
                   tabIndex={0}
-                  onClick={() => {
-                    setShowInventory(true);
-                    const inventoryEl = document.getElementById('admin-inventory-section') || document.querySelector('.admin-list-section');
-                    if (inventoryEl) {
-                      inventoryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+                  onClick={handleGoToCriticalStock}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      setShowInventory(true);
-                      const inventoryEl = document.getElementById('admin-inventory-section') || document.querySelector('.admin-list-section');
-                      if (inventoryEl) {
-                        inventoryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
+                      handleGoToCriticalStock();
                     }
                   }}
-                  title="Ir al Inventario"
+                  title="Ver en vista de Stock Crítico"
                 >
                   {p.nombre} ({p.stock === 0 ? 'Sin stock' : `${p.stock} uds.`})
                 </span>
@@ -875,13 +886,68 @@ function Admin() {
           </div>
 
           <div className={`inventory-content-wrapper ${showInventory ? 'expanded' : 'collapsed'}`}>
+            {/* Barra de Filtros de Inventario: Todos / Stock Crítico */}
+            <div className="inventory-filters-bar">
+              <button
+                type="button"
+                className={`inventory-filter-chip ${inventoryFilter === 'todos' ? 'active' : ''}`}
+                onClick={() => setInventoryFilter('todos')}
+              >
+                <Package size={14} />
+                <span>Todos los productos</span>
+                <span className="chip-count">{productos.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`inventory-filter-chip critical-chip ${inventoryFilter === 'critico' ? 'active' : ''}`}
+                onClick={() => setInventoryFilter('critico')}
+              >
+                <AlertCircle size={14} />
+                <span>Stock Crítico</span>
+                <span className="chip-count critical-count">{lowStockProducts.length}</span>
+              </button>
+            </div>
+
+            {inventoryFilter === 'critico' && (
+              <div className="inventory-critical-banner">
+                <div className="banner-left">
+                  <AlertCircle size={16} />
+                  <span>Mostrando productos con <strong>Stock Crítico (3 unidades o menos)</strong></span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-reset-filter"
+                  onClick={() => setInventoryFilter('todos')}
+                >
+                  Ver todos los productos
+                </button>
+              </div>
+            )}
+
             <div className="products-table-container">
             {loading ? (
               <div className="empty-state"><p>Cargando productos...</p></div>
-            ) : productos.length === 0 ? (
+            ) : displayedProductos.length === 0 ? (
               <div className="empty-state">
-                <Package size={48} strokeWidth={1} />
-                <p>No hay productos en la base de datos.</p>
+                {inventoryFilter === 'critico' ? (
+                  <>
+                    <CheckCircle size={48} strokeWidth={1} color="#52c41a" />
+                    <p>No hay productos con stock crítico en este momento.</p>
+                    <button 
+                      type="button" 
+                      className="btn-reset-filter"
+                      style={{ marginTop: '10px' }}
+                      onClick={() => setInventoryFilter('todos')}
+                    >
+                      Volver al inventario completo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Package size={48} strokeWidth={1} />
+                    <p>No hay productos en la base de datos.</p>
+                  </>
+                )}
               </div>
             ) : (
               <table className="products-table products-inventory">
@@ -896,8 +962,8 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {productos.map((producto) => (
-                    <tr key={producto.id} className={producto.oculto ? 'row-oculto' : ''}>
+                  {displayedProductos.map((producto) => (
+                    <tr key={producto.id} id={`product-row-${producto.id}`} className={producto.oculto ? 'row-oculto' : ''}>
                       <td data-label="Imagen" className="td-image">
                         <div className="table-img-container">
                           {producto.imagenUrl ? <img src={producto.imagenUrl} alt={producto.nombre} /> : <ImageIcon size={24} color="#ccc" />}
