@@ -51,8 +51,6 @@ function Contacto() {
     e.preventDefault();
 
     if (
-      !formData.nombre.trim() ||
-      !formData.apellido.trim() ||
       !formData.email.trim() ||
       !formData.mensaje.trim()
     ) {
@@ -202,31 +200,6 @@ function Contacto() {
                 {error && <div className="form-error-msg">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="contacto-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>NOMBRE *</label>
-                      <input
-                        type="text"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        required
-                        placeholder="Su nombre"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>APELLIDO *</label>
-                      <input
-                        type="text"
-                        name="apellido"
-                        value={formData.apellido}
-                        onChange={handleChange}
-                        required
-                        placeholder="Su apellido"
-                      />
-                    </div>
-                  </div>
-
                   <div className="form-group">
                     <label>CORREO ELECTRÓNICO *</label>
                     <input
