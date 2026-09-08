@@ -118,19 +118,26 @@ function Admin() {
   };
 
   // --- CÁLCULO DE MÉTRICAS ---
-  const paidOrders = orders.filter(order => order.status === 'pagado');
-  const totalSalesVal = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
+  // Ventas válidas: compras confirmadas/pagadas (efectivo, cripto o pagadas con MP) que no hayan sido canceladas.
+  // Se excluyen únicamente pedidos cancelados y carritos de Mercado Pago abandonados que quedaron pendientes.
+  const validOrders = orders.filter(order => {
+    if (order.status === 'cancelado') return false;
+    if (order.metodoPago === 'mercadolibre' && order.status === 'pendiente') return false;
+    return true;
+  });
+
+  const totalSalesVal = validOrders.reduce((sum, order) => sum + Number(order.total), 0);
   
   // Obtener año y mes a partir de selectedMonthYear (YYYY-MM)
   const [selYear, selMonth] = selectedMonthYear.split('-').map(Number);
 
-  const monthlyOrders = paidOrders.filter(order => {
+  const monthlyOrders = validOrders.filter(order => {
     const orderDate = new Date(order.createdAt);
     return orderDate.getMonth() === (selMonth - 1) && orderDate.getFullYear() === selYear;
   });
   const monthlySalesVal = monthlyOrders.reduce((sum, order) => sum + Number(order.total), 0);
 
-  const totalOrdersCount = paidOrders.length;
+  const totalOrdersCount = validOrders.length;
   const monthlyOrdersCount = monthlyOrders.length;
 
   // --- CÁLCULO DE VENTAS DIARIAS ---
@@ -168,7 +175,7 @@ function Admin() {
   const getMostSoldProducts = () => {
     const productSales = {};
 
-    paidOrders.forEach(order => {
+    validOrders.forEach(order => {
       if (order.items) {
         order.items.forEach(item => {
           const productId = item.productId;
@@ -992,7 +999,7 @@ function Admin() {
               </thead>
               <tbody>
                 {[...orders]
-                  .reverse()
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                   .map((order) => (
                   <React.Fragment key={order.id}>
                     <tr 

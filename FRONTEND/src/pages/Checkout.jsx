@@ -85,8 +85,16 @@ function Checkout() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mpStatus = params.get('status') || params.get('collection_status');
+    const externalRef = params.get('external_reference');
 
     if (mpStatus === 'approved') {
+      if (externalRef && externalRef !== '0') {
+        fetch('http://localhost:3000/api/mp/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: externalRef })
+        }).catch(err => console.error('Error al confirmar pago de Mercado Pago:', err));
+      }
       setSuccessMsg('¡Pago realizado con éxito! Tu pedido ha sido confirmado.');
       clearCart();
       // Limpiamos los parámetros de la URL

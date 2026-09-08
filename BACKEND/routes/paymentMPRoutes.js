@@ -124,6 +124,45 @@ router.get('/config', (req, res) => {
     });
 });
 
+// POST /api/mp/confirm-payment
+// Permite confirmar el pago cuando MP redirige al usuario con status=approved en localhost o producción
+router.post('/confirm-payment', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        if (!orderId || orderId === '0') {
+            return res.status(400).json({ error: 'orderId requerido' });
+        }
 
+        const t = await sequelize.transaction();
+        try {
+            const order = await Order.findByPk(orderId, {
+                include: [{ model: OrderItem, as: 'items' }],
+                transaction: t
+            });
+
+            if (order && order.status === 'pendiente') {
+                for (const item of order.items) {
+                    const product = await Product.findByPk(item.productId, { transaction: t });
+                    if (product) {
+                        const newStock = Math.max(0, product.stock - item.cantidad);
+                        await product.update({ stock: newStock }, { transaction: t });
+                        console.log(`[MP Confirm] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
+                    }
+                }
+                await order.update({ status: 'pagado' }, { transaction: t });
+                console.log(`[MP Confirm] Orden ${orderId} marcada como PAGADA con éxito.`);
+            }
+
+            await t.commit();
+            res.json({ ok: true, status: order ? order.status : 'no_encontrada' });
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
+    } catch (error) {
+        console.error('[MP Confirm] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 module.exports = router;

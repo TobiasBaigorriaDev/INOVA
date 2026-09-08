@@ -163,13 +163,8 @@ router.post('/', validarJWT, async (req, res) => {
 // ==========================================
 router.get('/', validarJWT, esAdmin, async (req, res) => {
     try {
-        const { Op } = require('sequelize');
         const orders = await Order.findAll({
-            where: {
-                status: {
-                    [Op.ne]: 'pendiente'
-                }
-            },
+            order: [['createdAt', 'DESC']],
             include: [
                 { model: Payment },
                 {
