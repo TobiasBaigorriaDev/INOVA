@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Trash2, Eye, EyeOff, LayoutDashboard, Image as ImageIcon, Package, AlertCircle, CheckCircle, DollarSign, TrendingUp, ShoppingBag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { PackagePlus, Trash2, Eye, EyeOff, LayoutDashboard, Image as ImageIcon, Package, AlertCircle, CheckCircle, DollarSign, TrendingUp, ShoppingBag, Calendar, ChevronDown, ChevronUp, Clock, CreditCard, Wallet, Coins, MapPin, ExternalLink } from 'lucide-react';
 import './Admin.css';
 
 function Admin() {
@@ -13,6 +13,9 @@ function Admin() {
 
   // Estado para expandir el detalle de una orden
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  // Estado para filtro del historial de ventas ('todos', 'efectivo', 'mercadolibre', 'cripto')
+  const [orderFilter, setOrderFilter] = useState('todos');
 
   // Estado para mostrar/ocultar el panel de estadísticas y métricas
   const [showMetrics, setShowMetrics] = useState(true);
@@ -204,6 +207,22 @@ function Admin() {
   };
 
   const mostSoldProducts = getMostSoldProducts();
+
+  // Contadores y filtro de órdenes para el historial
+  const countTodos = orders.length;
+  const countEfectivo = orders.filter(o => !o.metodoPago || o.metodoPago === 'efectivo').length;
+  const countMP = orders.filter(o => o.metodoPago === 'mercadolibre').length;
+  const countCripto = orders.filter(o => o.metodoPago === 'cripto').length;
+
+  const displayedOrders = orders
+    .filter(order => {
+      if (orderFilter === 'todos') return true;
+      if (orderFilter === 'efectivo') return !order.metodoPago || order.metodoPago === 'efectivo';
+      if (orderFilter === 'mercadolibre') return order.metodoPago === 'mercadolibre';
+      if (orderFilter === 'cripto') return order.metodoPago === 'cripto';
+      return true;
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -971,18 +990,60 @@ function Admin() {
 
       {/* SECCIÓN DE HISTORIAL DE VENTAS */}
       <div className="admin-history-section">
-        <h2 className="admin-form-title font-serif" style={{ marginBottom: '30px', borderBottom: '1px solid #eee', paddingBottom: '15px' }}>
-          <ShoppingBag size={24} />
-          Historial de Ventas y Pedidos
-        </h2>
+        <div className="history-header-top">
+          <div className="history-title-wrapper">
+            <h2 className="admin-form-title font-serif" style={{ margin: 0 }}>
+              <ShoppingBag size={24} />
+              Historial de Ventas y Pedidos
+            </h2>
+            <span className="history-count-badge">
+              {orders.length} {orders.length === 1 ? 'pedido registrado' : 'pedidos registrados'}
+            </span>
+          </div>
+          <p className="history-subtitle">
+            Gestión y seguimiento de entregas. Podés marcar los pedidos como <strong>No entregado</strong>, <strong>Entregado</strong> o <strong>Cancelado</strong> según el avance de cada compra.
+          </p>
+        </div>
 
-        <div className="products-table-container">
+        {/* Barra de filtros por método de pago */}
+        <div className="history-filters-bar">
+          <button 
+            type="button" 
+            className={`history-filter-chip ${orderFilter === 'todos' ? 'active' : ''}`}
+            onClick={() => setOrderFilter('todos')}
+          >
+            Todos <span className="chip-count">{countTodos}</span>
+          </button>
+          <button 
+            type="button" 
+            className={`history-filter-chip ${orderFilter === 'efectivo' ? 'active' : ''}`}
+            onClick={() => setOrderFilter('efectivo')}
+          >
+            <Wallet size={13} /> Efectivo <span className="chip-count">{countEfectivo}</span>
+          </button>
+          <button 
+            type="button" 
+            className={`history-filter-chip ${orderFilter === 'mercadolibre' ? 'active' : ''}`}
+            onClick={() => setOrderFilter('mercadolibre')}
+          >
+            <CreditCard size={13} /> Mercado Pago <span className="chip-count">{countMP}</span>
+          </button>
+          <button 
+            type="button" 
+            className={`history-filter-chip ${orderFilter === 'cripto' ? 'active' : ''}`}
+            onClick={() => setOrderFilter('cripto')}
+          >
+            <Coins size={13} /> Cripto <span className="chip-count">{countCripto}</span>
+          </button>
+        </div>
+
+        <div className="orders-table-wrapper">
           {loadingOrders ? (
             <div className="empty-state"><p>Cargando historial de ventas...</p></div>
-          ) : orders.length === 0 ? (
+          ) : displayedOrders.length === 0 ? (
             <div className="empty-state">
               <ShoppingBag size={48} strokeWidth={1} />
-              <p>No se registran pedidos en el historial aún.</p>
+              <p>{orderFilter === 'todos' ? 'No se registran pedidos en el historial aún.' : `No hay pedidos registrados con el filtro "${orderFilter}".`}</p>
             </div>
           ) : (
             <table className="products-table orders-table">
@@ -993,57 +1054,85 @@ function Admin() {
                   <th>Cliente</th>
                   <th>Método de Pago</th>
                   <th>Monto Total</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
+                  <th>Estado de Entrega</th>
+                  <th>Detalles</th>
                 </tr>
               </thead>
               <tbody>
-                {[...orders]
-                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                  .map((order) => (
+                {displayedOrders.map((order) => (
                   <React.Fragment key={order.id}>
                     <tr 
                       onClick={() => toggleOrderExpand(order.id)}
-                      style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
+                      style={{ cursor: 'pointer' }}
                       className={expandedOrderId === order.id ? 'row-expanded' : ''}
                     >
-                      <td data-label="Nº Pedido" className="td-order-id">#{order.id}</td>
+                      <td data-label="Nº Pedido" className="td-order-id">
+                        <span className="order-code">#{order.id}</span>
+                      </td>
                       <td data-label="Fecha y Hora" className="td-order-date">
-                        {new Date(order.createdAt).toLocaleDateString('es-AR')} - {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
+                        <div className="order-datetime-cell">
+                          <span className="order-date-str">
+                            {new Date(order.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                          <span className="order-time-str">
+                            <Clock size={12} /> {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
+                          </span>
+                        </div>
                       </td>
                       <td data-label="Cliente" className="td-order-client">
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: '600', color: '#333' }}>{order.nombreCliente} {order.apellidoCliente}</span>
-                          <span style={{ fontSize: '12px', color: '#888' }}>{order.email}</span>
+                        <div className="order-client-cell">
+                          <div className="client-avatar">
+                            {order.nombreCliente ? order.nombreCliente.charAt(0).toUpperCase() : 'C'}
+                          </div>
+                          <div className="client-info">
+                            <strong className="client-name">{order.nombreCliente} {order.apellidoCliente}</strong>
+                            <span className="client-email">{order.email}</span>
+                          </div>
                         </div>
                       </td>
                       <td data-label="Método de Pago" className="td-order-payment">
-                        <span className={`badge badge-payment-${order.metodoPago || 'efectivo'}`}>
-                          {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : order.metodoPago === 'cripto' ? 'Cripto' : 'Efectivo'}
+                        <span className={`badge-payment-pill badge-payment-${order.metodoPago || 'efectivo'}`}>
+                          {order.metodoPago === 'mercadolibre' && <CreditCard size={13} />}
+                          {order.metodoPago === 'tarjeta' && <CreditCard size={13} />}
+                          {order.metodoPago === 'cripto' && <Coins size={13} />}
+                          {(!order.metodoPago || order.metodoPago === 'efectivo') && <Wallet size={13} />}
+                          <span>
+                            {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : order.metodoPago === 'cripto' ? 'Cripto' : 'Efectivo'}
+                          </span>
                         </span>
                       </td>
-                      <td data-label="Monto Total" className="td-order-total">${Number(order.total).toFixed(2)}</td>
-                      <td data-label="Estado" className="td-order-status" onClick={(e) => e.stopPropagation()}>
-                        <select 
-                          value={order.status} 
-                          onChange={(e) => handleTableFieldChange(order.id, 'status', e.target.value, true)}
-                          disabled={order.status === 'pagado'}
-                          className={`status-select status-${order.status}`}
-                        >
-                          <option value="pendiente">Pendiente</option>
-                          <option value="pagado">Pagado</option>
-                          <option value="cancelado">Cancelado</option>
-                        </select>
+                      <td data-label="Monto Total" className="td-order-total">
+                        <span className="order-total-amount">
+                          ${Number(order.total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
                       </td>
-                      <td data-label="Acción" className="td-order-action" onClick={(e) => e.stopPropagation()}>
-                        <button 
-                          type="button"
-                          onClick={() => handleUpdateOrderStatus(order.id, order.status)}
-                          disabled={order.status === 'pagado'}
-                          className="order-update-btn"
-                        >
-                          Actualizar
-                        </button>
+                      <td data-label="Estado de Entrega" className="td-order-status" onClick={(e) => e.stopPropagation()}>
+                        <div className="order-status-edit-wrapper">
+                          <select 
+                            value={order.status === 'pagado' ? 'entregado' : order.status} 
+                            onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                            className={`status-select status-${order.status === 'pagado' ? 'entregado' : order.status}`}
+                            title="Cambiar estado de entrega del pedido"
+                          >
+                            <option value="pendiente">⏳ No entregado</option>
+                            <option value="entregado">✓ Entregado</option>
+                            <option value="cancelado">✗ Cancelado</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td data-label="Detalles" className="td-order-details" onClick={(e) => e.stopPropagation()}>
+                        <div className="order-actions-group">
+                          <button 
+                            type="button"
+                            onClick={() => toggleOrderExpand(order.id)}
+                            className={`order-view-detail-btn ${expandedOrderId === order.id ? 'active' : ''}`}
+                            title={expandedOrderId === order.id ? 'Ocultar detalles' : 'Ver productos y punto de retiro'}
+                          >
+                            <Eye size={13} />
+                            <span>{expandedOrderId === order.id ? 'Ocultar' : 'Ver detalle'}</span>
+                            {expandedOrderId === order.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
 
@@ -1051,33 +1140,61 @@ function Admin() {
                     {expandedOrderId === order.id && (
                       <tr className="expanded-detail-row">
                         <td colSpan={7}>
-                          <div className="order-items-detail-container" style={{ padding: '15px 0' }}>
-                            <div className="order-meeting-point-info" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5eff9', borderRadius: '10px', border: '1px solid rgba(90, 64, 107, 0.1)' }}>
-                              <h5 style={{ margin: '0 0 10px 0', color: '#5A406B', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                📍 Punto de Encuentro Pactado
-                              </h5>
-                              <p style={{ margin: 0, fontSize: '13px', color: '#444', display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
-                                <span><strong>Día:</strong> {order.diaEncuentro || 'No especificado'}</span>
-                                <span><strong>Hora:</strong> {order.horaEncuentro || 'No especificada'}</span>
-                              </p>
+                          <div className="order-expanded-card">
+                            <div className="order-expanded-header">
+                              <div className="expanded-header-left">
+                                <span className="expanded-tag">Resumen del Pedido #{order.id}</span>
+                                <span className="expanded-items-count">
+                                  {order.items ? order.items.reduce((acc, it) => acc + Number(it.cantidad || 0), 0) : 0} artículos
+                                </span>
+                              </div>
+                              <div className="expanded-header-right">
+                                <span className="expanded-payment-note">
+                                  {(!order.metodoPago || order.metodoPago === 'efectivo') && '💵 Pago presencial contra entrega'}
+                                  {order.metodoPago === 'mercadolibre' && '💳 Procesado vía Mercado Pago'}
+                                  {order.metodoPago === 'cripto' && '🪙 Pago en criptomonedas'}
+                                  {order.metodoPago === 'tarjeta' && '💳 Pago procesado con tarjeta'}
+                                </span>
+                              </div>
                             </div>
-                            
-                            {order.metodoPago === 'cripto' && (
-                              <div className="order-crypto-info" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#eef8f5', borderRadius: '10px', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
-                                <h5 style={{ margin: '0 0 10px 0', color: '#27ae60', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  🪙 Detalles del Pago en Criptomoneda
-                                </h5>
-                                <p style={{ margin: 0, fontSize: '13px', color: '#444', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  <span><strong>Red seleccionada:</strong> {order.cryptoNetwork || 'No especificada'}</span>
-                                  <span>
-                                    <strong>ID de Transacción (TXID):</strong>{' '}
-                                    <code style={{ background: '#f0f0f0', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', wordBreak: 'break-all' }}>
-                                      {order.cryptoTxId || 'No proporcionado'}
-                                    </code>
-                                  </span>
-                                  {order.cryptoTxId && (
-                                    <span>
-                                      <strong>Verificar en explorador:</strong>{' '}
+
+                            <div className="order-expanded-grid">
+                              {/* Card Punto de Encuentro */}
+                              <div className="order-info-card meeting-card">
+                                <div className="info-card-header">
+                                  <MapPin size={16} className="info-card-icon" />
+                                  <h4>Punto de Retiro Pactado</h4>
+                                </div>
+                                <p className="meeting-location">📍 Plaza Independencia (Mendoza)</p>
+                                <div className="meeting-schedule">
+                                  <div className="schedule-item">
+                                    <span className="schedule-label">Día:</span>
+                                    <strong className="schedule-val">{order.diaEncuentro || 'No especificado'}</strong>
+                                  </div>
+                                  <div className="schedule-item">
+                                    <span className="schedule-label">Horario:</span>
+                                    <strong className="schedule-val">{order.horaEncuentro || 'No especificada'} hs</strong>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Card Cripto (si aplica) */}
+                              {order.metodoPago === 'cripto' && (
+                                <div className="order-info-card crypto-card">
+                                  <div className="info-card-header">
+                                    <Coins size={16} className="info-card-icon" />
+                                    <h4>Transacción Cripto</h4>
+                                  </div>
+                                  <div className="crypto-details">
+                                    <div className="crypto-field">
+                                      <span>Red:</span>
+                                      <strong>{order.cryptoNetwork || 'No especificada'}</strong>
+                                    </div>
+                                    <div className="crypto-field">
+                                      <span>TXID:</span>
+                                      <code className="crypto-hash">{order.cryptoTxId || 'No proporcionado'}</code>
+                                    </div>
+                                    {order.cryptoTxId && (
                                       <a 
                                         href={order.cryptoNetwork?.includes('Dogecoin') || order.cryptoNetwork?.includes('DOGE')
                                           ? `https://dogechain.info/tx/${order.cryptoTxId}`
@@ -1089,35 +1206,51 @@ function Admin() {
                                         } 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        style={{ color: '#27ae60', fontWeight: 'bold', textDecoration: 'underline' }}
+                                        className="crypto-explorer-link"
                                       >
-                                        Ver en Dogechain/Explorer ↗
+                                        Ver en Explorer <ExternalLink size={12} />
                                       </a>
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            )}
-                            
-                            <h4 className="detail-title" style={{ fontSize: '14px', marginBottom: '12px', color: '#333' }}>Productos Comprados (Pedido #{order.id})</h4>
-                            <div className="detail-items-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                              {order.items && order.items.map((item) => (
-                                <div key={item.id} className="detail-item-card" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px', backgroundColor: '#fafafa', borderRadius: '10px', border: '1px solid #eee' }}>
-                                  <div className="detail-item-img-container" style={{ width: '50px', height: '50px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #eaeaea', backgroundColor: '#fff' }}>
-                                    <img src={item.producto?.imagenUrl || 'https://via.placeholder.com/60'} alt={item.producto?.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  </div>
-                                  <div className="detail-item-info" style={{ flex: 1, minWidth: '100px' }}>
-                                    <div className="item-name" style={{ fontWeight: '600', fontSize: '13px', color: '#333', marginBottom: '4px' }}>{item.producto?.nombre || 'Producto eliminado'}</div>
-                                    <div className="item-price" style={{ fontSize: '12px', color: '#888' }}>${Number(item.precioUnitario).toFixed(2)} c/u</div>
-                                  </div>
-                                  <div className="detail-item-qty" style={{ fontSize: '12px', fontWeight: '600', color: '#5A406B', backgroundColor: '#f3eef7', padding: '4px 10px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
-                                    {item.cantidad} {item.cantidad === 1 ? 'ud.' : 'uds.'}
-                                  </div>
-                                  <div className="detail-item-total" style={{ fontSize: '13px', fontWeight: '700', color: '#333', minWidth: '70px', textAlign: 'right' }}>
-                                    ${(item.cantidad * Number(item.precioUnitario)).toFixed(2)}
+                                    )}
                                   </div>
                                 </div>
-                              ))}
+                              )}
+                            </div>
+
+                            {/* Lista de productos comprados */}
+                            <div className="order-products-section">
+                              <h4 className="products-section-title">Productos en este pedido</h4>
+                              <div className="order-products-list">
+                                {order.items && order.items.map((item) => (
+                                  <div key={item.id} className="order-product-card">
+                                    <div className="product-card-img">
+                                      <img src={item.producto?.imagenUrl || 'https://via.placeholder.com/60'} alt={item.producto?.nombre} />
+                                    </div>
+                                    <div className="product-card-info">
+                                      <span className="product-card-name">{item.producto?.nombre || 'Producto eliminado'}</span>
+                                      <span className="product-card-unit-price">${Number(item.precioUnitario).toLocaleString('es-AR', { minimumFractionDigits: 2 })} c/u</span>
+                                    </div>
+                                    <div className="product-card-qty-badge">
+                                      {item.cantidad} {item.cantidad === 1 ? 'unidad' : 'unidades'}
+                                    </div>
+                                    <div className="product-card-subtotal">
+                                      ${(item.cantidad * Number(item.precioUnitario)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Barra de total */}
+                            <div className="order-summary-footer">
+                              <div className="footer-notes">
+                                <span>* Entrega presencial en punto de encuentro sin costo de envío.</span>
+                              </div>
+                              <div className="footer-total-box">
+                                <span className="footer-total-label">Total del Pedido:</span>
+                                <span className="footer-total-amount">
+                                  ${Number(order.total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </td>

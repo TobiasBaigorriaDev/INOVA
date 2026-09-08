@@ -219,37 +219,26 @@ router.put('/:id', validarJWT, esAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Orden no encontrada' });
         }
 
-        // Si la orden ya está pagada, bloqueamos cualquier intento de cambiar su estado
-        if (order.status === 'pagado') {
-            await t.rollback();
-            return res.status(403).json({ error: 'Acción denegada: No se puede modificar el estado de una orden que ya ha sido pagada.' });
-        }
-
-        // Si pasa a 'pagado' y estaba en 'pendiente', descontamos stock si es MP
-        if (status === 'pagado' && order.status === 'pendiente') {
+        // Si pasa a 'cancelado' y no estaba cancelada antes, devolvemos el stock
+        if (status === 'cancelado' && order.status !== 'cancelado') {
             for (const item of order.items) {
                 const product = await Product.findByPk(item.productId, { transaction: t });
                 if (product) {
-                    // Solo descontamos si es mercadolibre (ya que los demás ya descontaron stock al crearse)
-                    if (order.metodoPago === 'mercadolibre') {
-                        const newStock = Math.max(0, product.stock - item.cantidad);
-                        await product.update({ stock: newStock }, { transaction: t });
-                        console.log(`[Admin PUT] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
-                    }
+                    const newStock = product.stock + item.cantidad;
+                    await product.update({ stock: newStock }, { transaction: t });
+                    console.log(`[Admin PUT] Devuelto stock para producto ${product.nombre} por cancelación. Nuevo stock: ${newStock}`);
                 }
             }
         }
 
-        // Si pasa de 'pendiente' a 'cancelado' y era de un método que SÍ descontó stock al inicio (efectivo, etc.), devolvemos el stock
-        if (status === 'cancelado' && order.status === 'pendiente') {
+        // Si estaba 'cancelado' y se reactiva a 'pendiente' o 'entregado', volvemos a descontar el stock
+        if (order.status === 'cancelado' && (status === 'pendiente' || status === 'entregado')) {
             for (const item of order.items) {
                 const product = await Product.findByPk(item.productId, { transaction: t });
                 if (product) {
-                    if (order.metodoPago !== 'mercadolibre') {
-                        const newStock = product.stock + item.cantidad;
-                        await product.update({ stock: newStock }, { transaction: t });
-                        console.log(`[Admin PUT] Devuelto stock para producto ${product.nombre} por cancelación. Nuevo stock: ${newStock}`);
-                    }
+                    const newStock = Math.max(0, product.stock - item.cantidad);
+                    await product.update({ stock: newStock }, { transaction: t });
+                    console.log(`[Admin PUT] Re-descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
                 }
             }
         }
