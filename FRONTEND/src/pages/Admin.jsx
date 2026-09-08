@@ -1,8 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PackagePlus, Trash2, Eye, EyeOff, LayoutDashboard, Image as ImageIcon, Package, AlertCircle, CheckCircle, DollarSign, TrendingUp, ShoppingBag, Calendar, ChevronDown, ChevronUp, Clock, CreditCard, Wallet, Coins, MapPin, ExternalLink } from 'lucide-react';
 import './Admin.css';
 
 function Admin() {
+  const navigate = useNavigate();
+
+  // Referencia a los productos originales para detectar cambios sin guardar y restaurar
+  const originalProductosRef = useRef([]);
+
+  // IDs de productos con cambios pendientes de guardar
+  const [unsavedProductIds, setUnsavedProductIds] = useState(new Set());
+  const hasUnsavedChanges = unsavedProductIds.size > 0;
+
+  // Estado para el modal de cambios sin guardar
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [isSavingModal, setIsSavingModal] = useState(false);
+
+  // Snapshot de IDs congelados de stock crítico para estabilidad visual
+  const [criticalProductIds, setCriticalProductIds] = useState(new Set());
+
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
@@ -173,10 +191,35 @@ function Admin() {
   // Productos con bajo stock (3 unidades o menos)
   const lowStockProducts = productos.filter(p => p.stock !== undefined && Number(p.stock) <= 3);
 
-  // Productos a mostrar en la tabla según el filtro de inventario ('todos' | 'critico')
-  const displayedProductos = inventoryFilter === 'critico' ? lowStockProducts : productos;
+  // Productos a mostrar en la tabla: en vista 'critico' se congela con los IDs de criticalProductIds
+  const displayedProductos = inventoryFilter === 'critico' 
+    ? productos.filter(p => criticalProductIds.has(p.id)) 
+    : productos;
+
+  const handleFilterClick = (newFilter) => {
+    if (newFilter === inventoryFilter) return;
+    if (hasUnsavedChanges) {
+      setPendingNavigation({ type: 'filter', target: newFilter });
+      setShowUnsavedModal(true);
+      return;
+    }
+    if (newFilter === 'critico') {
+      const ids = new Set(productos.filter(p => p.stock !== undefined && Number(p.stock) <= 3).map(p => p.id));
+      setCriticalProductIds(ids);
+    }
+    setInventoryFilter(newFilter);
+  };
 
   const handleGoToCriticalStock = () => {
+    if (hasUnsavedChanges && inventoryFilter !== 'critico') {
+      setPendingNavigation({ type: 'filter', target: 'critico' });
+      setShowUnsavedModal(true);
+      return;
+    }
+    if (!hasUnsavedChanges) {
+      const ids = new Set(productos.filter(p => p.stock !== undefined && Number(p.stock) <= 3).map(p => p.id));
+      setCriticalProductIds(ids);
+    }
     setInventoryFilter('critico');
     setShowInventory(true);
     setTimeout(() => {
@@ -189,6 +232,109 @@ function Admin() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }, 50);
+  };
+
+  // Interceptor de navegación interna de React Router cuando hay cambios sin guardar
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleLinkClick = (e) => {
+      if (e.target.closest('.inova-modal-container')) return;
+
+      const anchor = e.target.closest('a');
+      if (anchor && anchor.href) {
+        const url = new URL(anchor.href, window.location.origin);
+        if (url.origin === window.location.origin && (url.pathname !== window.location.pathname || url.search !== window.location.search)) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPendingNavigation({ type: 'route', target: url.pathname + url.search + url.hash });
+          setShowUnsavedModal(true);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavigation({ type: 'back' });
+      setShowUnsavedModal(true);
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.removeEventListener('click', handleLinkClick, true);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
+
+  const handleModalSaveAndProceed = async () => {
+    try {
+      setIsSavingModal(true);
+      const token = localStorage.getItem('token');
+      const modifiedProds = productos.filter(p => unsavedProductIds.has(p.id));
+
+      for (const prod of modifiedProds) {
+        const payload = {
+          nombre: prod.nombre,
+          descripcion: prod.descripcion,
+          precio: Number(prod.precio),
+          categoria: prod.categoria,
+          imagenUrl: prod.imagenUrl,
+          stock: Number(prod.stock)
+        };
+        await fetch(`${apiUrl}/${prod.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      showToast('¡Cambios de stock guardados con éxito!');
+      setUnsavedProductIds(new Set());
+      setShowUnsavedModal(false);
+
+      if (pendingNavigation) {
+        if (pendingNavigation.type === 'route') {
+          navigate(pendingNavigation.target);
+        } else if (pendingNavigation.type === 'filter') {
+          setInventoryFilter(pendingNavigation.target);
+        } else if (pendingNavigation.type === 'back') {
+          navigate(-1);
+        }
+        setPendingNavigation(null);
+      }
+      fetchProductos();
+    } catch (err) {
+      console.error('Error al guardar cambios de stock:', err);
+      showToast('Error al guardar los cambios', 'error');
+    } finally {
+      setIsSavingModal(false);
+    }
+  };
+
+  const handleModalDiscardAndProceed = () => {
+    if (originalProductosRef.current && originalProductosRef.current.length > 0) {
+      setProductos(JSON.parse(JSON.stringify(originalProductosRef.current)));
+    }
+    setUnsavedProductIds(new Set());
+    setShowUnsavedModal(false);
+
+    if (pendingNavigation) {
+      if (pendingNavigation.type === 'route') {
+        navigate(pendingNavigation.target);
+      } else if (pendingNavigation.type === 'filter') {
+        setInventoryFilter(pendingNavigation.target);
+      } else if (pendingNavigation.type === 'back') {
+        navigate(-1);
+      }
+      setPendingNavigation(null);
+    }
   };
 
   const toggleOrderExpand = (orderId) => {
@@ -259,7 +405,13 @@ function Admin() {
       });
       if (!res.ok) throw new Error('Error al obtener productos');
       const data = await res.json();
-      setProductos(data.productos || data || []);
+      const prodsList = data.productos || data || [];
+      setProductos(prodsList);
+      originalProductosRef.current = JSON.parse(JSON.stringify(prodsList));
+      setUnsavedProductIds(new Set());
+      // Congelar IDs que tienen stock crítico al cargar datos
+      const criticalIds = new Set(prodsList.filter(p => p.stock !== undefined && Number(p.stock) <= 3).map(p => p.id));
+      setCriticalProductIds(criticalIds);
     } catch (error) {
       console.error(error);
       showToast('Error al cargar los productos', 'error');
@@ -282,12 +434,34 @@ function Admin() {
         return o;
       }));
     } else {
-      setProductos(prev => prev.map(p => {
-        if (p.id === id) {
-          return { ...p, [field]: value };
-        }
-        return p;
-      }));
+      setProductos(prev => {
+        const next = prev.map(p => {
+          if (p.id === id) {
+            return { ...p, [field]: value };
+          }
+          return p;
+        });
+
+        const orig = (originalProductosRef.current || []).find(item => item.id === id);
+        const currentProd = next.find(item => item.id === id);
+        
+        setUnsavedProductIds(prevIds => {
+          const newSet = new Set(prevIds);
+          if (orig && currentProd && (
+            String(orig.nombre || '') !== String(currentProd.nombre || '') ||
+            String(orig.descripcion || '') !== String(currentProd.descripcion || '') ||
+            Number(orig.precio) !== Number(currentProd.precio) ||
+            Number(orig.stock) !== Number(currentProd.stock)
+          )) {
+            newSet.add(id);
+          } else {
+            newSet.delete(id);
+          }
+          return newSet;
+        });
+
+        return next;
+      });
     }
   };
 
@@ -338,6 +512,18 @@ function Admin() {
       if (!res.ok) throw new Error('Error al actualizar el producto');
 
       showToast('¡Inventario actualizado con éxito!');
+
+      if (originalProductosRef.current) {
+        originalProductosRef.current = originalProductosRef.current.map(item => 
+          item.id === producto.id ? JSON.parse(JSON.stringify(producto)) : item
+        );
+      }
+      setUnsavedProductIds(prevIds => {
+        const newSet = new Set(prevIds);
+        newSet.delete(producto.id);
+        return newSet;
+      });
+
       fetchProductos();
     } catch (error) {
       console.error(error);
@@ -891,7 +1077,7 @@ function Admin() {
               <button
                 type="button"
                 className={`inventory-filter-chip ${inventoryFilter === 'todos' ? 'active' : ''}`}
-                onClick={() => setInventoryFilter('todos')}
+                onClick={() => handleFilterClick('todos')}
               >
                 <Package size={14} />
                 <span>Todos los productos</span>
@@ -900,11 +1086,11 @@ function Admin() {
               <button
                 type="button"
                 className={`inventory-filter-chip critical-chip ${inventoryFilter === 'critico' ? 'active' : ''}`}
-                onClick={() => setInventoryFilter('critico')}
+                onClick={() => handleFilterClick('critico')}
               >
                 <AlertCircle size={14} />
                 <span>Stock Crítico</span>
-                <span className="chip-count critical-count">{lowStockProducts.length}</span>
+                <span className="chip-count critical-count">{criticalProductIds.size}</span>
               </button>
             </div>
 
@@ -917,7 +1103,7 @@ function Admin() {
                 <button
                   type="button"
                   className="btn-reset-filter"
-                  onClick={() => setInventoryFilter('todos')}
+                  onClick={() => handleFilterClick('todos')}
                 >
                   Ver todos los productos
                 </button>
@@ -937,7 +1123,7 @@ function Admin() {
                       type="button" 
                       className="btn-reset-filter"
                       style={{ marginTop: '10px' }}
-                      onClick={() => setInventoryFilter('todos')}
+                      onClick={() => handleFilterClick('todos')}
                     >
                       Volver al inventario completo
                     </button>
@@ -1357,6 +1543,41 @@ function Admin() {
         <div className={`toast ${toast.type}`}>
           {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
           {toast.message}
+        </div>
+      )}
+
+      {/* MODAL DE CAMBIOS SIN GUARDAR (INTERCEPTOR DE NAVEGACIÓN) */}
+      {showUnsavedModal && (
+        <div className="inova-modal-overlay" role="dialog" aria-modal="true">
+          <div className="inova-modal-container">
+            <div className="inova-modal-header">
+              <div className="inova-modal-icon-circle">
+                <AlertCircle size={26} color="#cf1322" />
+              </div>
+              <h3 className="inova-modal-title font-serif">Tienes cambios de stock sin guardar</h3>
+              <p className="inova-modal-description">
+                Has modificado valores de stock en el inventario que aún no han sido guardados.
+              </p>
+            </div>
+            <div className="inova-modal-actions">
+              <button
+                type="button"
+                className="inova-modal-btn btn-save"
+                onClick={handleModalSaveAndProceed}
+                disabled={isSavingModal}
+              >
+                {isSavingModal ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+              <button
+                type="button"
+                className="inova-modal-btn btn-discard"
+                onClick={handleModalDiscardAndProceed}
+                disabled={isSavingModal}
+              >
+                Salir sin guardar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

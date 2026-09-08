@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import './index.css';
 
@@ -20,6 +20,16 @@ import Collections from './pages/Collections';
 import Admin from './pages/Admin';
 import Contacto from './pages/Contacto';
 import Historia from './pages/Historia';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
 
@@ -152,6 +162,7 @@ function App() {
     <CartProvider>
 
       <Router>
+        <ScrollToTop />
 
         <Navbar
           usuario={usuario}
