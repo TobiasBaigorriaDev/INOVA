@@ -11,6 +11,7 @@ function Checkout() {
   const {
     cartItems,
     updateQuantity,
+    setExactQuantity,
     removeFromCart,
     subtotal,
     envio,
@@ -953,13 +954,36 @@ function Checkout() {
                         -
                       </button>
 
-                      <span
-                        style={{
-                          padding: '0 8px'
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.stock !== undefined ? item.stock : 99}
+                        value={item.qty}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') return;
+                          setExactQuantity(item.id, val);
                         }}
-                      >
-                        {item.qty}
-                      </span>
+                        onBlur={(e) => {
+                          if (!e.target.value || Number(e.target.value) < 1) {
+                            setExactQuantity(item.id, 1);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.target.blur();
+                        }}
+                        aria-label="Cantidad de producto"
+                        style={{
+                          width: '42px',
+                          textAlign: 'center',
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          fontWeight: '600',
+                          fontSize: '0.9rem',
+                          padding: '0 2px'
+                        }}
+                      />
 
                       <button
                         style={{

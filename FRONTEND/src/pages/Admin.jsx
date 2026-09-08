@@ -23,6 +23,9 @@ function Admin() {
   // Estado para mostrar/ocultar el desglose de ventas diarias del mes actual
   const [showDailyBreakdown, setShowDailyBreakdown] = useState(false);
 
+  // Estado para expandir/contraer el inventario de productos
+  const [showInventory, setShowInventory] = useState(true);
+
   // Estado para el mes y año seleccionado (formato YYYY-MM)
   const [selectedMonthYear, setSelectedMonthYear] = useState(() => {
     const today = new Date();
@@ -419,7 +422,7 @@ function Admin() {
     <div className="admin-container">
       <div className="admin-header">
         <h1 className="admin-title font-serif">Panel de Administración</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="admin-header-actions">
           {isDemoActive ? (
             <>
               <button 
@@ -748,7 +751,7 @@ function Admin() {
               <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} required placeholder="Detalles sobre el diseño y materiales..." />
             </div>
 
-            <div style={{ display: 'flex', gap: '20px' }}>
+            <div className="form-row-2col">
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Precio ($)</label>
                 <input type="number" name="precio" value={formData.precio} onChange={handleChange} required min="0" step="0.01" placeholder="0.00" />
@@ -795,12 +798,35 @@ function Admin() {
         </div>
 
         <div className="admin-list-section">
-          <h2 className="admin-form-title font-serif" style={{ marginBottom: '30px' }}>
-            <LayoutDashboard size={24} />
-            Inventario
-          </h2>
+          <div className="inventory-sticky-header">
+            <button
+              type="button"
+              className="inventory-toggle-btn"
+              onClick={() => setShowInventory(prev => !prev)}
+              title={showInventory ? "Haz clic para contraer el inventario" : "Haz clic para expandir el inventario"}
+            >
+              <div className="inventory-header-left">
+                <LayoutDashboard size={24} className="inventory-title-icon" />
+                <h2 className="admin-form-title font-serif" style={{ margin: 0 }}>
+                  Inventario
+                </h2>
+                <span className="inventory-count-badge">
+                  {productos.length} {productos.length === 1 ? 'producto' : 'productos'}
+                </span>
+              </div>
+              <div className="inventory-header-right">
+                <span className="inventory-toggle-hint">
+                  {showInventory ? 'Contraer' : 'Expandir'}
+                </span>
+                <div className="inventory-chevron-circle">
+                  {showInventory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+              </div>
+            </button>
+          </div>
 
-          <div className="products-table-container">
+          <div className={`inventory-content-wrapper ${showInventory ? 'expanded' : 'collapsed'}`}>
+            <div className="products-table-container">
             {loading ? (
               <div className="empty-state"><p>Cargando productos...</p></div>
             ) : productos.length === 0 ? (
@@ -809,7 +835,7 @@ function Admin() {
                 <p>No hay productos en la base de datos.</p>
               </div>
             ) : (
-              <table className="products-table">
+              <table className="products-table products-inventory">
                 <thead>
                   <tr>
                     <th>Imagen</th>
@@ -823,15 +849,28 @@ function Admin() {
                 <tbody>
                   {productos.map((producto) => (
                     <tr key={producto.id} className={producto.oculto ? 'row-oculto' : ''}>
-                      <td data-label="Imagen">
+                      <td data-label="Imagen" className="td-image">
                         <div className="table-img-container">
                           {producto.imagenUrl ? <img src={producto.imagenUrl} alt={producto.nombre} /> : <ImageIcon size={24} color="#ccc" />}
                         </div>
+                        {/* Badges redundantes para encabezado visual en tarjeta móvil */}
+                        <div className="mobile-only-badges">
+                          <span className={`badge badge-${producto.categoria}`}>{producto.categoria}</span>
+                          {producto.oculto && (
+                            <span className="badge badge-oculto" title="Este producto está oculto para los usuarios">Oculto</span>
+                          )}
+                        </div>
                       </td>
-                      <td data-label="Nombre y Categoría">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <input type="text" value={producto.nombre || ''} onChange={(e) => handleTableFieldChange(producto.id, 'nombre', e.target.value)} style={{ width: '145px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }} />
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <td data-label="Nombre y Categoría" className="td-name">
+                        <div className="table-name-wrapper">
+                          <input 
+                            type="text" 
+                            className="table-input-name"
+                            value={producto.nombre || ''} 
+                            onChange={(e) => handleTableFieldChange(producto.id, 'nombre', e.target.value)} 
+                            placeholder="Nombre del producto"
+                          />
+                          <div className="table-badges-wrapper desktop-only-badges">
                             <span className={`badge badge-${producto.categoria}`}>{producto.categoria}</span>
                             {producto.oculto && (
                               <span className="badge badge-oculto" title="Este producto está oculto para los usuarios">Oculto</span>
@@ -839,64 +878,79 @@ function Admin() {
                           </div>
                         </div>
                       </td>
-                      <td data-label="Descripción">
-                        <textarea value={producto.descripcion || ''} onChange={(e) => handleTableFieldChange(producto.id, 'descripcion', e.target.value)} style={{ width: '190px', height: '55px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '13px', resize: 'none' }} />
-                      </td>
-                      <td data-label="Precio">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span>$</span>
-                          <input type="number" value={producto.precio !== undefined ? producto.precio : ''} onChange={(e) => handleTableFieldChange(producto.id, 'precio', e.target.value)} style={{ width: '85px', padding: '8px', border: '1px solid #dddddd', borderRadius: '8px', fontSize: '14px' }} step="0.01" min="0" />
+                      <td data-label="Descripción" className="td-desc">
+                        <div className="table-desc-wrapper">
+                          <textarea 
+                            className="table-textarea-desc"
+                            value={producto.descripcion || ''} 
+                            onChange={(e) => handleTableFieldChange(producto.id, 'descripcion', e.target.value)} 
+                            placeholder="Descripción..."
+                          />
                         </div>
                       </td>
-                      <td data-label="Stock">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <td data-label="Precio" className="td-price">
+                        <div className="table-price-wrapper">
+                          <span className="currency-symbol">$</span>
                           <input 
                             type="number" 
+                            className="table-input-price"
+                            value={producto.precio !== undefined ? producto.precio : ''} 
+                            onChange={(e) => handleTableFieldChange(producto.id, 'precio', e.target.value)} 
+                            step="0.01" 
+                            min="0" 
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </td>
+                      <td data-label="Stock" className="td-stock">
+                        <div className="table-stock-wrapper">
+                          <input 
+                            type="number" 
+                            className={`table-input-stock ${Number(producto.stock) <= 3 ? 'stock-low' : ''}`}
                             value={producto.stock !== undefined ? producto.stock : ''} 
                             onChange={(e) => handleTableFieldChange(producto.id, 'stock', e.target.value)} 
-                            style={{ 
-                              width: '70px', 
-                              padding: '8px', 
-                              border: Number(producto.stock) <= 3 ? '1px solid #ff4d4f' : '1px solid #dddddd', 
-                              borderRadius: '8px', 
-                              fontSize: '14px', 
-                              textAlign: 'center',
-                              backgroundColor: Number(producto.stock) <= 3 ? '#fff2f0' : 'white',
-                              fontWeight: Number(producto.stock) <= 3 ? '600' : 'normal',
-                              color: Number(producto.stock) <= 3 ? '#ff4d4f' : 'inherit'
-                            }} 
                             min="0" 
+                            placeholder="0"
                           />
-                          <span style={{ fontSize: '13px', color: '#888' }}>uds.</span>
+                          <span className="stock-unit">uds.</span>
                           {Number(producto.stock) <= 3 && (
                             <AlertCircle 
                               size={18} 
                               color="#ff4d4f" 
                               title="Poco stock - ¡Necesita reponer!" 
-                              style={{ flexShrink: 0, animation: 'pulseRed 1.5s infinite' }} 
+                              className="stock-alert-icon"
                             />
                           )}
                         </div>
                       </td>
-                      <td data-label="Acciones">
-                        <button onClick={() => handleTableSave(producto)} style={{ marginRight: '12px', backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Guardar</button>
-                        <button 
-                          className={`visibility-btn ${producto.oculto ? 'show-btn' : 'hide-btn'}`} 
-                          onClick={() => handleToggleOcultar(producto)} 
-                          title={producto.oculto ? 'Hacer visible en la tienda para los usuarios' : 'Ocultar producto de la tienda para los usuarios'}
-                        >
-                          {producto.oculto ? (
-                            <>
-                              <Eye size={16} />
-                              <span>Mostrar</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff size={16} />
-                              <span>Ocultar</span>
-                            </>
-                          )}
-                        </button>
+                      <td data-label="Acciones" className="td-actions">
+                        <div className="table-actions-wrapper">
+                          <button 
+                            type="button"
+                            onClick={() => handleTableSave(producto)} 
+                            className="table-save-btn"
+                          >
+                            Guardar
+                          </button>
+                          <button 
+                            type="button"
+                            className={`visibility-btn ${producto.oculto ? 'show-btn' : 'hide-btn'}`} 
+                            onClick={() => handleToggleOcultar(producto)} 
+                            title={producto.oculto ? 'Hacer visible en la tienda para los usuarios' : 'Ocultar producto de la tienda para los usuarios'}
+                          >
+                            {producto.oculto ? (
+                              <>
+                                <Eye size={16} />
+                                <span>Mostrar</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff size={16} />
+                                <span>Ocultar</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -905,6 +959,7 @@ function Admin() {
             )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* SECCIÓN DE HISTORIAL DE VENTAS */}
@@ -923,7 +978,7 @@ function Admin() {
               <p>No se registran pedidos en el historial aún.</p>
             </div>
           ) : (
-            <table className="products-table">
+            <table className="products-table orders-table">
               <thead>
                 <tr>
                   <th>Nº Pedido</th>
@@ -945,59 +1000,40 @@ function Admin() {
                       style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
                       className={expandedOrderId === order.id ? 'row-expanded' : ''}
                     >
-                      <td data-label="Nº Pedido" style={{ fontWeight: '700', color: '#5A406B' }}>#{order.id}</td>
-                      <td data-label="Fecha y Hora" style={{ fontSize: '13px', color: '#555' }}>
+                      <td data-label="Nº Pedido" className="td-order-id">#{order.id}</td>
+                      <td data-label="Fecha y Hora" className="td-order-date">
                         {new Date(order.createdAt).toLocaleDateString('es-AR')} - {new Date(order.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
                       </td>
-                      <td data-label="Cliente">
+                      <td data-label="Cliente" className="td-order-client">
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: '600', color: '#333' }}>{order.nombreCliente} {order.apellidoCliente}</span>
                           <span style={{ fontSize: '12px', color: '#888' }}>{order.email}</span>
                         </div>
                       </td>
-                      <td data-label="Método de Pago">
+                      <td data-label="Método de Pago" className="td-order-payment">
                         <span className={`badge badge-payment-${order.metodoPago || 'efectivo'}`}>
                           {order.metodoPago === 'mercadolibre' ? 'Mercado Pago' : order.metodoPago === 'tarjeta' ? 'Tarjeta' : order.metodoPago === 'cripto' ? 'Cripto' : 'Efectivo'}
                         </span>
                       </td>
-                      <td data-label="Monto Total" style={{ fontWeight: '700', color: '#5A406B' }}>${Number(order.total).toFixed(2)}</td>
-                      <td data-label="Estado" onClick={(e) => e.stopPropagation()}>
+                      <td data-label="Monto Total" className="td-order-total">${Number(order.total).toFixed(2)}</td>
+                      <td data-label="Estado" className="td-order-status" onClick={(e) => e.stopPropagation()}>
                         <select 
                           value={order.status} 
                           onChange={(e) => handleTableFieldChange(order.id, 'status', e.target.value, true)}
                           disabled={order.status === 'pagado'}
                           className={`status-select status-${order.status}`}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            border: '1px solid #ddd',
-                            fontWeight: '600',
-                            fontSize: '13px',
-                            cursor: order.status === 'pagado' ? 'not-allowed' : 'pointer',
-                            opacity: order.status === 'pagado' ? 0.6 : 1
-                          }}
                         >
                           <option value="pendiente">Pendiente</option>
                           <option value="pagado">Pagado</option>
                           <option value="cancelado">Cancelado</option>
                         </select>
                       </td>
-                      <td data-label="Acción" onClick={(e) => e.stopPropagation()}>
+                      <td data-label="Acción" className="td-order-action" onClick={(e) => e.stopPropagation()}>
                         <button 
+                          type="button"
                           onClick={() => handleUpdateOrderStatus(order.id, order.status)}
                           disabled={order.status === 'pagado'}
-                          style={{
-                            backgroundColor: '#5A406B',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            cursor: order.status === 'pagado' ? 'not-allowed' : 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            transition: 'background-color 0.2s',
-                            opacity: order.status === 'pagado' ? 0.6 : 1
-                          }}
+                          className="order-update-btn"
                         >
                           Actualizar
                         </button>

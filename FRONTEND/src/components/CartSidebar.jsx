@@ -12,6 +12,7 @@ const CartSidebar = () => {
     setIsCartOpen, 
     cartItems, 
     updateQuantity, 
+    setExactQuantity,
     removeFromCart, 
     subtotal, 
     envio, 
@@ -81,8 +82,28 @@ const CartSidebar = () => {
 
                   <div className="quantity-control">
                     {/* Botón de Restar */}
-                    <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}>-</button>
-                    <span>{item.qty}</span>
+                    <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)} aria-label="Restar uno">-</button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={item.stock !== undefined ? item.stock : 99}
+                      value={item.qty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') return;
+                        setExactQuantity(item.id, val);
+                      }}
+                      onBlur={(e) => {
+                        if (!e.target.value || Number(e.target.value) < 1) {
+                          setExactQuantity(item.id, 1);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.target.blur();
+                      }}
+                      aria-label="Cantidad de producto"
+                      className="qty-input"
+                    />
                     {/* Botón de Sumar (Muestra cartel si no hay más stock) */}
                     <button 
                       className="qty-btn" 

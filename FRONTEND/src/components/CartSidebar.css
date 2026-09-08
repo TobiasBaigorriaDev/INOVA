@@ -127,6 +127,18 @@
   padding: 0 10px;
 }
 
+.quantity-control .qty-input {
+  width: 42px;
+  text-align: center;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: inherit;
+  padding: 0 2px;
+}
+
 .cart-footer {
   padding: 20px;
   border-top: 1px solid #eee;

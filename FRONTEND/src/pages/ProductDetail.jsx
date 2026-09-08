@@ -321,10 +321,11 @@ function ProductDetail({
   // =========================
 
   const handleAddToCart = () => {
+    const finalQty = Math.max(1, Number(quantity) || 1);
     const existingItem = cartItems.find(item => String(item.id) === String(productInfo.id));
     const cartQuantity = existingItem ? Number(existingItem.qty) : 0;
 
-    if (cartQuantity + quantity > Number(productInfo.stock)) {
+    if (cartQuantity + finalQty > Number(productInfo.stock)) {
       setIsStockLimitReached(true);
       setTimeout(() => setIsStockLimitReached(false), 1500);
       return;
@@ -332,7 +333,7 @@ function ProductDetail({
 
     addToCart(
       cleanProductPrice(productInfo),
-      quantity,
+      finalQty,
       false // Sumamos la cantidad en lugar de sobreescribirla
     );
 
@@ -363,10 +364,11 @@ function ProductDetail({
   // =========================
 
   const handleBuyNow = () => {
+    const finalQty = Math.max(1, Number(quantity) || 1);
 
     addToCart(
       cleanProductPrice(productInfo),
-      quantity,
+      finalQty,
       true
     );
 
@@ -379,34 +381,54 @@ function ProductDetail({
   // =========================
 
   const updateQty = (amount) => {
-
     setQuantity(prev => {
-
       if (availableToAdd <= 0) {
         showToast('Límite de stock alcanzado', 'error');
         return 1;
-
       }
 
-      const newQty =
-        prev + amount;
+      const current = typeof prev === 'number' ? prev : (parseInt(prev, 10) || 1);
+      const newQty = current + amount;
 
       if (newQty < 1) {
-
         return 1;
-
       }
 
       if (newQty > availableToAdd) {
         showToast('Límite de stock alcanzado', 'error');
         return availableToAdd;
-
       }
 
       return newQty;
-
     });
+  };
 
+  const handleQuantityInputChange = (e) => {
+    const val = e.target.value;
+    if (val === '') {
+      setQuantity('');
+      return;
+    }
+
+    const parsed = parseInt(val, 10);
+    if (isNaN(parsed)) return;
+
+    if (availableToAdd > 0 && parsed > availableToAdd) {
+      setQuantity(availableToAdd);
+      showToast(`Límite de stock alcanzado (${availableToAdd} disponibles)`, 'error');
+    } else if (parsed < 1) {
+      setQuantity(1);
+    } else {
+      setQuantity(parsed);
+    }
+  };
+
+  const handleQuantityInputBlur = () => {
+    if (quantity === '' || Number(quantity) < 1) {
+      setQuantity(availableToAdd > 0 ? 1 : 0);
+    } else if (availableToAdd > 0 && Number(quantity) > availableToAdd) {
+      setQuantity(availableToAdd);
+    }
   };
 
   // =========================
@@ -579,62 +601,90 @@ function ProductDetail({
             >
 
               <button
+                type="button"
                 style={{
                   background: 'none',
                   border: 'none',
                   fontSize: '20px',
                   cursor:
-                    quantity <= 1 ||
+                    (Number(quantity) || 1) <= 1 ||
                       availableToAdd === 0
                       ? 'not-allowed'
                       : 'pointer',
                   padding: '10px',
                   color:
-                    quantity <= 1 ||
+                    (Number(quantity) || 1) <= 1 ||
                       availableToAdd === 0
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
                 onClick={() => updateQty(-1)}
                 disabled={
-                  quantity <= 1 ||
+                  (Number(quantity) || 1) <= 1 ||
                   availableToAdd === 0
                 }
+                title="Disminuir cantidad"
+                aria-label="Disminuir cantidad"
               >
                 -
               </button>
 
-              <span
-                style={{
-                  width: '30px',
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  fontWeight: '600'
+              <input
+                type="number"
+                min="1"
+                max={availableToAdd > 0 ? availableToAdd : 1}
+                value={quantity}
+                onChange={handleQuantityInputChange}
+                onBlur={handleQuantityInputBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.target.blur();
                 }}
-              >
-                {quantity}
-              </span>
+                disabled={availableToAdd === 0}
+                aria-label="Cantidad de productos"
+                style={{
+                  width: '56px',
+                  textAlign: 'center',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  color: 'inherit',
+                  padding: '4px'
+                }}
+              />
 
               <button
+                type="button"
                 style={{
                   background: 'none',
                   border: 'none',
                   fontSize: '20px',
-                  cursor: 'pointer',
+                  cursor:
+                    (Number(quantity) || 1) >= availableToAdd ||
+                      availableToAdd === 0
+                      ? 'not-allowed'
+                      : 'pointer',
                   padding: '10px',
                   color:
-                    quantity >= availableToAdd
+                    (Number(quantity) || 1) >= availableToAdd ||
+                      availableToAdd === 0
                       ? '#ccc'
                       : 'var(--primary)'
                 }}
                 onClick={() => {
-                  if (quantity >= availableToAdd) {
+                  if ((Number(quantity) || 1) >= availableToAdd) {
                     showToast('Límite de stock alcanzado', 'error');
                   } else {
                     updateQty(1);
                   }
                 }}
-                disabled={quantity >= availableToAdd}
+                disabled={
+                  (Number(quantity) || 1) >= availableToAdd ||
+                  availableToAdd === 0
+                }
+                title="Aumentar cantidad"
+                aria-label="Aumentar cantidad"
               >
                 +
               </button>

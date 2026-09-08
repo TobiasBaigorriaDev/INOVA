@@ -204,6 +204,24 @@ export const CartProvider = ({ children }) => {
     setCartItems((prev) => prev.map((p) => String(p.id) === String(id) ? { ...p, qty: newQty } : p));
   };
 
+  // Actualizar la cantidad de un artículo a un número específico de forma manual
+  const setExactQuantity = (id, targetQty) => {
+    const item = cartItems.find((p) => String(p.id) === String(id));
+    if (!item) return;
+
+    const maxStock = item.stock !== undefined ? Number(item.stock) : 99;
+    let qtyNum = parseInt(targetQty, 10);
+
+    if (isNaN(qtyNum) || qtyNum < 1) {
+      qtyNum = 1;
+    } else if (qtyNum > maxStock) {
+      showToast('Límite de stock alcanzado', 'error');
+      qtyNum = maxStock;
+    }
+
+    setCartItems((prev) => prev.map((p) => String(p.id) === String(id) ? { ...p, qty: qtyNum } : p));
+  };
+
   // Eliminar un producto del carrito
   const removeFromCart = (id) => {
     setCartItems((prevItems) => prevItems.filter((item) => String(item.id) !== String(id)));
@@ -235,6 +253,7 @@ export const CartProvider = ({ children }) => {
       setIsCartOpen,
       addToCart,
       updateQuantity,
+      setExactQuantity,
       removeFromCart,
       clearCart,
       subtotal,

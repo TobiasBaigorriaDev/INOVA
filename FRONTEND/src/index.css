@@ -5,6 +5,7 @@
   --border-color: #EBE5ED;
   --font-serif: 'Playfair Display', serif;
   --font-sans: 'Montserrat', sans-serif;
+  --navbar-height: 120px;
 }
 
 * {
@@ -831,6 +832,10 @@ li {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --navbar-height: 150px;
+  }
+
   .container {
     padding: 0 20px;
   }
