@@ -103,16 +103,12 @@ function Collections({ toggleFavorite, favorites }) {
             }
 
             if (isSearching) {
-                // Algoritmo de Búsqueda Difusa (Fuzzy Search)
-                const fuse = new Fuse(mappedData, {
-                    keys: ['name', 'category', 'description'],
-                    threshold: 0.4, // Tolerancia a errores/typos
-                    ignoreLocation: true, // Coincidencia en cualquier parte del texto
-                    includeScore: true // Para que Fuse ordene por relevancia implícitamente
-                });
-
-                const results = fuse.search(searchQuery.trim());
-                let fuzzyProducts = results.map(res => res.item);
+                // Búsqueda exacta estricta para no mezclar productos
+                const searchLower = searchQuery.toLowerCase().trim();
+                let fuzzyProducts = mappedData.filter(p => 
+                    p.name.toLowerCase().includes(searchLower) || 
+                    p.category.toLowerCase().includes(searchLower)
+                );
 
                 // Aplicar ordenamiento por precio en cliente si hay sortOrder
                 if (sortOrder === 'asc') {

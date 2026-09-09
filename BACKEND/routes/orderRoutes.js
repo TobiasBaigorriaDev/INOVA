@@ -68,7 +68,8 @@ router.post('/', validarJWT, async (req, res) => {
         const costoEnvio = 0.00;
         const totalFinal = subtotal + costoEnvio;
 
-        const status = 'pendiente';
+        // Si es pago por Cripto, se asume pagado (verificación de demo). Efectivo y MP inician como pendiente.
+        const status = (metodoPago === 'cripto') ? 'pagado' : 'pendiente';
 
         // 3. Crear el registro de la Orden principal
         const order = await Order.create({
@@ -108,38 +109,40 @@ router.post('/', validarJWT, async (req, res) => {
 
         // Enviamos los datos de la compra a n8n para disparar el mail automático.
         // Importante: si n8n falla, NO rompemos la compra.
-        try {
-            await fetch(N8N_ORDER_WEBHOOK_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    orderId: order.id,
-                    email,
-                    nombreCliente,
-                    apellidoCliente,
-                    diaEncuentro,
-                    horaEncuentro,
-                    metodoPago,
-                    cryptoTxId: order.cryptoTxId,
-                    cryptoNetwork: order.cryptoNetwork,
-                    subtotal,
-                    costoEnvio,
-                    total: totalFinal,
-                    status: order.status,
-                    productos: itemsToCreate.map(item => ({
-                        productId: item.productId,
-                        nombre: item.dbProduct.nombre,
-                        cantidad: item.cantidad,
-                        precioUnitario: item.precioUnitario
-                    }))
-                })
-            });
+        if (metodoPago !== 'mercadolibre') {
+            try {
+                await fetch(N8N_ORDER_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orderId: order.id,
+                        email,
+                        nombreCliente,
+                        apellidoCliente,
+                        diaEncuentro,
+                        horaEncuentro,
+                        metodoPago,
+                        cryptoTxId: order.cryptoTxId,
+                        cryptoNetwork: order.cryptoNetwork,
+                        subtotal,
+                        costoEnvio,
+                        total: totalFinal,
+                        status: order.status,
+                        productos: itemsToCreate.map(item => ({
+                            productId: item.productId,
+                            nombre: item.dbProduct.nombre,
+                            cantidad: item.cantidad,
+                            precioUnitario: item.precioUnitario
+                        }))
+                    })
+                });
 
-            console.log(`[n8n] Webhook de compra enviado correctamente para la orden ${order.id}`);
-        } catch (webhookError) {
-            console.error('[n8n] Error al enviar webhook de compra:', webhookError.message);
+                console.log(`[n8n] Webhook de compra enviado correctamente para la orden ${order.id}`);
+            } catch (webhookError) {
+                console.error('[n8n] Error al enviar webhook de compra:', webhookError.message);
+            }
         }
 
         res.status(201).json({

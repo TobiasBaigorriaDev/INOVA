@@ -98,6 +98,8 @@
   background-color: #fcfcfc;
   transition: all 0.3s ease;
   color: #333;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -495,11 +497,29 @@
 
 /* Animación y colapso de inventario */
 .inventory-content-wrapper {
-  max-height: 10000px;
+  max-height: calc(100vh - 200px);
   opacity: 1;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px; /* Para que el scroll no tape contenido */
   transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
               opacity 0.3s ease-out;
+}
+
+/* Personalizar scroll de inventario */
+.inventory-content-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+.inventory-content-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.inventory-content-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+.inventory-content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .inventory-content-wrapper.collapsed {

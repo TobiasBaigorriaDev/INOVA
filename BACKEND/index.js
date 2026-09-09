@@ -4,6 +4,12 @@ require('dotenv').config({ override: true }); // Lee el archivo .env y fuerza su
 const express = require('express');
 const cors = require('cors');
 const { connectSQL } = require('./config/dbSQL');
+
+// Evitar que errores de promesas no manejados tumben el servidor
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Importamos todos los modelos para que Sequelize los registre
 require('./models/User');
 require('./models/Products');

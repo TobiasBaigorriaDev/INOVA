@@ -1384,12 +1384,13 @@ function Admin() {
                       <td data-label="Estado de Entrega" className="td-order-status" onClick={(e) => e.stopPropagation()}>
                         <div className="order-status-edit-wrapper">
                           <select 
-                            value={order.status === 'pagado' ? 'entregado' : order.status} 
+                            value={order.status} 
                             onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                            className={`status-select status-${order.status === 'pagado' ? 'entregado' : order.status}`}
+                            className={`status-select status-${order.status}`}
                             title="Cambiar estado de entrega del pedido"
                           >
                             <option value="pendiente">⏳ No entregado</option>
+                            <option value="pagado">💲 Pagado (Sin entregar)</option>
                             <option value="entregado">✓ Entregado</option>
                             <option value="cancelado">✗ Cancelado</option>
                           </select>

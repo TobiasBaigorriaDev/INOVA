@@ -45,7 +45,9 @@ function Checkout() {
 
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState('');
   const [cryptoTxId, setCryptoTxId] = useState('');
-  const [cryptoNetwork, setCryptoNetwork] = useState('Red Dogecoin (Nativa)');
+  const [cryptoNetwork, setCryptoNetwork] = useState('Red Ethereum (Sepolia)');
+  const [cryptoTotalEth, setCryptoTotalEth] = useState(null);
+  const [cryptoLoading, setCryptoLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,8 @@ function Checkout() {
     };
     fetchMpConfig();
   }, []);
+
+
 
   useEffect(() => {
 
@@ -156,6 +160,41 @@ function Checkout() {
 
   const [paymentMethod, setPaymentMethod] =
     useState('');
+
+  // =========================
+  // COTIZACIÓN CRIPTO EN VIVO
+  // =========================
+  useEffect(() => {
+    // Solo cotizamos si el usuario eligió "cripto"
+    if (paymentMethod === 'cripto' && total > 0) {
+      const fetchCryptoPrices = async () => {
+        setCryptoLoading(true);
+        try {
+          // 1. Dólar Cripto (ARS a USD) usando DolarAPI
+          const dolarRes = await fetch('https://dolarapi.com/v1/dolares/cripto');
+          const dolarData = await dolarRes.json();
+          const dolarVenta = dolarData.venta;
+
+          // 2. Precio de ETH en USDT usando Binance API
+          const ethRes = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
+          const ethData = await ethRes.json();
+          const ethPriceUSD = parseFloat(ethData.price);
+
+          // 3. Conversión: Total ARS -> USD -> ETH
+          const totalUsd = total / dolarVenta;
+          const totalEth = totalUsd / ethPriceUSD;
+
+          setCryptoTotalEth(totalEth);
+        } catch (error) {
+          console.error('Error al obtener cotización cripto:', error);
+          setCryptoTotalEth(null);
+        } finally {
+          setCryptoLoading(false);
+        }
+      };
+      fetchCryptoPrices();
+    }
+  }, [paymentMethod, total]);
 
   // =========================
   // REALIZAR PEDIDO
@@ -701,10 +740,10 @@ function Checkout() {
                 ></div>
 
                 <span className="payment-method-name">
-                  CRIPTOMONEDAS (DOGE - Dogecoin)
+                  CRIPTOMONEDAS (Ethereum - ETH)
                 </span>
 
-                <span className="payment-method-icon" style={{ fontSize: '18px', fontWeight: 'bold' }}>🪙</span>
+                <span className="payment-method-icon" style={{ fontSize: '18px', fontWeight: 'bold' }}>⟠</span>
 
               </div>
 
@@ -722,7 +761,7 @@ function Checkout() {
               boxShadow: '0 8px 30px rgba(90, 64, 107, 0.04)'
             }}>
               <h3 className="font-serif" style={{ fontSize: '20px', marginBottom: '15px', color: '#3b0a45', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>🪙</span> Pago Seguro con Dogecoin (DOGE)
+                <span style={{ fontSize: '24px' }}>⟠</span> Pago Seguro con Ethereum (ETH / Sepolia)
               </h3>
               
               <p style={{ fontSize: '14px', lineHeight: '1.6', color: '#555', marginBottom: '25px' }}>
@@ -762,12 +801,18 @@ function Checkout() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                     <div>
                       <span style={{ fontSize: '11px', fontWeight: '700', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>Red de Envío</span>
-                      <div style={{ fontSize: '15px', fontWeight: '700', color: '#009688', marginTop: '3px' }}>Dogecoin (Nativa)</div>
+                      <div style={{ fontSize: '15px', fontWeight: '700', color: '#009688', marginTop: '3px' }}>Ethereum (Sepolia)</div>
                     </div>
                     <div>
                       <span style={{ fontSize: '11px', fontWeight: '700', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>Total a Transferir</span>
                       <div style={{ fontSize: '16px', fontWeight: '800', color: '#3b0a45', marginTop: '3px' }}>
-                        ${Number(total).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS
+                        {cryptoLoading ? (
+                          <span style={{ fontSize: '14px', color: '#888' }}>Calculando en vivo...</span>
+                        ) : cryptoTotalEth ? (
+                          <>{cryptoTotalEth.toFixed(6)} ETH <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#888' }}>(${Number(total).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS)</span></>
+                        ) : (
+                          <>${Number(total).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS</>
+                        )}
                       </div>
                     </div>
                   </div>

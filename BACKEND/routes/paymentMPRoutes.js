@@ -6,6 +6,8 @@ const OrderItem = require('../models/OrderItem');
 const Product = require('../models/Products');
 const { sequelize } = require('../config/dbSQL');
 
+const N8N_ORDER_WEBHOOK_URL = process.env.N8N_ORDER_WEBHOOK_URL || 'http://localhost:5678/webhook/inova-compra';
+
 const accessToken = process.env.MP_ACCESS_TOKEN || '';
 
 if (!accessToken || accessToken.includes('TEST-aqui')) {
@@ -14,6 +16,14 @@ if (!accessToken || accessToken.includes('TEST-aqui')) {
 
 const client = new MercadoPagoConfig({
     accessToken
+});
+
+// GET /api/mp/success
+// Ruta puente para saltar la restricción de localhost en Mercado Pago
+router.get('/success', (req, res) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const queryString = new URLSearchParams(req.query).toString();
+    res.redirect(`${frontendUrl}/checkout?${queryString}`);
 });
 
 router.post('/create-preference', async (req, res) => {
@@ -25,12 +35,17 @@ router.post('/create-preference', async (req, res) => {
 
         const preference = new Preference(client);
 
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const webhookUrl = process.env.WEBHOOK_URL || 'https://TU_DOMINIO.ngrok.app/api/mp/webhook';
+        // Extraemos la base de la URL (ej: https://xxx.trycloudflare.com)
+        const baseUrl = webhookUrl.replace('/api/mp/webhook', '');
+
         const response = await preference.create({
             body: {
                 // external_reference nos sirve para identificar la orden cuando MP nos mande el webhook
                 external_reference: orderId ? orderId.toString() : '0',
                 // notification_url es donde Mercado Pago enviará los avisos por POST
-                notification_url: process.env.WEBHOOK_URL || 'https://TU_DOMINIO.ngrok.app/api/mp/webhook',
+                notification_url: webhookUrl,
                 items: items.map(item => ({
                     title: item.nombre,
                     quantity: item.cantidad,
@@ -38,10 +53,11 @@ router.post('/create-preference', async (req, res) => {
                     currency_id: 'ARS'
                 })),
                 back_urls: {
-                    success: 'http://localhost:5173/checkout',
-                    failure: 'http://localhost:5173/checkout',
-                    pending: 'http://localhost:5173/checkout'
-                }
+                    success: `${baseUrl}/api/mp/success`,
+                    failure: `${baseUrl}/api/mp/success`,
+                    pending: `${baseUrl}/api/mp/success`
+                },
+                auto_return: 'approved'
             }
         });
 
@@ -82,6 +98,7 @@ router.post('/webhook', async (req, res) => {
                     });
 
                     if (order && order.status === 'pendiente') {
+                        const orderProducts = [];
                         // Descontamos stock para cada producto de la orden
                         for (const item of order.items) {
                             const product = await Product.findByPk(item.productId, { transaction: t });
@@ -89,12 +106,45 @@ router.post('/webhook', async (req, res) => {
                                 const newStock = Math.max(0, product.stock - item.cantidad);
                                 await product.update({ stock: newStock }, { transaction: t });
                                 console.log(`[Webhook] Descontado stock para producto ${product.nombre}. Nuevo stock: ${newStock}`);
+                                orderProducts.push({
+                                    productId: item.productId,
+                                    nombre: product.nombre,
+                                    cantidad: item.cantidad,
+                                    precioUnitario: item.precioUnitario
+                                });
                             }
                         }
 
                         // Actualizamos el estado de la Orden a 'pagado'
                         await order.update({ status: 'pagado' }, { transaction: t });
                         console.log(`[Webhook] Orden ${orderId} marcada como PAGADA con éxito.`);
+
+                        // Mandamos mail luego de confirmar
+                        try {
+                            await fetch(N8N_ORDER_WEBHOOK_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId: order.id,
+                                    email: order.email,
+                                    nombreCliente: order.nombreCliente,
+                                    apellidoCliente: order.apellidoCliente,
+                                    diaEncuentro: order.diaEncuentro,
+                                    horaEncuentro: order.horaEncuentro,
+                                    metodoPago: order.metodoPago,
+                                    cryptoTxId: order.cryptoTxId,
+                                    cryptoNetwork: order.cryptoNetwork,
+                                    subtotal: order.total,
+                                    costoEnvio: 0,
+                                    total: order.total,
+                                    status: 'pagado',
+                                    productos: orderProducts
+                                })
+                            });
+                            console.log(`[n8n] Correo de compra MP enviado correctamente para orden ${order.id}`);
+                        } catch (err) {
+                            console.error('[n8n] Error correo MP:', err);
+                        }
                     } else if (order && order.status === 'pagado') {
                         console.log(`[Webhook] La orden ${orderId} ya se encontraba pagada.`);
                     }
